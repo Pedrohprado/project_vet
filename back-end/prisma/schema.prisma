@@ -1,0 +1,363 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum ClinicPlan {
+  FREE
+  STARTER
+  PRO
+}
+
+enum UserRole {
+  VETERINARIAN
+  ADMIN
+}
+
+enum PetSpecies {
+  DOG
+  CAT
+  OTHER
+}
+
+enum PetSex {
+  MALE
+  FEMALE
+  UNKNOWN
+}
+
+enum AppointmentType {
+  CONSULTATION
+  VACCINATION
+  EXAM
+  PROCEDURE
+  RETURN
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+  NO_SHOW
+}
+
+enum ConsultationStatus {
+  OPEN
+  FINISHED
+  CANCELLED
+}
+
+enum NotificationChannel {
+  WHATSAPP
+  EMAIL
+  SMS
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  FAILED
+  CANCELLED
+}
+
+enum NotificationType {
+  APPOINTMENT_REMINDER
+  VACCINE_REMINDER
+  POST_CONSULTATION
+  RETURN_REMINDER
+  GENERAL
+}
+
+model Clinic {
+  id           String  @id @default(uuid())
+  name         String
+  document     String? // CNPJ ou CPF
+  phone        String?
+  whatsapp     String?
+  email        String?
+  logoUrl      String?
+  zipCode      String?
+  street       String?
+  number       String?
+  complement   String?
+  neighborhood String?
+  city         String?
+  state        String?
+
+  plan     ClinicPlan @default(FREE)
+  isActive Boolean    @default(true)
+
+  users         User[]
+  tutors        Tutor[]
+  pets          Pet[]
+  appointments  Appointment[]
+  consultations Consultation[]
+  vaccinations  Vaccination[]
+  notifications Notification[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model User {
+  id            String         @id @default(uuid())
+  name          String
+  email         String
+  password      String
+  phone         String?
+  crmv          String?
+  role          UserRole       @default(VETERINARIAN)
+  isActive      Boolean        @default(true)
+  appointments  Appointment[]
+  consultations Consultation[]
+  clinicId      String
+  clinic        Clinic         @relation(fields: [clinicId], references: [id])
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  @@unique([clinicId, email])
+}
+
+model Tutor {
+  id       String @id @default(uuid())
+  clinicId String
+  clinic   Clinic @relation(fields: [clinicId], references: [id])
+
+  name     String
+  document String? // CPF
+  phone    String?
+  whatsapp String?
+  email    String?
+
+  zipCode      String?
+  street       String?
+  number       String?
+  complement   String?
+  neighborhood String?
+  city         String?
+  state        String?
+
+  notes String?
+
+  pets          Pet[]
+  appointments  Appointment[]
+  consultations Consultation[]
+  notifications Notification[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([clinicId])
+}
+
+model Pet {
+  id       String @id @default(uuid())
+  clinicId String
+  clinic   Clinic @relation(fields: [clinicId], references: [id])
+
+  tutorId String
+  tutor   Tutor  @relation(fields: [tutorId], references: [id])
+
+  name      String
+  species   PetSpecies
+  breed     String?
+  sex       PetSex     @default(UNKNOWN)
+  birthDate DateTime?
+  color     String?
+  weightKg  Decimal?   @db.Decimal(6, 2)
+  photoUrl  String?
+
+  isCastrated Boolean @default(false)
+  microchip   String?
+
+  allergies             String?
+  chronicDiseases       String?
+  continuousMedications String?
+  notes                 String?
+
+  appointments  Appointment[]
+  consultations Consultation[]
+  vaccinations  Vaccination[]
+  notifications Notification[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([clinicId])
+  @@index([tutorId])
+}
+
+model Appointment {
+  id       String @id @default(uuid())
+  clinicId String
+  clinic   Clinic @relation(fields: [clinicId], references: [id])
+
+  tutorId String
+  tutor   Tutor  @relation(fields: [tutorId], references: [id])
+
+  petId String
+  pet   Pet    @relation(fields: [petId], references: [id])
+
+  veterinarianId String?
+  veterinarian   User?   @relation(fields: [veterinarianId], references: [id])
+
+  type   AppointmentType
+  status AppointmentStatus @default(SCHEDULED)
+
+  title       String?
+  description String?
+
+  scheduledAt     DateTime
+  durationMinutes Int      @default(30)
+
+  consultation Consultation?
+  vaccination  Vaccination?
+
+  notifications Notification[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([clinicId, scheduledAt])
+  @@index([petId])
+  @@index([tutorId])
+}
+
+model Consultation {
+  id       String @id @default(uuid())
+  clinicId String
+  clinic   Clinic @relation(fields: [clinicId], references: [id])
+
+  appointmentId String?      @unique
+  appointment   Appointment? @relation(fields: [appointmentId], references: [id])
+
+  tutorId String
+  tutor   Tutor  @relation(fields: [tutorId], references: [id])
+
+  petId String
+  pet   Pet    @relation(fields: [petId], references: [id])
+
+  veterinarianId String
+  veterinarian   User   @relation(fields: [veterinarianId], references: [id])
+
+  status ConsultationStatus @default(OPEN)
+
+  startedAt  DateTime  @default(now())
+  finishedAt DateTime?
+
+  weightKg    Decimal? @db.Decimal(6, 2)
+  temperature Decimal? @db.Decimal(4, 1)
+
+  mainComplaint String?
+  history       String?
+  physicalExam  String?
+  diagnosis     String?
+  conduct       String?
+  observations  String?
+
+  needsReturn Boolean   @default(false)
+  returnDate  DateTime?
+
+  prescriptions Prescription[]
+  notifications Notification[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([clinicId])
+  @@index([petId])
+}
+
+model Prescription {
+  id String @id @default(uuid())
+
+  consultationId String
+  consultation   Consultation @relation(fields: [consultationId], references: [id])
+
+  medicineName String
+  dosage       String?
+  frequency    String?
+  duration     String?
+  instructions String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Vaccination {
+  id       String @id @default(uuid())
+  clinicId String
+  clinic   Clinic @relation(fields: [clinicId], references: [id])
+
+  appointmentId String?      @unique
+  appointment   Appointment? @relation(fields: [appointmentId], references: [id])
+
+  petId String
+  pet   Pet    @relation(fields: [petId], references: [id])
+
+  vaccineName  String
+  dose         String?
+  batch        String?
+  manufacturer String?
+
+  appliedAt  DateTime?
+  nextDoseAt DateTime?
+
+  notes String?
+
+  notifications Notification[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([clinicId])
+  @@index([petId])
+  @@index([nextDoseAt])
+}
+
+model Notification {
+  id       String @id @default(uuid())
+  clinicId String
+  clinic   Clinic @relation(fields: [clinicId], references: [id])
+
+  tutorId String
+  tutor   Tutor  @relation(fields: [tutorId], references: [id])
+
+  petId String?
+  pet   Pet?    @relation(fields: [petId], references: [id])
+
+  appointmentId String?
+  appointment   Appointment? @relation(fields: [appointmentId], references: [id])
+
+  consultationId String?
+  consultation   Consultation? @relation(fields: [consultationId], references: [id])
+
+  vaccinationId String?
+  vaccination   Vaccination? @relation(fields: [vaccinationId], references: [id])
+
+  type    NotificationType
+  channel NotificationChannel @default(WHATSAPP)
+  status  NotificationStatus  @default(PENDING)
+
+  recipientName  String?
+  recipientPhone String?
+  recipientEmail String?
+
+  title   String?
+  message String
+
+  scheduledAt  DateTime
+  sentAt       DateTime?
+  errorMessage String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([clinicId, scheduledAt])
+  @@index([status, scheduledAt])
+}
