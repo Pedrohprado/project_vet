@@ -4,5 +4,6 @@ declare module 'fastify' {
   interface FastifyRequest {
     rawBody?: Buffer;
     authUser: AuthenticatedUser;
+    tenantId: string;
   }
 }

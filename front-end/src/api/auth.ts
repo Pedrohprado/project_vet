@@ -28,3 +28,15 @@ export async function login(
 export async function getMe(): Promise<AuthResponse> {
   return apiFetchJson<AuthResponse>('/auth/me');
 }
+
+export async function refreshSession(): Promise<void> {
+  await apiFetchJson<{ ok: true }>('/auth/refresh', {
+    method: 'POST',
+  });
+}
+
+export async function logout(): Promise<void> {
+  await apiFetchJson<{ ok: true }>('/auth/logout', {
+    method: 'POST',
+  });
+}

@@ -1,8 +1,8 @@
-import type { JwtPayload } from './jwt-payload.js';
+import type { AccessJwtPayload } from './jwt-payload.js';
 
 declare module '@fastify/jwt' {
   interface FastifyJWT {
-    payload: JwtPayload;
-    user: JwtPayload;
+    payload: AccessJwtPayload;
+    user: AccessJwtPayload;
   }
 }

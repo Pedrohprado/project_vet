@@ -1,24 +1,14 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
-import { env } from '../../env/index.js';
+import { clearAuthCookies, setAuthCookies } from '../../lib/auth-cookies.js';
 import { UserPrismaRepository } from '../../repositories/prisma/user-prisma-repository.js';
 import { LoginService } from '../../services/login-service.js';
 import { HttpError } from '../../services/erros/http-error.js';
 import { loginSchema } from '../schemas/login-schema.js';
-import type { JwtPayload } from '../../types/jwt-payload.js';
+import type { RefreshJwtPayload } from '../../types/jwt-payload.js';
 import { getClinicById } from './clinic-controller.js';
 
 const loginService = new LoginService();
 const userRepository = new UserPrismaRepository();
-
-function setAuthCookie(reply: FastifyReply, token: string) {
-  reply.setCookie('token', token, {
-    httpOnly: true,
-    sameSite: 'lax',
-    secure: env.NODE_ENV === 'production',
-    path: '/',
-    maxAge: 60 * 60 * 24 * 7,
-  });
-}
 
 export async function login(request: FastifyRequest, reply: FastifyReply) {
   const parsed = loginSchema.safeParse(request.body);
@@ -30,13 +20,7 @@ export async function login(request: FastifyRequest, reply: FastifyReply) {
 
   const { user, clinic } = await loginService.execute(parsed.data);
 
-  const token = await reply.jwtSign({
-    sub: user.id,
-    role: user.role,
-    clinicId: user.clinicId,
-  } satisfies JwtPayload);
-
-  setAuthCookie(reply, token);
+  await setAuthCookies(reply, user);
 
   return reply.status(200).send({ user, clinic });
 }
@@ -51,4 +35,42 @@ export async function me(request: FastifyRequest, reply: FastifyReply) {
   const clinic = await getClinicById(request.authUser.clinicId);
 
   return reply.status(200).send({ user, clinic });
+}
+
+export async function refresh(request: FastifyRequest, reply: FastifyReply) {
+  const refreshToken = request.cookies.refreshToken;
+
+  if (!refreshToken) {
+    throw new HttpError('Sessão expirada', 401);
+  }
+
+  let payload: RefreshJwtPayload;
+
+  try {
+    payload = await request.server.jwt.verify<RefreshJwtPayload>(refreshToken);
+  } catch {
+    clearAuthCookies(reply);
+    throw new HttpError('Sessão expirada', 401);
+  }
+
+  if (payload.type !== 'refresh') {
+    clearAuthCookies(reply);
+    throw new HttpError('Token inválido', 401);
+  }
+
+  const user = await userRepository.findById(payload.sub);
+
+  if (!user?.isActive) {
+    clearAuthCookies(reply);
+    throw new HttpError('Usuário não autorizado', 401);
+  }
+
+  await setAuthCookies(reply, user);
+
+  return reply.status(200).send({ ok: true });
+}
+
+export async function logout(_request: FastifyRequest, reply: FastifyReply) {
+  clearAuthCookies(reply);
+  return reply.status(200).send({ ok: true });
 }

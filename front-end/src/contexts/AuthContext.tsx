@@ -17,7 +17,7 @@ type AuthContextValue = {
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (payload: RegisterClinicPayload) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
 };
 
 export const AuthContext = createContext<AuthContextValue | null>(null);
@@ -67,9 +67,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setClinic(data.clinic);
   }, []);
 
-  const logout = useCallback(() => {
-    setUser(null);
-    setClinic(null);
+  const logout = useCallback(async () => {
+    try {
+      await authApi.logout();
+    } catch (error) {
+      console.error('Failed to logout', error);
+    } finally {
+      setUser(null);
+      setClinic(null);
+    }
   }, []);
 
   const value = useMemo<AuthContextValue>(

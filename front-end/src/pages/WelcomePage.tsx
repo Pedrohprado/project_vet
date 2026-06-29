@@ -16,8 +16,8 @@ export function WelcomePage() {
   const navigate = useNavigate();
   const { user, clinic, logout } = useAuth();
 
-  function handleLogout() {
-    logout();
+  async function handleLogout() {
+    await logout();
     void navigate('/login');
   }
 

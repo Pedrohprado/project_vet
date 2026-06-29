@@ -6,7 +6,7 @@ export function ProtectedRoute() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-svh items-center justify-center text-muted-foreground">
+      <div className="flex min-h-svh items-center justify-center px-4 py-6 text-muted-foreground">
         Carregando...
       </div>
     );
@@ -24,14 +24,14 @@ export function GuestRoute() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-svh items-center justify-center text-muted-foreground">
+      <div className="flex min-h-svh items-center justify-center px-4 py-6 text-muted-foreground">
         Carregando...
       </div>
     );
   }
 
   if (isAuthenticated) {
-    return <Navigate to="/welcome" replace />;
+    return <Navigate to="/atendimento" replace />;
   }
 
   return <Outlet />;

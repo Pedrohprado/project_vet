@@ -1,6 +1,7 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { UserPrismaRepository } from '../repositories/prisma/user-prisma-repository.js';
 import { HttpError } from '../services/erros/http-error.js';
+import { isAccessJwtPayload } from '../types/jwt-payload.js';
 
 const userRepository = new UserPrismaRepository();
 
@@ -11,6 +12,10 @@ export async function authMiddleware(
   try {
     await request.jwtVerify();
   } catch {
+    throw new HttpError('Token inválido ou ausente', 401);
+  }
+
+  if (!isAccessJwtPayload(request.user)) {
     throw new HttpError('Token inválido ou ausente', 401);
   }
 
