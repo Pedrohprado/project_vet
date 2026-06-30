@@ -1,13 +1,12 @@
 import { useEffect, useState, type RefObject } from 'react';
 
-export type HowItWorksPhase = 'idle' | 'absorb' | 'reveal' | 'hold' | 'reset';
+export type HowItWorksPhase = 'idle' | 'absorb' | 'reveal' | 'hold';
 
 const PHASE_DURATIONS: Record<HowItWorksPhase, number> = {
   idle: 2500,
   absorb: 2000,
   reveal: 2800,
-  hold: 2000,
-  reset: 500,
+  hold: 5000,
 };
 
 const PHASE_ORDER: HowItWorksPhase[] = [
@@ -15,7 +14,6 @@ const PHASE_ORDER: HowItWorksPhase[] = [
   'absorb',
   'reveal',
   'hold',
-  'reset',
 ];
 
 const REVEAL_INTERVAL_MS = 550;
@@ -63,10 +61,6 @@ export function useHowItWorksAnimation(
         }
 
         if (nextPhase === 'reveal') {
-          setVisibleSolutionCount(0);
-        }
-
-        if (nextPhase === 'reset') {
           setVisibleSolutionCount(0);
         }
 
@@ -130,7 +124,7 @@ export function getSolutionBalloonClassName(
 ): string {
   if (reducedMotion) return '';
 
-  if (phase === 'idle' || phase === 'absorb' || phase === 'reset') {
+  if (phase === 'idle' || phase === 'absorb') {
     return 'how-it-works-hidden';
   }
 

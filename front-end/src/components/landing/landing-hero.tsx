@@ -1,4 +1,3 @@
-import { Link } from 'react-router';
 import { Button } from '@/components/ui/button';
 import { FLYBIRD_SRC, CAT_SRC } from '@/lib/brand';
 import { heroContent } from '@/lib/landing-content';
@@ -26,7 +25,7 @@ export function LandingHero() {
             <div className='mt-8 flex flex-col gap-3 sm:flex-row sm:items-center'>
               <Button
                 className={landingPrimaryButtonClassName}
-                render={<Link to='/register' />}
+                render={<a href={heroContent.plansHref} />}
               >
                 {heroContent.primaryCta}
               </Button>

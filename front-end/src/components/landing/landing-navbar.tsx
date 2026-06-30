@@ -1,7 +1,7 @@
 import { Link } from 'react-router';
 import { BrandLogo } from '@/components/brand/brand-logo';
 import { Button } from '@/components/ui/button';
-import { navLinks } from '@/lib/landing-content';
+import { heroContent, navLinks } from '@/lib/landing-content';
 import { cn } from '@/lib/utils';
 import {
   landingOutlineButtonClassName,
@@ -41,9 +41,9 @@ export function LandingNavbar() {
           </Button>
           <Button
             className={landingPrimaryButtonClassName}
-            render={<Link to="/register" />}
+            render={<a href={heroContent.plansHref} />}
           >
-            Começar gratuitamente
+            {heroContent.primaryCta}
           </Button>
         </div>
       </div>

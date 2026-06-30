@@ -38,7 +38,7 @@ export function LandingComparison() {
   return (
     <LandingSection
       title="Comparativo"
-      subtitle="BoxVet vs ERP tradicional — o que realmente importa para sua clínica."
+      subtitle="Por que a BoxVet não é só mais um sistema veterinário?"
     >
       <div className="overflow-x-auto rounded-2xl border border-border/50 bg-white shadow-xl shadow-black/4">
         <table className="w-full min-w-[480px] text-left text-sm">

@@ -10,7 +10,7 @@ export function LandingPricing() {
     <LandingSection
       id="planos"
       title="Planos"
-      subtitle="Escolha o plano ideal para o tamanho da sua clínica."
+      subtitle="Starter para quem está começando. Pro para clínicas em crescimento."
     >
       <div className="mx-auto grid max-w-4xl gap-6 md:grid-cols-2">
         {pricingPlans.map((plan) => (
@@ -45,7 +45,7 @@ export function LandingPricing() {
               className={cn(landingPrimaryButtonClassName, 'mt-8 w-full')}
               render={<Link to="/register" />}
             >
-              Começar gratuitamente
+              Quero esse plano
             </Button>
           </div>
         ))}

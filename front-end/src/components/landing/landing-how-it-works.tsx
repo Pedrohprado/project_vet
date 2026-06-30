@@ -11,12 +11,6 @@ import { howItWorksContent, howItWorksPairs } from '@/lib/landing-content';
 import { cn } from '@/lib/utils';
 
 const problemOffsets = ['ml-0', 'ml-6 lg:ml-8', 'ml-2 lg:ml-3', 'ml-8 lg:ml-10'];
-const solutionOffsets = [
-  'mr-0 lg:ml-auto',
-  'mr-4 lg:mr-6 lg:ml-auto',
-  'mr-1 lg:mr-2 lg:ml-auto',
-  'mr-6 lg:mr-8 lg:ml-auto',
-];
 
 export function LandingHowItWorks() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -57,12 +51,11 @@ export function LandingHowItWorks() {
 
         <HowItWorksPlatform />
 
-        <div className="flex flex-col items-center gap-3 lg:items-start lg:gap-4">
+        <div className="flex flex-col items-start gap-3 pr-2 pt-2 lg:gap-4">
           {howItWorksPairs.map((pair, index) => (
             <div
               key={`solution-${cycleKey}-${pair.solution.title}`}
-              className={cn('w-full max-w-[340px] lg:w-max lg:max-w-none', solutionOffsets[index])}
-              style={{ marginTop: pair.offsetY }}
+              className="w-full max-w-[340px] lg:w-max lg:max-w-none"
             >
               <HowItWorksBalloon
                 icon={pair.solution.icon}

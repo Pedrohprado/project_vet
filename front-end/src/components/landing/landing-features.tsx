@@ -5,7 +5,7 @@ export function LandingFeatures() {
   return (
     <LandingSection
       id="recursos"
-      title="Principais recursos"
+      title="Recursos"
       subtitle="Tudo que sua clínica precisa para organizar o dia a dia e encantar tutores."
     >
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

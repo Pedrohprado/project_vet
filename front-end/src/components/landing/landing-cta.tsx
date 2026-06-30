@@ -1,6 +1,5 @@
-import { Link } from 'react-router';
 import { Button } from '@/components/ui/button';
-import { ctaContent } from '@/lib/landing-content';
+import { ctaContent, heroContent } from '@/lib/landing-content';
 import { landingPrimaryButtonClassName } from './landing-section';
 
 export function LandingCta() {
@@ -16,7 +15,7 @@ export function LandingCta() {
         </h2>
         <Button
           className={landingPrimaryButtonClassName + ' mt-8'}
-          render={<Link to="/register" />}
+          render={<a href={heroContent.plansHref} />}
         >
           {ctaContent.button}
         </Button>

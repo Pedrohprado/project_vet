@@ -9,6 +9,8 @@ import {
   HeartOff,
   Home,
   MessageCircle,
+  PawPrint,
+  Bell,
   Pill,
   Smartphone,
   Sparkles,
@@ -22,9 +24,10 @@ import {
 export const heroContent = {
   title: 'O atendimento não termina quando a consulta acaba.',
   subtitle:
-    'A BoxVet ajuda médicos veterinários a organizar consultas, vacinação e manter contato automático com os tutores, criando uma experiência que faz seus clientes voltarem.',
-  primaryCta: 'Começar gratuitamente',
+    'A BoxVet organiza consultas, vacinação e pós-consulta para que sua clínica mantenha contato com o tutor antes, durante e depois do atendimento.',
+  primaryCta: 'Conhecer os planos',
   secondaryCta: 'Ver demonstração',
+  plansHref: '#planos',
 };
 
 export const metrics = [
@@ -68,11 +71,11 @@ export const howItWorksPairs = [
   {
     problem: {
       icon: MessageCircle,
-      title: 'Consultas espalhadas no WhatsApp',
+      title: 'Mensagens perdidas no WhatsApp',
     },
     solution: {
       icon: Calendar,
-      title: 'Consultas organizadas na plataforma',
+      title: 'Consulta organizada',
     },
     offsetY: '-12px',
   },
@@ -82,30 +85,30 @@ export const howItWorksPairs = [
       title: 'Vacinas esquecidas',
     },
     solution: {
-      icon: Syringe,
-      title: 'Lembretes de vacinação automáticos',
+      icon: Bell,
+      title: 'Lembrete automático',
     },
     offsetY: '8px',
   },
   {
     problem: {
       icon: CalendarX,
-      title: 'Retornos perdidos',
+      title: 'Retornos não agendados',
     },
     solution: {
-      icon: Calendar,
-      title: 'Lembretes de retorno',
+      icon: Sparkles,
+      title: 'Pós-consulta enviado',
     },
     offsetY: '-4px',
   },
   {
     problem: {
       icon: HeartOff,
-      title: 'Pouco relacionamento após a consulta',
+      title: 'Tutor sem acompanhamento',
     },
     solution: {
-      icon: Sparkles,
-      title: 'Pós-consulta automático',
+      icon: Heart,
+      title: 'Tutor mais próximo da clínica',
     },
     offsetY: '12px',
   },
@@ -113,34 +116,34 @@ export const howItWorksPairs = [
 
 export const features = [
   {
-    icon: Users,
-    title: 'Cadastro de Tutores',
-    description: 'Organize todos os responsáveis.',
-  },
-  {
-    icon: ClipboardList,
-    title: 'Histórico do Pet',
-    description: 'Nunca perca informações importantes.',
+    icon: PawPrint,
+    title: 'Tutores e Pets organizados',
+    description: 'Responsáveis e histórico de cada pet no mesmo lugar.',
   },
   {
     icon: Calendar,
-    title: 'Agenda Inteligente',
-    description: 'Consultas, vacinas e retornos.',
-  },
-  {
-    icon: Stethoscope,
-    title: 'Anamnese Digital',
-    description: 'Registre toda a consulta.',
-  },
-  {
-    icon: Pill,
-    title: 'Receitas',
-    description: 'Medicamentos organizados.',
+    title: 'Agenda de consultas e vacinas',
+    description: 'Consultas, vacinas e retornos organizados.',
   },
   {
     icon: Sparkles,
-    title: 'Pós-consulta',
-    description: 'Envie automaticamente orientações ao tutor.',
+    title: 'Pós-consulta automático',
+    description: 'Envie orientações ao tutor automaticamente.',
+  },
+  {
+    icon: Pill,
+    title: 'Receitas e orientações',
+    description: 'Medicamentos e orientações organizados.',
+  },
+  {
+    icon: Stethoscope,
+    title: 'Anamnese digital',
+    description: 'Registre toda a consulta.',
+  },
+  {
+    icon: Bell,
+    title: 'Lembretes de retorno',
+    description: 'Retornos e vacinas sem esquecimentos.',
   },
 ] as const;
 
@@ -216,9 +219,9 @@ export const comparisonRows: {
 
 export const pricingPlans = [
   {
-    name: 'Inicial',
+    name: 'Starter',
     price: 'Em breve',
-    description: 'Ideal para começar a organizar sua clínica.',
+    description: 'Para veterinários começando.',
     features: [
       '1 Veterinário',
       'Agenda',
@@ -229,11 +232,11 @@ export const pricingPlans = [
     highlighted: false,
   },
   {
-    name: 'Profissional',
+    name: 'Pro',
     price: 'Em breve',
-    description: 'Para clínicas que querem fidelizar tutores.',
+    description: 'Para clínicas em crescimento.',
     features: [
-      'Tudo do Inicial',
+      'Tudo do Starter',
       'Notificações',
       'Pós-consulta',
       'Lembretes',
@@ -268,8 +271,8 @@ export const faqItems = [
 ] as const;
 
 export const ctaContent = {
-  title: 'Pronto para transformar o atendimento da sua clínica?',
-  button: 'Começar gratuitamente',
+  title: 'Comece a transformar cada consulta em um relacionamento duradouro.',
+  button: 'Conhecer os planos',
 };
 
 export const navLinks = [

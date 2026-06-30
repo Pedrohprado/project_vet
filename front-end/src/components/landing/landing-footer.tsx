@@ -1,5 +1,4 @@
 import { Instagram, Linkedin, MessageCircle } from 'lucide-react';
-import { Link } from 'react-router';
 import { BrandLogo } from '@/components/brand/brand-logo';
 import { navLinks } from '@/lib/landing-content';
 
@@ -74,15 +73,14 @@ export function LandingFooter() {
           <div>
             <h3 className="text-sm font-semibold">Comece agora</h3>
             <p className="mt-4 text-sm text-muted-foreground">
-              Crie sua conta gratuitamente e transforme o atendimento da sua
-              clínica.
+              Conheça os planos e escolha o ideal para sua clínica.
             </p>
-            <Link
-              to="/register"
+            <a
+              href="#planos"
               className="mt-4 inline-block text-sm font-medium text-primary hover:underline"
             >
-              Criar conta →
-            </Link>
+              Ver planos →
+            </a>
           </div>
         </div>
 

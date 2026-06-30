@@ -1,4 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
+import { Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 type HowItWorksBalloonProps = {
@@ -24,14 +25,22 @@ export function HowItWorksBalloon({
         'flex h-11 w-max max-w-full items-center rounded-xl border px-3.5',
         isProblem
           ? 'border-border/60 bg-muted/40 text-muted-foreground shadow-sm'
-          : 'gap-3 border-primary/30 bg-white text-foreground shadow-xl shadow-black/4',
+          : 'relative gap-3 border-green-500/70 bg-white text-foreground shadow-xl shadow-black/4',
         className,
       )}
       style={style}
     >
+      {!isProblem ? (
+        <span
+          className="absolute -right-2 -top-2 flex size-5 items-center justify-center rounded-full bg-green-500 text-white shadow-sm"
+          aria-hidden
+        >
+          <Check className="size-3" strokeWidth={3} />
+        </span>
+      ) : null}
       {!isProblem && Icon ? (
-        <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/20">
-          <Icon className="size-4 text-primary" />
+        <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-green-500/15">
+          <Icon className="size-4 text-green-600" />
         </div>
       ) : null}
       <p
