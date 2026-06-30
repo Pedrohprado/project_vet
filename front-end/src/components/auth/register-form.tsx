@@ -1,17 +1,9 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router';
+import { useNavigate } from 'react-router';
 import { toast } from 'sonner';
 import { z } from 'zod';
-import { PawPrint } from 'lucide-react';
 import { ApiError } from '@/api/http';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
 import {
   Field,
   FieldDescription,
@@ -20,6 +12,7 @@ import {
 } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';
+import { cn } from '@/lib/utils';
 
 const registerSchema = z
   .object({
@@ -48,7 +41,13 @@ const initialData: FormData = {
   confirmPassword: '',
 };
 
-export function RegisterForm() {
+const inputClassName =
+  'h-11 rounded-xl border-border/80 bg-white px-3.5 text-sm';
+
+export function RegisterForm({
+  className,
+  ...props
+}: React.ComponentProps<'div'>) {
   const navigate = useNavigate();
   const { register } = useAuth();
   const [form, setForm] = useState<FormData>(initialData);
@@ -95,31 +94,24 @@ export function RegisterForm() {
   }
 
   return (
-    <Card className="mx-auto w-full max-w-md border-0 shadow-none sm:border sm:shadow-sm">
-      <CardHeader className="space-y-1 text-center sm:text-left">
-        <div className="mb-2 flex justify-center sm:hidden">
-          <div className="flex size-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <PawPrint className="size-5" />
-          </div>
-        </div>
-        <CardTitle className="text-2xl">Criar conta</CardTitle>
-        <CardDescription>
-          Cadastre sua clínica e comece a usar o Project Vet
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={(e) => void handleSubmit(e)}>
-          <FieldGroup>
-            <Field>
-              <FieldLabel htmlFor="clinicName">Nome da clínica *</FieldLabel>
-              <Input
-                id="clinicName"
-                value={form.clinicName}
-                onChange={(e) => updateField('clinicName', e.target.value)}
-                placeholder="Clínica Veterinária Exemplo"
-                required
-              />
-            </Field>
+    <div className={cn('flex flex-col', className)} {...props}>
+      <form
+        onSubmit={(e) => void handleSubmit(e)}
+        className="max-h-[min(28rem,calc(100svh-16rem))] overflow-y-auto pr-1"
+      >
+        <FieldGroup className="gap-4">
+          <Field>
+            <FieldLabel htmlFor="clinicName">Nome da clínica *</FieldLabel>
+            <Input
+              id="clinicName"
+              value={form.clinicName}
+              onChange={(e) => updateField('clinicName', e.target.value)}
+              placeholder="Clínica Veterinária Exemplo"
+              required
+              className={inputClassName}
+            />
+          </Field>
+          <div className="grid gap-4 sm:grid-cols-2">
             <Field>
               <FieldLabel htmlFor="document">CPF *</FieldLabel>
               <Input
@@ -128,6 +120,7 @@ export function RegisterForm() {
                 onChange={(e) => updateField('document', e.target.value)}
                 placeholder="000.000.000-00"
                 required
+                className={inputClassName}
               />
             </Field>
             <Field>
@@ -138,80 +131,90 @@ export function RegisterForm() {
                 onChange={(e) => updateField('phone', e.target.value)}
                 placeholder="(11) 99999-8888"
                 required
+                className={inputClassName}
+              />
+            </Field>
+          </div>
+          <Field>
+            <FieldLabel htmlFor="email">E-mail *</FieldLabel>
+            <Input
+              id="email"
+              type="email"
+              value={form.email}
+              onChange={(e) => updateField('email', e.target.value)}
+              placeholder="voce@exemplo.com"
+              required
+              autoComplete="email"
+              className={inputClassName}
+            />
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="name">Nome completo *</FieldLabel>
+            <Input
+              id="name"
+              value={form.name}
+              onChange={(e) => updateField('name', e.target.value)}
+              placeholder="Dr. João Silva"
+              required
+              className={inputClassName}
+            />
+          </Field>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field>
+              <FieldLabel htmlFor="password">Senha *</FieldLabel>
+              <Input
+                id="password"
+                type="password"
+                value={form.password}
+                onChange={(e) => updateField('password', e.target.value)}
+                placeholder="Mínimo 6 caracteres"
+                required
+                minLength={6}
+                autoComplete="new-password"
+                className={inputClassName}
               />
             </Field>
             <Field>
-              <FieldLabel htmlFor="email">E-mail *</FieldLabel>
+              <FieldLabel htmlFor="confirmPassword">Confirmar senha *</FieldLabel>
               <Input
-                id="email"
-                type="email"
-                value={form.email}
-                onChange={(e) => updateField('email', e.target.value)}
-                placeholder="seu@email.com"
+                id="confirmPassword"
+                type="password"
+                value={form.confirmPassword}
+                onChange={(e) =>
+                  updateField('confirmPassword', e.target.value)
+                }
+                placeholder="Repita a senha"
                 required
-                autoComplete="email"
+                minLength={6}
+                autoComplete="new-password"
+                className={inputClassName}
               />
             </Field>
-            <Field>
-              <FieldLabel htmlFor="name">Nome completo *</FieldLabel>
-              <Input
-                id="name"
-                value={form.name}
-                onChange={(e) => updateField('name', e.target.value)}
-                placeholder="Dr. João Silva"
-                required
-              />
-            </Field>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Field>
-                <FieldLabel htmlFor="password">Senha *</FieldLabel>
-                <Input
-                  id="password"
-                  type="password"
-                  value={form.password}
-                  onChange={(e) => updateField('password', e.target.value)}
-                  placeholder="Mínimo 6 caracteres"
-                  required
-                  minLength={6}
-                  autoComplete="new-password"
-                />
-              </Field>
-              <Field>
-                <FieldLabel htmlFor="confirmPassword">
-                  Confirmar senha *
-                </FieldLabel>
-                <Input
-                  id="confirmPassword"
-                  type="password"
-                  value={form.confirmPassword}
-                  onChange={(e) =>
-                    updateField('confirmPassword', e.target.value)
-                  }
-                  placeholder="Repita a senha"
-                  required
-                  minLength={6}
-                  autoComplete="new-password"
-                />
-              </Field>
-            </div>
-            {error ? (
-              <p className="text-sm text-destructive">{error}</p>
-            ) : null}
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
+          </div>
+          {error ? (
+            <p className="text-sm text-destructive">{error}</p>
+          ) : null}
+          <Field>
+            <Button
+              type="submit"
+              className="h-11 w-full rounded-xl bg-foreground text-sm text-background hover:bg-foreground/90"
+              disabled={isSubmitting}
+            >
               {isSubmitting ? 'Criando conta...' : 'Criar conta'}
             </Button>
-            <FieldDescription className="text-center">
+            <FieldDescription className="text-center text-xs">
               Já tem uma conta?{' '}
-              <Link
-                to="/login"
-                className="font-medium text-primary underline-offset-4 hover:underline"
+              <button
+                type="button"
+                onClick={() => void navigate('/login')}
+                className="font-semibold text-foreground underline-offset-4 hover:underline"
               >
                 Entrar
-              </Link>
+              </button>
             </FieldDescription>
-          </FieldGroup>
-        </form>
-      </CardContent>
-    </Card>
+          </Field>
+        </FieldGroup>
+      </form>
+    </div>
   );
 }

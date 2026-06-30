@@ -6,10 +6,10 @@ import { useAuth } from '@/hooks/useAuth';
 import { AtendimentoPage } from '@/pages/AtendimentoPage';
 import { AppointmentFormPage } from '@/pages/AppointmentFormPage';
 import { ConsultationPage } from '@/pages/ConsultationPage';
-import { LoginPage } from '@/pages/LoginPage';
+import { AuthPage } from '@/pages/AuthPage';
+import { LandingPage } from '@/pages/LandingPage';
 import { PetDetailPage } from '@/pages/PetDetailPage';
 import { PetFormPage } from '@/pages/PetFormPage';
-import { RegisterPage } from '@/pages/RegisterPage';
 import { TutorDetailPage } from '@/pages/TutorDetailPage';
 import { TutorFormPage } from '@/pages/TutorFormPage';
 import { TutorListPage } from '@/pages/TutorListPage';
@@ -26,9 +26,11 @@ function RootRedirect() {
     );
   }
 
-  return (
-    <Navigate to={isAuthenticated ? '/atendimento' : '/login'} replace />
-  );
+  if (isAuthenticated) {
+    return <Navigate to="/atendimento" replace />;
+  }
+
+  return <LandingPage />;
 }
 
 function App() {
@@ -38,8 +40,8 @@ function App() {
         <Route path="/" element={<RootRedirect />} />
 
         <Route element={<GuestRoute />}>
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/login" element={<AuthPage />} />
+          <Route path="/register" element={<AuthPage />} />
         </Route>
 
         <Route element={<ProtectedRoute />}>

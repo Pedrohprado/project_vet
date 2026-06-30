@@ -32,7 +32,7 @@ export function WelcomePage() {
           <div className="flex size-12 items-center justify-center rounded-xl bg-primary text-primary-foreground">
             <PawPrint className="size-6" />
           </div>
-          <h1 className="text-xl font-semibold tracking-tight">Project Vet</h1>
+          <h1 className="text-xl font-semibold tracking-tight">Box Vet</h1>
         </div>
 
         <Card>

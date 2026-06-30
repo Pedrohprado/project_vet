@@ -24,7 +24,7 @@ export function HomePage() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center gap-6 p-8">
       <div className="w-full max-w-md space-y-4 rounded-xl border bg-card p-6 shadow-sm">
-        <h1 className="text-2xl font-semibold tracking-tight">Project Vet</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Box Vet</h1>
         <p className="text-sm text-muted-foreground">
           Scaffold base — front-end conectado ao back-end via{' '}
           <code className="rounded bg-muted px-1 py-0.5 text-xs">/api/health</code>
