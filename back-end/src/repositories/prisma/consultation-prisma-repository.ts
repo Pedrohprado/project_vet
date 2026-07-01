@@ -35,7 +35,58 @@ const consultationSelect = {
   updatedAt: true,
 } as const;
 
+const consultationListSelect = {
+  id: true,
+  status: true,
+  startedAt: true,
+  finishedAt: true,
+  tutor: { select: { id: true, name: true } },
+  pet: { select: { id: true, name: true, species: true } },
+  veterinarian: { select: { id: true, name: true } },
+} as const;
+
 export class ConsultationPrismaRepository {
+  async findMany(
+    clinicId: string,
+    page: number,
+    limit: number,
+    range?: { start: Date; end: Date },
+  ) {
+    const where = {
+      clinicId,
+      ...(range
+        ? { startedAt: { gte: range.start, lte: range.end } }
+        : {}),
+    };
+
+    const orderBy = range
+      ? ({ startedAt: 'asc' } as const)
+      : ({ startedAt: 'desc' } as const);
+
+    if (range) {
+      const items = await prisma.consultation.findMany({
+        where,
+        select: consultationListSelect,
+        orderBy,
+      });
+
+      return { items, total: items.length, page: 1, limit: items.length };
+    }
+
+    const [items, total] = await Promise.all([
+      prisma.consultation.findMany({
+        where,
+        select: consultationListSelect,
+        orderBy,
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      prisma.consultation.count({ where }),
+    ]);
+
+    return { items, total, page, limit };
+  }
+
   async findOpenByPet(clinicId: string, petId: string) {
     return prisma.consultation.findFirst({
       where: {
@@ -47,7 +98,7 @@ export class ConsultationPrismaRepository {
         ...consultationSelect,
         prescriptions: { select: prescriptionSelect, orderBy: { createdAt: 'asc' } },
         tutor: { select: { id: true, name: true, phone: true, whatsapp: true } },
-        pet: { select: { id: true, name: true, species: true, breed: true } },
+        pet: { select: { id: true, name: true, species: true, breed: true, photoUrl: true, birthDate: true, weightKg: true } },
         veterinarian: { select: { id: true, name: true } },
       },
       orderBy: { startedAt: 'desc' },
@@ -61,7 +112,7 @@ export class ConsultationPrismaRepository {
         ...consultationSelect,
         prescriptions: { select: prescriptionSelect, orderBy: { createdAt: 'asc' } },
         tutor: { select: { id: true, name: true, phone: true, whatsapp: true } },
-        pet: { select: { id: true, name: true, species: true, breed: true } },
+        pet: { select: { id: true, name: true, species: true, breed: true, photoUrl: true, birthDate: true, weightKg: true } },
         veterinarian: { select: { id: true, name: true } },
       },
     });
@@ -122,6 +173,17 @@ export class ConsultationPrismaRepository {
   async removePrescription(consultationId: string, prescriptionId: string) {
     return prisma.prescription.deleteMany({
       where: { id: prescriptionId, consultationId },
+    });
+  }
+
+  async delete(clinicId: string, id: string) {
+    return prisma.$transaction(async (tx) => {
+      await tx.prescription.deleteMany({ where: { consultationId: id } });
+      await tx.notification.updateMany({
+        where: { consultationId: id },
+        data: { consultationId: null },
+      });
+      return tx.consultation.delete({ where: { id, clinicId } });
     });
   }
 }

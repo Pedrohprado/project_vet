@@ -1,11 +1,9 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { toast } from 'sonner';
-import { z } from 'zod';
 import { ApiError } from '@/api/http';
+import { TutorFormFields } from '@/components/tutor/tutor-form-fields';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
   Card,
   CardContent,
@@ -19,53 +17,27 @@ import {
   pageShellClassName,
   pageTitleClassName,
 } from '@/lib/mobile-ui';
-
-const tutorSchema = z.object({
-  name: z.string().min(1, 'Nome é obrigatório'),
-  document: z.string().optional(),
-  mobile: z.string().optional(),
-  email: z.string().email('E-mail inválido').optional().or(z.literal('')),
-  zipCode: z.string().optional(),
-  street: z.string().optional(),
-  number: z.string().optional(),
-  complement: z.string().optional(),
-  neighborhood: z.string().optional(),
-  city: z.string().optional(),
-  state: z.string().optional(),
-  notes: z.string().optional(),
-});
-
-type FormData = z.infer<typeof tutorSchema>;
-
-const initialData: FormData = {
-  name: '',
-  document: '',
-  mobile: '',
-  email: '',
-  zipCode: '',
-  street: '',
-  number: '',
-  complement: '',
-  neighborhood: '',
-  city: '',
-  state: '',
-  notes: '',
-};
+import {
+  emptyTutorFormData,
+  formDataToCreatePayload,
+  tutorFormSchema,
+  type TutorFormData,
+} from '@/lib/tutor-form';
 
 export function TutorFormPage() {
   const navigate = useNavigate();
   const createTutor = useCreateTutor();
-  const [form, setForm] = useState<FormData>(initialData);
+  const [form, setForm] = useState<TutorFormData>(emptyTutorFormData);
   const [error, setError] = useState<string>();
 
-  function updateField(field: keyof FormData, value: string) {
+  function updateField(field: keyof TutorFormData, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }));
   }
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
 
-    const parsed = tutorSchema.safeParse(form);
+    const parsed = tutorFormSchema.safeParse(form);
 
     if (!parsed.success) {
       setError(parsed.error.issues[0]?.message ?? 'Dados inválidos');
@@ -75,14 +47,9 @@ export function TutorFormPage() {
     setError(undefined);
 
     try {
-      const { mobile, ...rest } = parsed.data;
-      const celular = mobile || undefined;
-
-      const tutor = await createTutor.mutateAsync({
-        ...rest,
-        phone: celular,
-        whatsapp: celular,
-      });
+      const tutor = await createTutor.mutateAsync(
+        formDataToCreatePayload(parsed.data),
+      );
       toast.success('Tutor cadastrado!');
       void navigate(`/tutors/${tutor.id}/pets/new`);
     } catch (err) {
@@ -109,57 +76,7 @@ export function TutorFormPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Nome *</Label>
-                <Input
-                  id="name"
-                  value={form.name}
-                  onChange={(e) => updateField('name', e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="document">CPF</Label>
-                <Input
-                  id="document"
-                  value={form.document}
-                  onChange={(e) => updateField('document', e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="mobile">Celular</Label>
-                <Input
-                  id="mobile"
-                  value={form.mobile}
-                  onChange={(e) => updateField('mobile', e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="email">E-mail</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={form.email}
-                  onChange={(e) => updateField('email', e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="city">Cidade</Label>
-                <Input
-                  id="city"
-                  value={form.city}
-                  onChange={(e) => updateField('city', e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="notes">Observações</Label>
-                <Input
-                  id="notes"
-                  value={form.notes}
-                  onChange={(e) => updateField('notes', e.target.value)}
-                />
-              </div>
-            </div>
+            <TutorFormFields form={form} onChange={updateField} idPrefix="new-tutor" />
 
             {error && <p className="text-sm text-destructive">{error}</p>}
 

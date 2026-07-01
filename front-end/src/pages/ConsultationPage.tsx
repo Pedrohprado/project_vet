@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router';
+import { useNavigate, useParams } from 'react-router';
 import { toast } from 'sonner';
-import { ChevronLeft, ChevronRight, Trash2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, PawPrint, Trash2 } from 'lucide-react';
 import { ApiError } from '@/api/http';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { DatePicker } from '@/components/ui/date-picker';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
@@ -17,22 +18,35 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import {
-  pageDescriptionClassName,
   pageShellClassName,
   pageTitleClassName,
   stickyActionBarClassName,
 } from '@/lib/mobile-ui';
+import { formatPetAge, formatPetWeight } from '@/lib/pet-format';
 import {
   useAddPrescription,
   useConsultation,
+  useDeleteConsultation,
   useFinishConsultation,
   useRemovePrescription,
   useUpdateConsultation,
 } from '@/hooks/useConsultations';
 import type { Consultation } from '@/types/consultation';
-import { PET_SPECIES_LABELS } from '@/types/pet';
 
 const STEPS = [
   { id: 'anamnesis', label: 'Anamnese' },
@@ -63,6 +77,17 @@ function inferStep(consultation: Consultation): number {
   return 3;
 }
 
+function formatConsultationStart(startedAt: string) {
+  const date = new Date(startedAt);
+  return {
+    date: date.toLocaleDateString('pt-BR'),
+    time: date.toLocaleTimeString('pt-BR', {
+      hour: '2-digit',
+      minute: '2-digit',
+    }),
+  };
+}
+
 export function ConsultationPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -72,8 +97,10 @@ export function ConsultationPage() {
   const addPrescription = useAddPrescription();
   const removePrescription = useRemovePrescription();
   const finishConsultation = useFinishConsultation();
+  const deleteConsultation = useDeleteConsultation();
 
   const [currentStep, setCurrentStep] = useState(0);
+  const [cancelOpen, setCancelOpen] = useState(false);
 
   const [anamnesis, setAnamnesis] = useState({
     mainComplaint: '',
@@ -211,14 +238,12 @@ export function ConsultationPage() {
       duration: '',
       instructions: '',
     });
-    toast.success('Medicamento adicionado!');
   }
 
   async function handleRemovePrescription(prescriptionId: string) {
     if (!id) return;
 
     await removePrescription.mutateAsync({ consultationId: id, prescriptionId });
-    toast.success('Medicamento removido!');
   }
 
   async function handleContinue() {
@@ -227,12 +252,8 @@ export function ConsultationPage() {
     try {
       if (currentStep === 0) {
         await handleSaveAnamnesis();
-        toast.success('Anamnese salva!');
       } else if (currentStep === 1) {
         await handleSaveClinical();
-        toast.success('Diagnóstico salvo!');
-      } else if (currentStep === 2) {
-        toast.success('Receita registrada!');
       } else if (currentStep === 3) {
         await handleSaveReturn();
       }
@@ -270,6 +291,24 @@ export function ConsultationPage() {
     }
   }
 
+  async function handleConfirmCancel() {
+    if (!consultation) return;
+
+    try {
+      await deleteConsultation.mutateAsync({
+        id: consultation.id,
+        petId: consultation.petId,
+      });
+      toast.success('Consulta cancelada.');
+      setCancelOpen(false);
+      void navigate(`/tutors/${consultation.tutorId}/pets/${consultation.petId}`);
+    } catch (err) {
+      toast.error(
+        err instanceof ApiError ? err.message : 'Erro ao cancelar consulta',
+      );
+    }
+  }
+
   if (isLoading) {
     return <p className="text-muted-foreground">Carregando consulta...</p>;
   }
@@ -280,32 +319,65 @@ export function ConsultationPage() {
 
   const isFinished = consultation.status === 'FINISHED';
   const isLastStep = currentStep === STEPS.length - 1;
+  const { date: startDate, time: startTime } = formatConsultationStart(
+    consultation.startedAt,
+  );
 
   return (
     <div className={pageShellClassName}>
       <div className="flex flex-col gap-3">
-        <div className="min-w-0">
-          <Badge variant={isFinished ? 'secondary' : 'default'}>
-            {isFinished ? 'Finalizada' : 'Em andamento'}
-          </Badge>
-          <h1 className={`mt-2 ${pageTitleClassName}`}>Consulta</h1>
-          <p className={`break-words ${pageDescriptionClassName}`}>
-            {consultation.pet.name} (
-            {PET_SPECIES_LABELS[
-              consultation.pet.species as keyof typeof PET_SPECIES_LABELS
-            ]}
-            ) · Tutor: {consultation.tutor.name}
-          </p>
-          <p className="text-xs text-muted-foreground sm:text-sm">
-            Início: {new Date(consultation.startedAt).toLocaleString('pt-BR')} · Vet:{' '}
-            {consultation.veterinarian.name}
-          </p>
+        <div className="min-w-0 space-y-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge variant={isFinished ? 'secondary' : 'default'}>
+              {isFinished ? 'Finalizada' : 'Em andamento'}
+            </Badge>
+          </div>
+          <h1 className={pageTitleClassName}>Consulta</h1>
+          <div className="space-y-2">
+            <div className="flex items-start gap-2.5">
+              <Avatar className="size-9 shrink-0 sm:size-10">
+                {consultation.pet.photoUrl ? (
+                  <AvatarImage
+                    src={consultation.pet.photoUrl}
+                    alt={consultation.pet.name}
+                  />
+                ) : null}
+                <AvatarFallback className="bg-primary/10 text-primary">
+                  <PawPrint className="size-4" />
+                </AvatarFallback>
+              </Avatar>
+              <div className="min-w-0">
+                <p className="text-base font-semibold sm:text-lg">{consultation.pet.name}</p>
+                <p className="mt-0.5 text-xs text-muted-foreground sm:text-sm">
+                  {consultation.pet.birthDate
+                    ? formatPetAge(consultation.pet.birthDate)
+                    : 'Idade não informada'}{' '}
+                  ·{' '}
+                  {consultation.pet.weightKg
+                    ? formatPetWeight(consultation.pet.weightKg)
+                    : 'Peso não informado'}
+                </p>
+              </div>
+            </div>
+            <p className="text-sm font-medium sm:text-base">{consultation.tutor.name}</p>
+            <p className="text-xs text-muted-foreground sm:text-sm">
+              {startDate} · {startTime}
+            </p>
+            <p className="text-xs text-muted-foreground sm:text-sm">
+              Veterinário: {consultation.veterinarian.name}
+            </p>
+          </div>
         </div>
-        <Button variant="outline" className="w-full sm:w-auto sm:self-start" asChild>
-          <Link to={`/tutors/${consultation.tutorId}/pets/${consultation.petId}`}>
-            Voltar ao pet
-          </Link>
-        </Button>
+        {!isFinished && (
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full text-destructive hover:text-destructive sm:w-auto sm:self-start"
+            onClick={() => setCancelOpen(true)}
+          >
+            Cancelar consulta
+          </Button>
+        )}
       </div>
 
       {!isFinished && (
@@ -577,14 +649,14 @@ export function ConsultationPage() {
               {returnInfo.needsReturn && (
                 <div className="space-y-2">
                   <Label>Data do retorno</Label>
-                  <Input
-                    type="date"
+                  <DatePicker
                     value={returnInfo.returnDate}
                     disabled={isFinished}
-                    onChange={(e) =>
+                    fromDate={new Date()}
+                    onChange={(returnDate) =>
                       setReturnInfo((prev) => ({
                         ...prev,
-                        returnDate: e.target.value,
+                        returnDate,
                       }))
                     }
                   />
@@ -631,6 +703,36 @@ export function ConsultationPage() {
           </div>
         </div>
       )}
+
+      <Dialog open={cancelOpen} onOpenChange={setCancelOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Cancelar consulta?</DialogTitle>
+            <DialogDescription>
+              A consulta em andamento de <strong>{consultation.pet.name}</strong> será
+              removida permanentemente. Esta ação não tem volta.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setCancelOpen(false)}
+              disabled={deleteConsultation.isPending}
+            >
+              Voltar
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={() => void handleConfirmCancel()}
+              disabled={deleteConsultation.isPending}
+            >
+              {deleteConsultation.isPending ? 'Cancelando...' : 'Cancelar consulta'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

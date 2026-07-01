@@ -74,3 +74,13 @@ export async function logout(_request: FastifyRequest, reply: FastifyReply) {
   clearAuthCookies(reply);
   return reply.status(200).send({ ok: true });
 }
+
+export async function completeWelcome(
+  request: FastifyRequest,
+  reply: FastifyReply,
+) {
+  const user = await userRepository.updateLastLoginAt(request.authUser.id);
+  const clinic = await getClinicById(request.authUser.clinicId);
+
+  return reply.status(200).send({ user, clinic });
+}

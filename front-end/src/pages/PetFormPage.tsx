@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { ApiError } from '@/api/http';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { DatePicker } from '@/components/ui/date-picker';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -191,11 +192,11 @@ export function PetFormPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="birthDate">Data de nascimento</Label>
-                <Input
+                <DatePicker
                   id="birthDate"
-                  type="date"
-                  value={form.birthDate}
-                  onChange={(e) => updateField('birthDate', e.target.value)}
+                  value={form.birthDate ?? ''}
+                  onChange={(birthDate) => updateField('birthDate', birthDate)}
+                  toDate={new Date()}
                 />
               </div>
               <div className="space-y-2">

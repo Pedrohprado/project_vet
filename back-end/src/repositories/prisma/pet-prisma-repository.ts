@@ -64,6 +64,55 @@ export class PetPrismaRepository {
     });
   }
 
+  async findTimelineByPet(clinicId: string, petId: string) {
+    const [consultations, appointments, vaccinations] = await Promise.all([
+      prisma.consultation.findMany({
+        where: { clinicId, petId },
+        select: {
+          id: true,
+          status: true,
+          startedAt: true,
+          finishedAt: true,
+          mainComplaint: true,
+          diagnosis: true,
+          veterinarian: { select: { name: true } },
+        },
+        orderBy: { startedAt: 'desc' },
+      }),
+      prisma.appointment.findMany({
+        where: { clinicId, petId },
+        select: {
+          id: true,
+          type: true,
+          status: true,
+          scheduledAt: true,
+          title: true,
+          description: true,
+          veterinarian: { select: { name: true } },
+          consultation: { select: { id: true } },
+          vaccination: { select: { id: true } },
+        },
+        orderBy: { scheduledAt: 'desc' },
+      }),
+      prisma.vaccination.findMany({
+        where: { clinicId, petId },
+        select: {
+          id: true,
+          vaccineName: true,
+          dose: true,
+          appliedAt: true,
+          nextDoseAt: true,
+          notes: true,
+          createdAt: true,
+          veterinarian: { select: { name: true } },
+        },
+        orderBy: [{ appliedAt: 'desc' }, { createdAt: 'desc' }],
+      }),
+    ]);
+
+    return { consultations, appointments, vaccinations };
+  }
+
   async update(clinicId: string, id: string, data: Partial<{
     name: string;
     species: PetSpecies;

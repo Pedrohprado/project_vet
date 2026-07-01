@@ -5,6 +5,13 @@ import { createPetSchema, updatePetSchema } from '../schemas/pet-schema.js';
 
 const petService = new PetService();
 
+export async function getPetTimeline(request: FastifyRequest, reply: FastifyReply) {
+  const { id } = request.params as { id: string };
+  const timeline = await petService.getTimeline(request.tenantId, id);
+
+  return reply.status(200).send(timeline);
+}
+
 export async function getPet(request: FastifyRequest, reply: FastifyReply) {
   const { id } = request.params as { id: string };
   const pet = await petService.getById(request.tenantId, id);

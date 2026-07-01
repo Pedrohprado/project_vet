@@ -4,6 +4,8 @@ import { toast } from 'sonner';
 import { z } from 'zod';
 import { ApiError } from '@/api/http';
 import { Button } from '@/components/ui/button';
+import { DateTimePicker } from '@/components/ui/date-time-picker';
+import { DurationInput } from '@/components/ui/duration-input';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -20,10 +22,19 @@ import {
   pageTitleClassName,
 } from '@/lib/mobile-ui';
 import { APPOINTMENT_TYPE_LABELS } from '@/types/appointment';
+import { getDefaultDateTimeValue } from '@/lib/date-input';
+import {
+  minutesToDurationDigits,
+  parseDurationDigits,
+} from '@/lib/duration-input';
 
 const appointmentSchema = z.object({
   scheduledAt: z.string().min(1, 'Data e hora são obrigatórias'),
-  durationMinutes: z.coerce.number().int().min(5).max(480).default(30),
+  durationMinutes: z
+    .number()
+    .int()
+    .min(1, 'Duração mínima de 1 minuto')
+    .max(5999, 'Duração máxima de 99 horas e 59 minutos'),
   title: z.string().optional(),
   description: z.string().optional(),
 });
@@ -39,10 +50,12 @@ export function AppointmentFormPage() {
     | 'CONSULTATION'
     | 'VACCINATION';
 
+  const defaultTitle = type === 'VACCINATION' ? 'Vacinação' : '';
+
   const [form, setForm] = useState({
-    scheduledAt: '',
-    durationMinutes: '30',
-    title: '',
+    scheduledAt: getDefaultDateTimeValue(),
+    durationDigits: minutesToDurationDigits(30),
+    title: defaultTitle,
     description: '',
   });
   const [error, setError] = useState<string>();
@@ -55,7 +68,10 @@ export function AppointmentFormPage() {
       return;
     }
 
-    const parsed = appointmentSchema.safeParse(form);
+    const parsed = appointmentSchema.safeParse({
+      ...form,
+      durationMinutes: parseDurationDigits(form.durationDigits),
+    });
 
     if (!parsed.success) {
       setError(parsed.error.issues[0]?.message ?? 'Dados inválidos');
@@ -76,7 +92,7 @@ export function AppointmentFormPage() {
       });
 
       toast.success('Agendamento criado!');
-      void navigate(`/tutors/${tutorId}/pets/${petId}`);
+      void navigate('/agenda');
     } catch (err) {
       const message =
         err instanceof ApiError ? err.message : 'Erro ao criar agendamento';
@@ -106,27 +122,21 @@ export function AppointmentFormPage() {
             <div className="grid grid-cols-1 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="scheduledAt">Data e hora *</Label>
-                <Input
+                <DateTimePicker
                   id="scheduledAt"
-                  type="datetime-local"
                   value={form.scheduledAt}
-                  onChange={(e) =>
-                    setForm((prev) => ({ ...prev, scheduledAt: e.target.value }))
+                  onChange={(scheduledAt) =>
+                    setForm((prev) => ({ ...prev, scheduledAt }))
                   }
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="durationMinutes">Duração (min)</Label>
-                <Input
+                <Label htmlFor="durationMinutes">Duração</Label>
+                <DurationInput
                   id="durationMinutes"
-                  type="number"
-                  inputMode="numeric"
-                  value={form.durationMinutes}
-                  onChange={(e) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      durationMinutes: e.target.value,
-                    }))
+                  value={form.durationDigits}
+                  onChange={(durationDigits) =>
+                    setForm((prev) => ({ ...prev, durationDigits }))
                   }
                 />
               </div>

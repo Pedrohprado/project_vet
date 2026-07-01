@@ -31,8 +31,12 @@ export function GuestRoute() {
   }
 
   if (isAuthenticated) {
-    return <Navigate to="/atendimento" replace />;
+    return <Navigate to="/estatisticas" replace />;
   }
 
   return <Outlet />;
+}
+
+export function getAuthenticatedHome() {
+  return '/estatisticas';
 }

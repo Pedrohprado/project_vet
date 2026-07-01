@@ -6,6 +6,8 @@ import { tutorRoutes } from './tutor-route.js';
 import { petRoutes } from './pet-route.js';
 import { appointmentRoutes } from './appointment-route.js';
 import { consultationRoutes } from './consultation-route.js';
+import { statsRoutes } from './stats-route.js';
+import { vaccinationRoutes } from './vaccination-route.js';
 
 export async function mainRoutes(app: FastifyInstance) {
   app.register(healthRoutes, { prefix: '/health' });
@@ -15,4 +17,6 @@ export async function mainRoutes(app: FastifyInstance) {
   app.register(petRoutes, { prefix: '/pets' });
   app.register(appointmentRoutes, { prefix: '/appointments' });
   app.register(consultationRoutes, { prefix: '/consultations' });
+  app.register(vaccinationRoutes, { prefix: '/vaccinations' });
+  app.register(statsRoutes, { prefix: '/stats' });
 }

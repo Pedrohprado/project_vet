@@ -1,3 +1,4 @@
+import { onlyDigits } from '../../lib/normalize.js';
 import { prisma } from '../../lib/prisma.js';
 
 export class ClinicPrismaRepository {
@@ -39,5 +40,21 @@ export class ClinicPrismaRepository {
         createdAt: true,
       },
     });
+  }
+
+  async findByDocumentDigits(document: string) {
+    const digits = onlyDigits(document);
+
+    if (digits.length < 11) {
+      return null;
+    }
+
+    const rows = await prisma.$queryRaw<{ id: string }[]>`
+      SELECT id FROM "Clinic"
+      WHERE regexp_replace(COALESCE(document, ''), '[^0-9]', '', 'g') = ${digits}
+      LIMIT 1
+    `;
+
+    return rows[0] ?? null;
   }
 }

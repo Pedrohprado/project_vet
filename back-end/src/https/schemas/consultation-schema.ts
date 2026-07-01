@@ -34,7 +34,15 @@ export const finishConsultationSchema = z.object({
   returnDate: z.coerce.date().optional(),
 });
 
+export const listConsultationsQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+  start: z.coerce.date().optional(),
+  end: z.coerce.date().optional(),
+});
+
 export type CreateConsultationInput = z.infer<typeof createConsultationSchema>;
 export type UpdateConsultationInput = z.infer<typeof updateConsultationSchema>;
 export type CreatePrescriptionInput = z.infer<typeof createPrescriptionSchema>;
 export type FinishConsultationInput = z.infer<typeof finishConsultationSchema>;
+export type ListConsultationsQuery = z.infer<typeof listConsultationsQuerySchema>;

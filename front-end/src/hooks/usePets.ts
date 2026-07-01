@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { STATS_QUERY_KEY } from '@/hooks/useStats';
 import { createPetForTutor, getPet, updatePet } from '@/api/pets';
 
 export function usePet(id: string | undefined) {
@@ -23,6 +24,7 @@ export function useCreatePet() {
     onSuccess: (_, { tutorId }) => {
       void queryClient.invalidateQueries({ queryKey: ['tutor', tutorId] });
       void queryClient.invalidateQueries({ queryKey: ['tutors'] });
+      void queryClient.invalidateQueries({ queryKey: STATS_QUERY_KEY });
     },
   });
 }

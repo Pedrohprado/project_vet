@@ -1,4 +1,12 @@
+import type { PetSpecies } from '@/types/tutor';
+
 export type ConsultationStatus = 'OPEN' | 'FINISHED' | 'CANCELLED';
+
+export const CONSULTATION_STATUS_LABELS: Record<ConsultationStatus, string> = {
+  OPEN: 'Em andamento',
+  FINISHED: 'Finalizado',
+  CANCELLED: 'Cancelado',
+};
 
 export type Prescription = {
   id: string;
@@ -44,11 +52,31 @@ export type Consultation = {
     name: string;
     species: string;
     breed: string | null;
+    photoUrl: string | null;
+    birthDate: string | null;
+    weightKg: string | null;
   };
   veterinarian: {
     id: string;
     name: string;
   };
+};
+
+export type ConsultationListItem = {
+  id: string;
+  status: ConsultationStatus;
+  startedAt: string;
+  finishedAt: string | null;
+  tutor: { id: string; name: string };
+  pet: { id: string; name: string; species: PetSpecies };
+  veterinarian: { id: string; name: string };
+};
+
+export type ConsultationListResponse = {
+  items: ConsultationListItem[];
+  total: number;
+  page: number;
+  limit: number;
 };
 
 export type CreateConsultationPayload = {

@@ -8,7 +8,7 @@ export function LandingDifferential() {
         {differentialContent.items.map(({ icon: Icon, title }) => (
           <div
             key={title}
-            className={landingCardClassName + ' flex items-start gap-4'}
+            className={landingCardClassName + ' flex items-center gap-4'}
           >
             <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/15">
               <Icon className="size-5 text-primary" />

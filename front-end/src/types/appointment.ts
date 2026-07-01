@@ -29,6 +29,8 @@ export type Appointment = {
   tutor?: { id: string; name: string };
   pet?: { id: string; name: string; species: string };
   veterinarian?: { id: string; name: string };
+  consultation?: { id: string; status: string } | null;
+  vaccination?: { id: string; appliedAt: string | null } | null;
 };
 
 export type CreateAppointmentPayload = {
@@ -41,10 +43,18 @@ export type CreateAppointmentPayload = {
   description?: string;
 };
 
-export const APPOINTMENT_TYPE_LABELS: Record<
-  CreateAppointmentPayload['type'],
-  string
-> = {
+export const APPOINTMENT_TYPE_LABELS: Record<AppointmentType, string> = {
   CONSULTATION: 'Consulta',
   VACCINATION: 'Vacinação',
+  EXAM: 'Exame',
+  PROCEDURE: 'Procedimento',
+  RETURN: 'Retorno',
+};
+
+export const APPOINTMENT_STATUS_LABELS: Record<AppointmentStatus, string> = {
+  SCHEDULED: 'Agendado',
+  CONFIRMED: 'Confirmado',
+  CANCELLED: 'Cancelado',
+  COMPLETED: 'Concluído',
+  NO_SHOW: 'Não compareceu',
 };

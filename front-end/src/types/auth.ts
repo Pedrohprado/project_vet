@@ -23,6 +23,7 @@ export type User = {
   phone: string | null;
   crmv: string | null;
   isActive: boolean;
+  lastLoginAt: string | null;
   createdAt: string;
 };
 

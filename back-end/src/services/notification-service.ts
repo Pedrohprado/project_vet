@@ -57,4 +57,43 @@ export class NotificationService {
       scheduledAt: new Date(),
     });
   }
+
+  async createVaccineReminder(data: {
+    clinicId: string;
+    tutorId: string;
+    petId: string;
+    vaccinationId: string;
+    tutorName: string;
+    recipientPhone?: string | null;
+    recipientEmail?: string | null;
+    petName: string;
+    vaccineName: string;
+    nextDoseAt: Date;
+  }) {
+    const dateStr = data.nextDoseAt.toLocaleDateString('pt-BR');
+    const scheduledAt = new Date(data.nextDoseAt);
+    scheduledAt.setHours(9, 0, 0, 0);
+
+    return notificationRepository.create({
+      clinicId: data.clinicId,
+      tutorId: data.tutorId,
+      petId: data.petId,
+      vaccinationId: data.vaccinationId,
+      type: NotificationType.VACCINE_REMINDER,
+      channel: NotificationChannel.WHATSAPP,
+      status: NotificationStatus.PENDING,
+      recipientName: data.tutorName,
+      ...pickDefined({
+        recipientPhone: data.recipientPhone ?? undefined,
+        recipientEmail: data.recipientEmail ?? undefined,
+      }),
+      title: 'Lembrete de vacina',
+      message: `Olá ${data.tutorName}! A vacina ${data.vaccineName} do(a) ${data.petName} vence em ${dateStr}. Entre em contato para agendar.`,
+      scheduledAt,
+    });
+  }
+
+  async cancelPendingVaccineReminders(vaccinationId: string) {
+    return notificationRepository.cancelPendingVaccineReminders(vaccinationId);
+  }
 }

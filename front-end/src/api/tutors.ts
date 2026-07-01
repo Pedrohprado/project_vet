@@ -1,4 +1,4 @@
-import { apiFetchJson } from '@/api/http';
+import { apiFetch, apiFetchJson, ApiError } from '@/api/http';
 import type {
   CreateTutorPayload,
   Tutor,
@@ -44,6 +44,23 @@ export async function updateTutor(
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   });
+}
+
+export async function deleteTutor(id: string): Promise<void> {
+  const response = await apiFetch(`/tutors/${id}`, { method: 'DELETE' });
+
+  if (!response.ok) {
+    let message = 'Erro ao excluir tutor';
+
+    try {
+      const body = (await response.json()) as { error?: string };
+      message = body.error ?? message;
+    } catch {
+      // ignore
+    }
+
+    throw new ApiError(message, response.status);
+  }
 }
 
 export async function createPetForTutor(

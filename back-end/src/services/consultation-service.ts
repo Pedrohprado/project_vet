@@ -10,6 +10,7 @@ import type {
   CreateConsultationInput,
   CreatePrescriptionInput,
   FinishConsultationInput,
+  ListConsultationsQuery,
   UpdateConsultationInput,
 } from '../https/schemas/consultation-schema.js';
 
@@ -19,6 +20,28 @@ const appointmentService = new AppointmentService();
 const notificationService = new NotificationService();
 
 export class ConsultationService {
+  async list(tenantId: string, query: ListConsultationsQuery) {
+    const range =
+      query.start && query.end
+        ? (() => {
+            if (query.start > query.end) {
+              throw new HttpError(
+                'Data inicial deve ser anterior à data final',
+                400,
+              );
+            }
+            return { start: query.start, end: query.end };
+          })()
+        : undefined;
+
+    return consultationRepository.findMany(
+      tenantId,
+      query.page,
+      query.limit,
+      range,
+    );
+  }
+
   async getById(tenantId: string, id: string) {
     const consultation = await consultationRepository.findById(tenantId, id);
 
@@ -32,6 +55,11 @@ export class ConsultationService {
   async getOpenByPet(tenantId: string, petId: string) {
     await petService.getById(tenantId, petId);
     return consultationRepository.findOpenByPet(tenantId, petId);
+  }
+
+  async delete(tenantId: string, id: string) {
+    await this.getById(tenantId, id);
+    await consultationRepository.delete(tenantId, id);
   }
 
   async create(

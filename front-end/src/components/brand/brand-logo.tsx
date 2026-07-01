@@ -4,9 +4,9 @@ import { cn } from '@/lib/utils';
 const sizeClasses = {
   sm: 'h-8 w-8',
   md: 'h-12 w-12',
-  lg: 'h-20 w-20',
-  xl: 'h-32 w-32',
-  '2xl': 'h-48 w-48',
+  lg: 'h-16 w-16',
+  xl: 'h-28 w-28',
+  '2xl': 'h-40 w-40',
 } as const;
 
 type BrandLogoProps = {

@@ -1,4 +1,5 @@
 import type { UserRole } from '../../generated/prisma/client.js';
+import { onlyDigits } from '../../lib/normalize.js';
 import { prisma } from '../../lib/prisma.js';
 
 const userSelect = {
@@ -10,6 +11,7 @@ const userSelect = {
   phone: true,
   crmv: true,
   isActive: true,
+  lastLoginAt: true,
   createdAt: true,
 } as const;
 
@@ -31,6 +33,22 @@ export class UserPrismaRepository {
     });
   }
 
+  async findByPhoneDigits(phone: string) {
+    const digits = onlyDigits(phone);
+
+    if (digits.length < 10) {
+      return null;
+    }
+
+    const rows = await prisma.$queryRaw<{ id: string }[]>`
+      SELECT id FROM "User"
+      WHERE regexp_replace(COALESCE(phone, ''), '[^0-9]', '', 'g') = ${digits}
+      LIMIT 1
+    `;
+
+    return rows[0] ?? null;
+  }
+
   async create(data: {
     name: string;
     email: string;
@@ -42,6 +60,14 @@ export class UserPrismaRepository {
   }) {
     return prisma.user.create({
       data,
+      select: userSelect,
+    });
+  }
+
+  async updateLastLoginAt(id: string) {
+    return prisma.user.update({
+      where: { id },
+      data: { lastLoginAt: new Date() },
       select: userSelect,
     });
   }

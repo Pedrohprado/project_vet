@@ -31,7 +31,13 @@ export class LoginService {
       throw new HttpError('Clínica inativa', 401);
     }
 
+    const isFirstAccess = user.lastLoginAt === null;
     const { password: _, ...safeUser } = user;
+
+    if (!isFirstAccess) {
+      const updatedUser = await userRepository.updateLastLoginAt(user.id);
+      return { user: updatedUser, clinic };
+    }
 
     return { user: safeUser, clinic };
   }

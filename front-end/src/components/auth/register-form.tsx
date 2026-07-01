@@ -12,13 +12,23 @@ import {
 } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';
+import { formatCpf, formatPhone, onlyDigits } from '@/lib/masks';
 import { cn } from '@/lib/utils';
 
 const registerSchema = z
   .object({
     clinicName: z.string().min(1, 'Nome da clínica é obrigatório'),
-    document: z.string().min(1, 'CPF é obrigatório'),
-    phone: z.string().min(1, 'Celular é obrigatório'),
+    document: z
+      .string()
+      .min(1, 'CPF é obrigatório')
+      .refine((value) => onlyDigits(value).length === 11, 'CPF inválido'),
+    phone: z
+      .string()
+      .min(1, 'Celular é obrigatório')
+      .refine((value) => {
+        const digits = onlyDigits(value);
+        return digits.length === 10 || digits.length === 11;
+      }, 'Celular inválido'),
     email: z.string().email('E-mail inválido'),
     name: z.string().min(1, 'Nome completo é obrigatório'),
     password: z.string().min(6, 'Senha deve ter no mínimo 6 caracteres'),
@@ -81,13 +91,17 @@ export function RegisterForm({
         name: parsed.data.name,
       });
 
-      toast.success('Conta criada com sucesso!');
-      void navigate('/atendimento');
+      void navigate('/estatisticas');
     } catch (err) {
       const message =
         err instanceof ApiError ? err.message : 'Erro ao criar conta';
       setError(message);
-      toast.error(message);
+
+      if (err instanceof ApiError && err.statusCode === 409) {
+        toast.warning(message);
+      } else {
+        toast.error(message);
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -117,8 +131,12 @@ export function RegisterForm({
               <Input
                 id="document"
                 value={form.document}
-                onChange={(e) => updateField('document', e.target.value)}
+                onChange={(e) =>
+                  updateField('document', formatCpf(e.target.value))
+                }
                 placeholder="000.000.000-00"
+                inputMode="numeric"
+                maxLength={14}
                 required
                 className={inputClassName}
               />
@@ -128,8 +146,12 @@ export function RegisterForm({
               <Input
                 id="phone"
                 value={form.phone}
-                onChange={(e) => updateField('phone', e.target.value)}
+                onChange={(e) =>
+                  updateField('phone', formatPhone(e.target.value))
+                }
                 placeholder="(11) 99999-8888"
+                inputMode="tel"
+                maxLength={15}
                 required
                 className={inputClassName}
               />

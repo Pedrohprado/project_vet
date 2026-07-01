@@ -15,6 +15,7 @@ const AUTH_PATHS_WITHOUT_REFRESH = [
   '/auth/register',
   '/auth/refresh',
   '/auth/logout',
+  '/auth/complete-welcome',
   '/clinics',
 ];
 

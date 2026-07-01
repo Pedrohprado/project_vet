@@ -92,13 +92,14 @@ model Clinic {
   plan     ClinicPlan @default(FREE)
   isActive Boolean    @default(true)
 
-  users         User[]
-  tutors        Tutor[]
-  pets          Pet[]
-  appointments  Appointment[]
-  consultations Consultation[]
-  vaccinations  Vaccination[]
-  notifications Notification[]
+  users              User[]
+  tutors             Tutor[]
+  pets               Pet[]
+  appointments       Appointment[]
+  consultations      Consultation[]
+  vaccinations       Vaccination[]
+  vaccineCatalog     VaccineCatalogItem[]
+  notifications      Notification[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -113,8 +114,10 @@ model User {
   crmv          String?
   role          UserRole       @default(VETERINARIAN)
   isActive      Boolean        @default(true)
+  lastLoginAt   DateTime?
   appointments  Appointment[]
   consultations Consultation[]
+  vaccinations  Vaccination[]
   clinicId      String
   clinic        Clinic         @relation(fields: [clinicId], references: [id])
   createdAt     DateTime       @default(now())
@@ -289,6 +292,24 @@ model Prescription {
   updatedAt DateTime @updatedAt
 }
 
+model VaccineCatalogItem {
+  id                  String      @id @default(uuid())
+  clinicId            String
+  clinic              Clinic      @relation(fields: [clinicId], references: [id])
+  name                String
+  manufacturer        String?
+  defaultIntervalDays Int?
+  species             PetSpecies?
+  isActive            Boolean     @default(true)
+  vaccinations        Vaccination[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([clinicId, name])
+  @@index([clinicId])
+}
+
 model Vaccination {
   id       String @id @default(uuid())
   clinicId String
@@ -300,7 +321,13 @@ model Vaccination {
   petId String
   pet   Pet    @relation(fields: [petId], references: [id])
 
-  vaccineName  String
+  veterinarianId String
+  veterinarian   User   @relation(fields: [veterinarianId], references: [id])
+
+  vaccineCatalogItemId String?
+  vaccineCatalogItem   VaccineCatalogItem? @relation(fields: [vaccineCatalogItemId], references: [id])
+
+  vaccineName  String  @default("")
   dose         String?
   batch        String?
   manufacturer String?

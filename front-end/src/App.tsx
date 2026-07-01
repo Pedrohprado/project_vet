@@ -4,9 +4,12 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { useAuth } from '@/hooks/useAuth';
 import { AtendimentoPage } from '@/pages/AtendimentoPage';
+import { AgendaPage } from '@/pages/AgendaPage';
 import { AppointmentFormPage } from '@/pages/AppointmentFormPage';
 import { ConsultationPage } from '@/pages/ConsultationPage';
+import { VaccinationPage } from '@/pages/VaccinationPage';
 import { AuthPage } from '@/pages/AuthPage';
+import { EstatisticasPage } from '@/pages/EstatisticasPage';
 import { LandingPage } from '@/pages/LandingPage';
 import { PetDetailPage } from '@/pages/PetDetailPage';
 import { PetFormPage } from '@/pages/PetFormPage';
@@ -27,7 +30,7 @@ function RootRedirect() {
   }
 
   if (isAuthenticated) {
-    return <Navigate to="/atendimento" replace />;
+    return <Navigate to="/estatisticas" replace />;
   }
 
   return <LandingPage />;
@@ -46,6 +49,8 @@ function App() {
 
         <Route element={<ProtectedRoute />}>
           <Route element={<AppLayout />}>
+            <Route path="/estatisticas" element={<EstatisticasPage />} />
+            <Route path="/agenda" element={<AgendaPage />} />
             <Route path="/atendimento" element={<AtendimentoPage />} />
             <Route path="/tutors" element={<TutorListPage />} />
             <Route path="/tutors/new" element={<TutorFormPage />} />
@@ -54,6 +59,7 @@ function App() {
             <Route path="/tutors/:id/pets/:petId" element={<PetDetailPage />} />
             <Route path="/appointments/new" element={<AppointmentFormPage />} />
             <Route path="/consultations/:id" element={<ConsultationPage />} />
+            <Route path="/vaccinations/:id" element={<VaccinationPage />} />
           </Route>
         </Route>
       </Routes>

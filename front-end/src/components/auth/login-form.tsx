@@ -34,8 +34,7 @@ export function LoginForm({
 
     try {
       await login(email, password);
-      toast.success('Login realizado com sucesso!');
-      void navigate('/atendimento');
+      void navigate('/estatisticas');
     } catch (err) {
       const message =
         err instanceof ApiError ? err.message : 'Erro ao fazer login';

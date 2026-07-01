@@ -3,7 +3,6 @@ import {
   Building2,
   Calendar,
   CalendarX,
-  ClipboardList,
   GraduationCap,
   Heart,
   HeartOff,
@@ -18,7 +17,6 @@ import {
   Stethoscope,
   Syringe,
   TrendingUp,
-  Users,
 } from 'lucide-react';
 
 export const heroContent = {
@@ -31,10 +29,34 @@ export const heroContent = {
 };
 
 export const metrics = [
-  { end: 500, prefix: '+', suffix: '', localeFormat: false, label: 'Consultas realizadas' },
-  { end: 1200, prefix: '+', suffix: '', localeFormat: true, label: 'Pets cadastrados' },
-  { end: 98, prefix: '', suffix: '%', localeFormat: false, label: 'Tutores retornam' },
-  { end: 24, prefix: '', suffix: 'h', localeFormat: false, label: 'Economizadas por mês' },
+  {
+    end: 500,
+    prefix: '+',
+    suffix: '',
+    localeFormat: false,
+    label: 'Consultas realizadas',
+  },
+  {
+    end: 1200,
+    prefix: '+',
+    suffix: '',
+    localeFormat: true,
+    label: 'Pets cadastrados',
+  },
+  {
+    end: 98,
+    prefix: '',
+    suffix: '%',
+    localeFormat: false,
+    label: 'Tutores retornam',
+  },
+  {
+    end: 24,
+    prefix: '',
+    suffix: 'h',
+    localeFormat: false,
+    label: 'Economizadas por mês',
+  },
 ] as const;
 
 export const problemContent = {
@@ -168,7 +190,7 @@ export const demoSlides = [
 
 export const audienceItems = [
   { icon: GraduationCap, title: 'Veterinários recém-formados' },
-  { icon: Building2, title: 'Clínicas pequenas' },
+  { icon: Building2, title: 'Clínicas' },
   { icon: Home, title: 'Atendimento domiciliar' },
   { icon: Syringe, title: 'Clínicas de vacinação' },
 ] as const;
@@ -246,10 +268,24 @@ export const pricingPlans = [
   },
 ] as const;
 
+export const migrationContent = {
+  title: 'Migração sem dor de cabeça',
+  subtitle:
+    'Saindo de um sistema antigo? Ajudamos sua clínica na transferência de dados e em todo o processo de mudança para o BoxVet.',
+  badges: [
+    'Importação de dados',
+    'Transição assistida',
+    'Histórico preservado',
+    'Suporte dedicado',
+    'Comece com tranquilidade',
+  ],
+} as const;
+
 export const faqItems = [
   {
     question: 'O sistema funciona pelo celular?',
-    answer: 'Sim. A BoxVet funciona no navegador do celular, tablet e computador.',
+    answer:
+      'Sim. A BoxVet funciona no navegador do celular, tablet e computador.',
   },
   {
     question: 'Preciso instalar algo?',
@@ -268,6 +304,11 @@ export const faqItems = [
     question: 'Posso cancelar quando quiser?',
     answer: 'Sempre. Você pode cancelar sua assinatura a qualquer momento.',
   },
+  {
+    question: 'Vocês ajudam na migração do meu sistema atual?',
+    answer:
+      'Sim. Ajudamos na transferência de dados e em todo o processo de mudança do seu sistema antigo para o BoxVet.',
+  },
 ] as const;
 
 export const ctaContent = {
@@ -278,6 +319,7 @@ export const ctaContent = {
 export const navLinks = [
   { label: 'Recursos', href: '#recursos' },
   { label: 'Como funciona', href: '#como-funciona' },
+  { label: 'Migração', href: '#migracao' },
   { label: 'Planos', href: '#planos' },
   { label: 'FAQ', href: '#faq' },
 ] as const;

@@ -10,6 +10,7 @@ export type PetSummary = {
   birthDate: string | null;
   color: string | null;
   weightKg: string | null;
+  photoUrl: string | null;
   isCastrated: boolean;
   createdAt: string;
 };

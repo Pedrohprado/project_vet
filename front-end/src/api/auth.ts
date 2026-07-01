@@ -40,3 +40,9 @@ export async function logout(): Promise<void> {
     method: 'POST',
   });
 }
+
+export async function completeWelcome(): Promise<AuthResponse> {
+  return apiFetchJson<AuthResponse>('/auth/complete-welcome', {
+    method: 'POST',
+  });
+}

@@ -12,6 +12,7 @@ export class NotificationPrismaRepository {
     petId?: string;
     appointmentId?: string;
     consultationId?: string;
+    vaccinationId?: string;
     type: NotificationType;
     channel?: NotificationChannel;
     status?: NotificationStatus;
@@ -33,6 +34,17 @@ export class NotificationPrismaRepository {
         scheduledAt: true,
         createdAt: true,
       },
+    });
+  }
+
+  async cancelPendingVaccineReminders(vaccinationId: string) {
+    return prisma.notification.updateMany({
+      where: {
+        vaccinationId,
+        type: 'VACCINE_REMINDER',
+        status: 'PENDING',
+      },
+      data: { status: 'CANCELLED' },
     });
   }
 }

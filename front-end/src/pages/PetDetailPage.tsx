@@ -1,8 +1,13 @@
 import { Link, useNavigate, useParams } from 'react-router';
-import { Calendar, Clock, Stethoscope, Syringe } from 'lucide-react';
+import { Calendar, Clock, Plus, Stethoscope, Syringe } from 'lucide-react';
 import { toast } from 'sonner';
 import { ApiError } from '@/api/http';
-import { Badge } from '@/components/ui/badge';
+import { getOpenVaccinationByPet } from '@/api/vaccinations';
+import { PetAvatar } from '@/components/pet/pet-avatar';
+import { PageBackButton } from '@/components/page-back-button';
+import { PetRegistrationCard } from '@/components/pet/pet-registration-card';
+import { PetVaccinationsCard } from '@/components/pet/pet-vaccinations-card';
+import { PetTimeline } from '@/components/pet/pet-timeline';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -12,22 +17,41 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Skeleton } from '@/components/ui/skeleton';
+import {
   useCreateConsultation,
   useOpenConsultation,
 } from '@/hooks/useConsultations';
+import { usePetTimeline } from '@/hooks/usePetTimeline';
 import { usePet } from '@/hooks/usePets';
 import { useTutor } from '@/hooks/useTutors';
-import { pageShellClassName, pageTitleClassName } from '@/lib/mobile-ui';
-import { PET_SPECIES_LABELS, PET_SEX_LABELS } from '@/types/pet';
+import {
+  useCreateVaccination,
+  useOpenVaccination,
+} from '@/hooks/useVaccinations';
+import {
+  pageDescriptionClassName,
+  pageShellClassName,
+  pageTitleClassName,
+} from '@/lib/mobile-ui';
 
 export function PetDetailPage() {
   const { id: tutorId, petId } = useParams<{ id: string; petId: string }>();
   const navigate = useNavigate();
   const { data: tutor } = useTutor(tutorId);
   const { data: pet, isLoading } = usePet(petId);
-  const { data: openConsultation, isLoading: isLoadingOpen } =
+  const { data: timeline, isLoading: isLoadingTimeline } = usePetTimeline(petId);
+  const { data: openConsultation, isLoading: isLoadingOpenConsultation } =
     useOpenConsultation(petId);
+  const { data: openVaccination, isLoading: isLoadingOpenVaccination } =
+    useOpenVaccination(petId);
   const createConsultation = useCreateConsultation();
+  const createVaccination = useCreateVaccination();
 
   async function handleStartConsultation() {
     if (!tutorId || !petId) return;
@@ -52,13 +76,59 @@ export function PetDetailPage() {
     }
   }
 
+  async function handleStartVaccination() {
+    if (!tutorId || !petId) return;
+
+    try {
+      const vaccination = await createVaccination.mutateAsync({
+        tutorId,
+        petId,
+      });
+      toast.success('Vacinação iniciada!');
+      void navigate(`/vaccinations/${vaccination.id}`);
+    } catch (err) {
+      if (err instanceof ApiError && err.statusCode === 409) {
+        const existing = openVaccination ?? (await getOpenVaccinationByPet(petId));
+        if (existing) {
+          toast.info('Retomando vacinação em andamento.');
+          void navigate(`/vaccinations/${existing.id}`);
+          return;
+        }
+      }
+
+      const message =
+        err instanceof ApiError ? err.message : 'Erro ao iniciar vacinação';
+      toast.error(message);
+    }
+  }
+
   function handleContinueConsultation() {
     if (!openConsultation) return;
     void navigate(`/consultations/${openConsultation.id}`);
   }
 
-  if (isLoading || isLoadingOpen) {
-    return <p className="text-sm text-muted-foreground">Carregando...</p>;
+  function handleContinueVaccination() {
+    if (!openVaccination) return;
+    void navigate(`/vaccinations/${openVaccination.id}`);
+  }
+
+  if (isLoading || isLoadingOpenConsultation || isLoadingOpenVaccination) {
+    return (
+      <div className={`${pageShellClassName} space-y-4`}>
+        {tutorId ? <PageBackButton to={`/tutors/${tutorId}`} /> : null}
+        <div className="flex items-center gap-2">
+          <Skeleton className="size-16 shrink-0 rounded-full sm:size-20" />
+          <div className="flex-1 space-y-2">
+            <Skeleton className="h-4 w-24" />
+            <Skeleton className="h-8 w-48" />
+          </div>
+          <Skeleton className="size-10 shrink-0 rounded-lg sm:hidden" />
+        </div>
+        <Skeleton className="h-48 w-full" />
+        <Skeleton className="h-32 w-full" />
+        <Skeleton className="h-64 w-full" />
+      </div>
+    );
   }
 
   if (!pet || !tutorId) {
@@ -66,21 +136,80 @@ export function PetDetailPage() {
   }
 
   const hasOpenConsultation = openConsultation?.status === 'OPEN';
+  const hasOpenVaccination = Boolean(openVaccination && !openVaccination.appliedAt);
 
   return (
     <div className={pageShellClassName}>
-      <div>
-        <p className="text-sm text-muted-foreground">
-          Tutor:{' '}
-          <Link to={`/tutors/${tutorId}`} className="text-primary hover:underline">
-            {tutor?.name ?? '...'}
-          </Link>
-        </p>
-        <h1 className={pageTitleClassName}>{pet.name}</h1>
-        <div className="mt-2 flex flex-wrap gap-2">
-          <Badge variant="secondary">{PET_SPECIES_LABELS[pet.species]}</Badge>
-          <Badge variant="outline">{PET_SEX_LABELS[pet.sex]}</Badge>
-          {pet.breed && <Badge variant="outline">{pet.breed}</Badge>}
+      <PageBackButton to={`/tutors/${tutorId}`} />
+
+      <div className="flex min-w-0 items-center gap-2">
+        <PetAvatar pet={pet} size="lg" />
+        <div className="min-w-0 flex-1">
+          <p className={`${pageDescriptionClassName} text-sm`}>
+            Tutor:{' '}
+            <Link
+              to={`/tutors/${tutorId}`}
+              className="text-primary hover:underline"
+            >
+              {tutor?.name ?? '...'}
+            </Link>
+          </p>
+          <h1 className={pageTitleClassName}>{pet.name}</h1>
+        </div>
+        <div className="shrink-0 sm:hidden">
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              render={
+                <Button
+                  size="icon-lg"
+                  className="size-10"
+                  aria-label="Ações do pet"
+                />
+              }
+            >
+              <Plus className="size-5" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              {!hasOpenConsultation && (
+                <DropdownMenuItem
+                  onClick={() => void handleStartConsultation()}
+                  disabled={createConsultation.isPending}
+                >
+                  <Stethoscope className="size-4" />
+                  {createConsultation.isPending ? 'Iniciando...' : 'Iniciar Consulta'}
+                </DropdownMenuItem>
+              )}
+              {!hasOpenVaccination && (
+                <DropdownMenuItem
+                  onClick={() => void handleStartVaccination()}
+                  disabled={createVaccination.isPending}
+                >
+                  <Syringe className="size-4" />
+                  {createVaccination.isPending ? 'Iniciando...' : 'Iniciar Vacinação'}
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuItem
+                onClick={() =>
+                  void navigate(
+                    `/appointments/new?tutorId=${tutorId}&petId=${petId}&type=CONSULTATION`,
+                  )
+                }
+              >
+                <Calendar className="size-4" />
+                Agendar Consulta
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() =>
+                  void navigate(
+                    `/appointments/new?tutorId=${tutorId}&petId=${petId}&type=VACCINATION`,
+                  )
+                }
+              >
+                <Syringe className="size-4" />
+                Agendar Vacinação
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
@@ -97,51 +226,82 @@ export function PetDetailPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button className="w-full" onClick={handleContinueConsultation}>
+            <Button className="w-full sm:w-auto" onClick={handleContinueConsultation}>
               Continuar consulta
             </Button>
           </CardContent>
         </Card>
       )}
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Próximo passo</CardTitle>
-          <CardDescription>
-            {hasOpenConsultation
-              ? 'Finalize a consulta em andamento ou agende outros atendimentos.'
-              : 'Escolha como prosseguir com o atendimento deste pet.'}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="grid grid-cols-1 gap-3">
+      {hasOpenVaccination && openVaccination && (
+        <Card className="border-emerald-500/40 bg-emerald-500/5">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Syringe className="size-5 shrink-0" />
+              Vacinação em andamento
+            </CardTitle>
+            <CardDescription>
+              Iniciada em{' '}
+              {new Date(openVaccination.createdAt).toLocaleString('pt-BR')}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button className="w-full sm:w-auto" onClick={handleContinueVaccination}>
+              Continuar vacinação
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      <div className="relative">
+        <div className="absolute right-0 bottom-full z-10 mb-2 hidden max-w-full flex-col items-end gap-2 sm:flex sm:flex-row sm:flex-wrap sm:justify-end">
           {!hasOpenConsultation && (
             <Button
-              className="h-auto min-h-14 flex-col gap-2 py-4"
+              className="w-auto"
               onClick={handleStartConsultation}
               disabled={createConsultation.isPending}
             >
-              <Stethoscope className="size-5" />
+              <Stethoscope className="size-4" />
               {createConsultation.isPending ? 'Iniciando...' : 'Iniciar Consulta'}
             </Button>
           )}
-          <Button variant="outline" className="h-auto min-h-14 flex-col gap-2 py-4" asChild>
+          {!hasOpenVaccination && (
+            <Button
+              className="w-auto"
+              onClick={handleStartVaccination}
+              disabled={createVaccination.isPending}
+            >
+              <Syringe className="size-4" />
+              {createVaccination.isPending ? 'Iniciando...' : 'Iniciar Vacinação'}
+            </Button>
+          )}
+          <Button variant="outline" className="w-auto" asChild>
             <Link
               to={`/appointments/new?tutorId=${tutorId}&petId=${petId}&type=CONSULTATION`}
             >
-              <Calendar className="size-5" />
+              <Calendar className="size-4" />
               Agendar Consulta
             </Link>
           </Button>
-          <Button variant="outline" className="h-auto min-h-14 flex-col gap-2 py-4" asChild>
+          <Button variant="outline" className="w-auto" asChild>
             <Link
               to={`/appointments/new?tutorId=${tutorId}&petId=${petId}&type=VACCINATION`}
             >
-              <Syringe className="size-5" />
+              <Syringe className="size-4" />
               Agendar Vacinação
             </Link>
           </Button>
-        </CardContent>
-      </Card>
+        </div>
+
+        <PetRegistrationCard pet={pet} />
+      </div>
+
+      <PetVaccinationsCard
+        petId={petId}
+        openVaccinationId={hasOpenVaccination ? openVaccination?.id : undefined}
+      />
+
+      <PetTimeline events={timeline} isLoading={isLoadingTimeline} />
     </div>
   );
 }
