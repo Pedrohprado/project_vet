@@ -19,7 +19,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar';
-import { ChevronsUpDownIcon, LogOutIcon } from 'lucide-react';
+import { ChevronsUpDownIcon, LogOutIcon, UserIcon } from 'lucide-react';
 
 function getInitials(name: string) {
   return name
@@ -91,6 +91,10 @@ export function NavUser({
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
+              <DropdownMenuItem onClick={() => void navigate('/perfil')}>
+                <UserIcon />
+                Meu perfil
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={() => void handleLogout()}>
                 <LogOutIcon />
                 Sair

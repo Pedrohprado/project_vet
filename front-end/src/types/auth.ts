@@ -1,6 +1,6 @@
 export type ClinicPlan = 'FREE' | 'STARTER' | 'PRO';
 
-export type UserRole = 'VETERINARIAN' | 'ADMIN';
+export type UserRole = 'VETERINARIAN' | 'ADMIN' | 'SUPER_ADMIN';
 
 export type Clinic = {
   id: string;
@@ -19,10 +19,12 @@ export type User = {
   email: string;
   name: string;
   role: UserRole;
-  clinicId: string;
+  clinicId: string | null;
   phone: string | null;
   crmv: string | null;
+  signatureUrl: string | null;
   isActive: boolean;
+  lastLoginAt: string | null;
   createdAt: string;
 };
 
@@ -35,7 +37,16 @@ export type RegisterClinicPayload = {
   name: string;
 };
 
+export type UpdateProfilePayload = {
+  crmv?: string | null;
+  phone?: string | null;
+};
+
 export type AuthResponse = {
   user: User;
-  clinic: Clinic;
+  clinic: Clinic | null;
 };
+
+export function isSuperAdmin(user: User | null | undefined): boolean {
+  return user?.role === 'SUPER_ADMIN';
+}

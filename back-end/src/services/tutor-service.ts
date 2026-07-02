@@ -59,4 +59,9 @@ export class TutorService {
       notes: input.notes,
     }));
   }
+
+  async delete(tenantId: string, id: string) {
+    await this.getById(tenantId, id);
+    await tutorRepository.delete(tenantId, id);
+  }
 }

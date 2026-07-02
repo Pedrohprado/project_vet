@@ -5,5 +5,5 @@ export type AuthenticatedUser = {
   email: string;
   name: string;
   role: UserRole;
-  clinicId: string;
+  clinicId: string | null;
 };

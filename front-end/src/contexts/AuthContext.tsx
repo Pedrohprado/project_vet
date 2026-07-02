@@ -8,15 +8,20 @@ import {
 } from 'react';
 import * as authApi from '@/api/auth';
 import { ApiError } from '@/api/http';
-import type { Clinic, RegisterClinicPayload, User } from '@/types/auth';
+import type { Clinic, RegisterClinicPayload, User, AuthResponse, UpdateProfilePayload } from '@/types/auth';
 
 type AuthContextValue = {
   user: User | null;
   clinic: Clinic | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  register: (payload: RegisterClinicPayload) => Promise<void>;
+  isFirstAccess: boolean;
+  login: (email: string, password: string) => Promise<AuthResponse>;
+  register: (payload: RegisterClinicPayload) => Promise<AuthResponse>;
+  completeWelcome: () => Promise<void>;
+  updateProfile: (payload: UpdateProfilePayload) => Promise<void>;
+  saveSignature: (signature: string) => Promise<void>;
+  deleteSignature: () => Promise<void>;
   logout: () => Promise<void>;
 };
 
@@ -59,10 +64,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const data = await authApi.login(email, password);
     setUser(data.user);
     setClinic(data.clinic);
+    return data;
   }, []);
 
   const register = useCallback(async (payload: RegisterClinicPayload) => {
     const data = await authApi.registerClinic(payload);
+    setUser(data.user);
+    setClinic(data.clinic);
+    return data;
+  }, []);
+
+  const completeWelcome = useCallback(async () => {
+    const data = await authApi.completeWelcome();
+    setUser(data.user);
+    setClinic(data.clinic);
+  }, []);
+
+  const updateProfile = useCallback(async (payload: UpdateProfilePayload) => {
+    const data = await authApi.updateProfile(payload);
+    setUser(data.user);
+    setClinic(data.clinic);
+  }, []);
+
+  const saveSignature = useCallback(async (signature: string) => {
+    const data = await authApi.saveSignature(signature);
+    setUser(data.user);
+    setClinic(data.clinic);
+  }, []);
+
+  const deleteSignature = useCallback(async () => {
+    const data = await authApi.deleteSignature();
     setUser(data.user);
     setClinic(data.clinic);
   }, []);
@@ -84,11 +115,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       clinic,
       isLoading,
       isAuthenticated: user !== null,
+      isFirstAccess: user !== null && user.lastLoginAt === null,
       login,
       register,
+      completeWelcome,
+      updateProfile,
+      saveSignature,
+      deleteSignature,
       logout,
     }),
-    [user, clinic, isLoading, login, register, logout],
+    [user, clinic, isLoading, login, register, completeWelcome, updateProfile, saveSignature, deleteSignature, logout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

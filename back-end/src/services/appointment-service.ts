@@ -6,12 +6,23 @@ import { AppointmentPrismaRepository } from '../repositories/prisma/appointment-
 import { pickDefined } from '../lib/pick-defined.js';
 import { PetService } from './pet-service.js';
 import { HttpError } from './erros/http-error.js';
-import type { CreateAppointmentInput } from '../https/schemas/appointment-schema.js';
+import type {
+  CreateAppointmentInput,
+  ListAppointmentsQuery,
+} from '../https/schemas/appointment-schema.js';
 
 const appointmentRepository = new AppointmentPrismaRepository();
 const petService = new PetService();
 
 export class AppointmentService {
+  async listInRange(tenantId: string, query: ListAppointmentsQuery) {
+    if (query.start > query.end) {
+      throw new HttpError('Data inicial deve ser anterior à data final', 400);
+    }
+
+    return appointmentRepository.findManyInRange(tenantId, query.start, query.end);
+  }
+
   async getById(tenantId: string, id: string) {
     const appointment = await appointmentRepository.findById(tenantId, id);
 
@@ -78,5 +89,10 @@ export class AppointmentService {
   async confirm(tenantId: string, id: string) {
     await this.getById(tenantId, id);
     return appointmentRepository.updateStatus(tenantId, id, AppointmentStatus.CONFIRMED);
+  }
+
+  async complete(tenantId: string, id: string) {
+    await this.getById(tenantId, id);
+    return appointmentRepository.updateStatus(tenantId, id, AppointmentStatus.COMPLETED);
   }
 }

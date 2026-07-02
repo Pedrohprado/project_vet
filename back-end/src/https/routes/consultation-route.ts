@@ -2,9 +2,12 @@ import type { FastifyInstance } from 'fastify';
 import {
   addPrescription,
   createConsultation,
+  deleteConsultation,
+  downloadPrescriptionPdf,
   finishConsultation,
   getConsultation,
   getOpenConsultationByPet,
+  listConsultations,
   removePrescription,
   updateConsultation,
 } from '../controllers/consultation-controller.js';
@@ -14,11 +17,17 @@ import { tenantMiddleware } from '../../middlewares/tenant-middleware.js';
 const protectedHandlers = [authMiddleware, tenantMiddleware];
 
 export async function consultationRoutes(app: FastifyInstance) {
+  app.get('/', { preHandler: protectedHandlers }, listConsultations);
   app.post('/', { preHandler: protectedHandlers }, createConsultation);
   app.get(
     '/pets/:petId/open',
     { preHandler: protectedHandlers },
     getOpenConsultationByPet,
+  );
+  app.get(
+    '/:id/prescription.pdf',
+    { preHandler: protectedHandlers },
+    downloadPrescriptionPdf,
   );
   app.get('/:id', { preHandler: protectedHandlers }, getConsultation);
   app.patch('/:id', { preHandler: protectedHandlers }, updateConsultation);
@@ -29,4 +38,5 @@ export async function consultationRoutes(app: FastifyInstance) {
     removePrescription,
   );
   app.post('/:id/finish', { preHandler: protectedHandlers }, finishConsultation);
+  app.delete('/:id', { preHandler: protectedHandlers }, deleteConsultation);
 }

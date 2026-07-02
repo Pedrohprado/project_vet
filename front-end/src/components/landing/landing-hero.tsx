@@ -39,24 +39,23 @@ export function LandingHero() {
             </div>
           </div>
 
-          <div className='relative mx-auto w-full max-w-lg lg:max-w-none'>
-            <img
-              src={FLYBIRD_SRC}
-              alt=''
+          <div className='relative mx-auto mt-8 w-full max-w-lg sm:mt-10 lg:mt-0 lg:max-w-none'>
+            <div
+              className='pointer-events-none absolute -inset-x-4 top-0 z-20 h-14 translate-y-[-70%] sm:-inset-x-6 sm:h-16 sm:translate-y-[-75%]'
               aria-hidden
-              className='auth-float pointer-events-none absolute left-1/2 top-0 z-20 h-14 w-auto -translate-x-1/2 translate-y-[-70%] object-contain sm:h-16 sm:translate-y-[-75%]'
-              style={
-                {
-                  '--float-duration': '5.5s',
-                  '--float-delay': '0s',
-                } as React.CSSProperties
-              }
-            />
+            >
+              <img
+                src={FLYBIRD_SRC}
+                alt=''
+                className='hero-bird-fly object-contain'
+                style={{ '--bird-duration': '10s' } as React.CSSProperties}
+              />
+            </div>
             <img
               src={CAT_SRC}
               alt=''
               aria-hidden
-              className='pointer-events-none absolute -bottom-4 -left-4 z-20 h-20 w-auto object-contain sm:h-24 lg:-left-8'
+              className='pointer-events-none absolute -bottom-4 -left-4 z-20 h-25 w-auto object-contain sm:h-28 lg:-left-8'
             />
             <DashboardMockup variant='dashboard' className='relative z-10' />
           </div>

@@ -29,6 +29,7 @@ const petSummarySelect = {
   birthDate: true,
   color: true,
   weightKg: true,
+  photoUrl: true,
   isCastrated: true,
   createdAt: true,
 } as const;
@@ -57,7 +58,7 @@ export class TutorPrismaRepository {
           ...tutorSelect,
           pets: { select: petSummarySelect },
         },
-        orderBy: { name: 'asc' },
+        orderBy: { createdAt: 'desc' },
         skip: (page - 1) * limit,
         take: limit,
       }),
@@ -117,6 +118,54 @@ export class TutorPrismaRepository {
       where: { id, clinicId },
       data,
       select: tutorSelect,
+    });
+  }
+
+  async delete(clinicId: string, id: string) {
+    const pets = await prisma.pet.findMany({
+      where: { tutorId: id, clinicId },
+      select: { id: true },
+    });
+    const petIds = pets.map((pet) => pet.id);
+
+    await prisma.$transaction(async (tx) => {
+      const consultations = await tx.consultation.findMany({
+        where: { clinicId, tutorId: id },
+        select: { id: true },
+      });
+      const consultationIds = consultations.map((item) => item.id);
+
+      if (consultationIds.length > 0) {
+        await tx.prescription.deleteMany({
+          where: { consultationId: { in: consultationIds } },
+        });
+        await tx.consultation.deleteMany({
+          where: { id: { in: consultationIds } },
+        });
+      }
+
+      await tx.notification.deleteMany({
+        where: {
+          clinicId,
+          OR: [
+            { tutorId: id },
+            ...(petIds.length > 0 ? [{ petId: { in: petIds } }] : []),
+            { appointment: { tutorId: id } },
+          ],
+        },
+      });
+
+      if (petIds.length > 0) {
+        await tx.vaccination.deleteMany({ where: { petId: { in: petIds } } });
+      }
+
+      await tx.appointment.deleteMany({ where: { tutorId: id, clinicId } });
+
+      if (petIds.length > 0) {
+        await tx.pet.deleteMany({ where: { id: { in: petIds }, clinicId } });
+      }
+
+      await tx.tutor.delete({ where: { id, clinicId } });
     });
   }
 }

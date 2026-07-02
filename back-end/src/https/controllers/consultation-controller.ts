@@ -5,10 +5,24 @@ import {
   createConsultationSchema,
   createPrescriptionSchema,
   finishConsultationSchema,
+  listConsultationsQuerySchema,
   updateConsultationSchema,
 } from '../schemas/consultation-schema.js';
 
 const consultationService = new ConsultationService();
+
+export async function listConsultations(request: FastifyRequest, reply: FastifyReply) {
+  const parsed = listConsultationsQuerySchema.safeParse(request.query);
+
+  if (!parsed.success) {
+    const firstError = parsed.error.issues[0]?.message ?? 'Parâmetros inválidos';
+    throw new HttpError(firstError, 400);
+  }
+
+  const result = await consultationService.list(request.tenantId, parsed.data);
+
+  return reply.status(200).send(result);
+}
 
 export async function getOpenConsultationByPet(
   request: FastifyRequest,
@@ -119,4 +133,27 @@ export async function finishConsultation(request: FastifyRequest, reply: Fastify
   );
 
   return reply.status(200).send(consultation);
+}
+
+export async function deleteConsultation(request: FastifyRequest, reply: FastifyReply) {
+  const { id } = request.params as { id: string };
+  await consultationService.delete(request.tenantId, id);
+
+  return reply.status(204).send();
+}
+
+export async function downloadPrescriptionPdf(
+  request: FastifyRequest,
+  reply: FastifyReply,
+) {
+  const { id } = request.params as { id: string };
+  const { buffer, filename } = await consultationService.getPrescriptionPdf(
+    request.tenantId,
+    id,
+  );
+
+  return reply
+    .header('Content-Type', 'application/pdf')
+    .header('Content-Disposition', `attachment; filename="${filename}"`)
+    .send(buffer);
 }

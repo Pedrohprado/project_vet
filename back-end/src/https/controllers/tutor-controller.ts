@@ -72,3 +72,10 @@ export async function createPetForTutor(request: FastifyRequest, reply: FastifyR
 
   return reply.status(201).send(pet);
 }
+
+export async function deleteTutor(request: FastifyRequest, reply: FastifyReply) {
+  const { id } = request.params as { id: string };
+  await tutorService.delete(request.tenantId, id);
+
+  return reply.status(204).send();
+}

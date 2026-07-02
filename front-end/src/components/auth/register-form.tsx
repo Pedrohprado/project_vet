@@ -7,22 +7,34 @@ import { Button } from '@/components/ui/button';
 import {
   Field,
   FieldDescription,
+  FieldError,
   FieldGroup,
   FieldLabel,
 } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';
+import { useFormFieldErrors } from '@/hooks/useFormFieldErrors';
+import { formatCpf, formatPhone, onlyDigits } from '@/lib/masks';
 import { cn } from '@/lib/utils';
 
 const registerSchema = z
   .object({
     clinicName: z.string().min(1, 'Nome da clínica é obrigatório'),
-    document: z.string().min(1, 'CPF é obrigatório'),
-    phone: z.string().min(1, 'Celular é obrigatório'),
-    email: z.string().email('E-mail inválido'),
+    document: z
+      .string()
+      .min(1, 'CPF é obrigatório')
+      .refine((value) => onlyDigits(value).length === 11, 'CPF inválido'),
+    phone: z
+      .string()
+      .min(1, 'Celular é obrigatório')
+      .refine((value) => {
+        const digits = onlyDigits(value);
+        return digits.length === 10 || digits.length === 11;
+      }, 'Celular inválido'),
+    email: z.string().min(1, 'E-mail é obrigatório').email('E-mail inválido'),
     name: z.string().min(1, 'Nome completo é obrigatório'),
     password: z.string().min(6, 'Senha deve ter no mínimo 6 caracteres'),
-    confirmPassword: z.string(),
+    confirmPassword: z.string().min(1, 'Confirmação de senha é obrigatória'),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: 'As senhas não coincidem',
@@ -51,11 +63,13 @@ export function RegisterForm({
   const navigate = useNavigate();
   const { register } = useAuth();
   const [form, setForm] = useState<FormData>(initialData);
-  const [error, setError] = useState<string>();
+  const { fieldErrors, formError, applyZodError, clearFieldError, clearErrors, setFormError } =
+    useFormFieldErrors<keyof FormData>();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   function updateField(field: keyof FormData, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }));
+    clearFieldError(field);
   }
 
   async function handleSubmit(event: React.FormEvent) {
@@ -64,11 +78,11 @@ export function RegisterForm({
     const parsed = registerSchema.safeParse(form);
 
     if (!parsed.success) {
-      setError(parsed.error.issues[0]?.message ?? 'Dados inválidos');
+      applyZodError(parsed.error);
       return;
     }
 
-    setError(undefined);
+    clearErrors();
     setIsSubmitting(true);
 
     try {
@@ -81,13 +95,17 @@ export function RegisterForm({
         name: parsed.data.name,
       });
 
-      toast.success('Conta criada com sucesso!');
-      void navigate('/atendimento');
+      void navigate('/estatisticas');
     } catch (err) {
       const message =
         err instanceof ApiError ? err.message : 'Erro ao criar conta';
-      setError(message);
-      toast.error(message);
+      setFormError(message);
+
+      if (err instanceof ApiError && err.statusCode === 409) {
+        toast.warning(message);
+      } else {
+        toast.error(message);
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -100,99 +118,112 @@ export function RegisterForm({
         className="max-h-[min(28rem,calc(100svh-16rem))] overflow-y-auto pr-1"
       >
         <FieldGroup className="gap-4">
-          <Field>
+          <Field data-invalid={Boolean(fieldErrors.clinicName)}>
             <FieldLabel htmlFor="clinicName">Nome da clínica *</FieldLabel>
             <Input
               id="clinicName"
               value={form.clinicName}
+              aria-invalid={Boolean(fieldErrors.clinicName)}
               onChange={(e) => updateField('clinicName', e.target.value)}
               placeholder="Clínica Veterinária Exemplo"
-              required
               className={inputClassName}
             />
+            <FieldError>{fieldErrors.clinicName}</FieldError>
           </Field>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field>
+            <Field data-invalid={Boolean(fieldErrors.document)}>
               <FieldLabel htmlFor="document">CPF *</FieldLabel>
               <Input
                 id="document"
                 value={form.document}
-                onChange={(e) => updateField('document', e.target.value)}
+                aria-invalid={Boolean(fieldErrors.document)}
+                onChange={(e) =>
+                  updateField('document', formatCpf(e.target.value))
+                }
                 placeholder="000.000.000-00"
-                required
+                inputMode="numeric"
+                maxLength={14}
                 className={inputClassName}
               />
+              <FieldError>{fieldErrors.document}</FieldError>
             </Field>
-            <Field>
+            <Field data-invalid={Boolean(fieldErrors.phone)}>
               <FieldLabel htmlFor="phone">Celular *</FieldLabel>
               <Input
                 id="phone"
                 value={form.phone}
-                onChange={(e) => updateField('phone', e.target.value)}
+                aria-invalid={Boolean(fieldErrors.phone)}
+                onChange={(e) =>
+                  updateField('phone', formatPhone(e.target.value))
+                }
                 placeholder="(11) 99999-8888"
-                required
+                inputMode="tel"
+                maxLength={15}
                 className={inputClassName}
               />
+              <FieldError>{fieldErrors.phone}</FieldError>
             </Field>
           </div>
-          <Field>
+          <Field data-invalid={Boolean(fieldErrors.email)}>
             <FieldLabel htmlFor="email">E-mail *</FieldLabel>
             <Input
               id="email"
               type="email"
               value={form.email}
+              aria-invalid={Boolean(fieldErrors.email)}
               onChange={(e) => updateField('email', e.target.value)}
               placeholder="voce@exemplo.com"
-              required
               autoComplete="email"
               className={inputClassName}
             />
+            <FieldError>{fieldErrors.email}</FieldError>
           </Field>
-          <Field>
+          <Field data-invalid={Boolean(fieldErrors.name)}>
             <FieldLabel htmlFor="name">Nome completo *</FieldLabel>
             <Input
               id="name"
               value={form.name}
+              aria-invalid={Boolean(fieldErrors.name)}
               onChange={(e) => updateField('name', e.target.value)}
               placeholder="Dr. João Silva"
-              required
               className={inputClassName}
             />
+            <FieldError>{fieldErrors.name}</FieldError>
           </Field>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field>
+            <Field data-invalid={Boolean(fieldErrors.password)}>
               <FieldLabel htmlFor="password">Senha *</FieldLabel>
               <Input
                 id="password"
                 type="password"
                 value={form.password}
+                aria-invalid={Boolean(fieldErrors.password)}
                 onChange={(e) => updateField('password', e.target.value)}
                 placeholder="Mínimo 6 caracteres"
-                required
-                minLength={6}
                 autoComplete="new-password"
                 className={inputClassName}
               />
+              <FieldError>{fieldErrors.password}</FieldError>
             </Field>
-            <Field>
+            <Field data-invalid={Boolean(fieldErrors.confirmPassword)}>
               <FieldLabel htmlFor="confirmPassword">Confirmar senha *</FieldLabel>
               <Input
                 id="confirmPassword"
                 type="password"
                 value={form.confirmPassword}
+                aria-invalid={Boolean(fieldErrors.confirmPassword)}
                 onChange={(e) =>
                   updateField('confirmPassword', e.target.value)
                 }
                 placeholder="Repita a senha"
-                required
-                minLength={6}
                 autoComplete="new-password"
                 className={inputClassName}
               />
+              <FieldError>{fieldErrors.confirmPassword}</FieldError>
             </Field>
           </div>
-          {error ? (
-            <p className="text-sm text-destructive">{error}</p>
+          {formError ? (
+            <p className="text-sm text-destructive">{formError}</p>
           ) : null}
           <Field>
             <Button

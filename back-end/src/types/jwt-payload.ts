@@ -3,7 +3,7 @@ import type { UserRole } from '../generated/prisma/client.js';
 export type AccessJwtPayload = {
   sub: string;
   role: UserRole;
-  clinicId: string;
+  clinicId: string | null;
 };
 
 export type RefreshJwtPayload = {

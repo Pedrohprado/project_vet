@@ -54,4 +54,22 @@ export class AppointmentPrismaRepository {
       select: appointmentSelect,
     });
   }
+
+  async findManyInRange(clinicId: string, start: Date, end: Date) {
+    return prisma.appointment.findMany({
+      where: {
+        clinicId,
+        scheduledAt: { gte: start, lte: end },
+      },
+      select: {
+        ...appointmentSelect,
+        tutor: { select: { id: true, name: true } },
+        pet: { select: { id: true, name: true, species: true } },
+        veterinarian: { select: { id: true, name: true } },
+        consultation: { select: { id: true, status: true } },
+        vaccination: { select: { id: true, appliedAt: true } },
+      },
+      orderBy: { scheduledAt: 'asc' },
+    });
+  }
 }

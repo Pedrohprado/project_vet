@@ -1,6 +1,16 @@
+import { Menu } from 'lucide-react';
 import { Link } from 'react-router';
 import { BrandLogo } from '@/components/brand/brand-logo';
 import { Button } from '@/components/ui/button';
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet';
 import { heroContent, navLinks } from '@/lib/landing-content';
 import { cn } from '@/lib/utils';
 import {
@@ -31,10 +41,10 @@ export function LandingNavbar() {
           ))}
         </nav>
 
-        <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+        <div className="hidden shrink-0 items-center gap-2 sm:gap-3 md:flex">
           <Button
             variant="outline"
-            className={cn(landingOutlineButtonClassName, 'hidden sm:inline-flex')}
+            className={landingOutlineButtonClassName}
             render={<Link to="/login" />}
           >
             Entrar
@@ -46,6 +56,71 @@ export function LandingNavbar() {
             {heroContent.primaryCta}
           </Button>
         </div>
+
+        <Sheet>
+          <SheetTrigger
+            className="md:hidden"
+            render={
+              <Button variant="ghost" size="icon" aria-label="Abrir menu" />
+            }
+          >
+            <Menu />
+          </SheetTrigger>
+          <SheetContent side="right" className="w-full max-w-xs gap-0 p-0">
+            <SheetHeader className="border-b border-border/50 p-4 text-left">
+              <SheetTitle className="flex items-center gap-2">
+                <BrandLogo size="sm" />
+                <span className="text-lg font-bold text-primary">boxvet.</span>
+              </SheetTitle>
+              <SheetDescription className="sr-only">
+                Navegação da landing page
+              </SheetDescription>
+            </SheetHeader>
+
+            <nav className="flex flex-col p-2">
+              {navLinks.map((link) => (
+                <SheetClose
+                  key={link.href}
+                  nativeButton={false}
+                  render={
+                    <a
+                      href={link.href}
+                      className="rounded-lg px-3 py-3 text-base font-medium text-foreground transition-colors hover:bg-muted"
+                    />
+                  }
+                >
+                  {link.label}
+                </SheetClose>
+              ))}
+            </nav>
+
+            <div className="mt-auto flex flex-col gap-2 border-t border-border/50 p-4">
+              <SheetClose
+                nativeButton={false}
+                render={
+                  <Button
+                    variant="outline"
+                    className={cn(landingOutlineButtonClassName, 'w-full')}
+                    render={<Link to="/login" />}
+                  />
+                }
+              >
+                Entrar
+              </SheetClose>
+              <SheetClose
+                nativeButton={false}
+                render={
+                  <Button
+                    className={cn(landingPrimaryButtonClassName, 'w-full')}
+                    render={<a href={heroContent.plansHref} />}
+                  />
+                }
+              >
+                {heroContent.primaryCta}
+              </SheetClose>
+            </div>
+          </SheetContent>
+        </Sheet>
       </div>
     </header>
   );

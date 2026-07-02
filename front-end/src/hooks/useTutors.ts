@@ -1,15 +1,20 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { STATS_QUERY_KEY } from '@/hooks/useStats';
 import {
   createTutor,
+  deleteTutor,
   getTutor,
   listTutors,
   updateTutor,
 } from '@/api/tutors';
-
-export function useTutors(search?: string) {
+export function useTutors(search?: string, options?: { limit?: number }) {
   return useQuery({
-    queryKey: ['tutors', search ?? ''],
-    queryFn: () => listTutors({ q: search || undefined }),
+    queryKey: ['tutors', search ?? '', options?.limit ?? ''],
+    queryFn: () =>
+      listTutors({
+        q: search || undefined,
+        limit: options?.limit,
+      }),
   });
 }
 
@@ -28,6 +33,7 @@ export function useCreateTutor() {
     mutationFn: createTutor,
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['tutors'] });
+      void queryClient.invalidateQueries({ queryKey: STATS_QUERY_KEY });
     },
   });
 }
@@ -41,6 +47,20 @@ export function useUpdateTutor() {
     onSuccess: (_, { id }) => {
       void queryClient.invalidateQueries({ queryKey: ['tutors'] });
       void queryClient.invalidateQueries({ queryKey: ['tutor', id] });
+    },
+  });
+}
+
+export function useDeleteTutor() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: deleteTutor,
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['tutors'] });
+      void queryClient.invalidateQueries({ queryKey: ['consultations'] });
+      void queryClient.invalidateQueries({ queryKey: STATS_QUERY_KEY });
+      void queryClient.invalidateQueries({ queryKey: ['tutor'] });
     },
   });
 }

@@ -2,6 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import {
   createTutor,
   createPetForTutor,
+  deleteTutor,
   getTutor,
   listTutors,
   updateTutor,
@@ -16,5 +17,6 @@ export async function tutorRoutes(app: FastifyInstance) {
   app.post('/', { preHandler: protectedHandlers }, createTutor);
   app.get('/:id', { preHandler: protectedHandlers }, getTutor);
   app.put('/:id', { preHandler: protectedHandlers }, updateTutor);
+  app.delete('/:id', { preHandler: protectedHandlers }, deleteTutor);
   app.post('/:tutorId/pets', { preHandler: protectedHandlers }, createPetForTutor);
 }

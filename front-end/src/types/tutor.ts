@@ -1,4 +1,13 @@
-export type PetSpecies = 'DOG' | 'CAT' | 'OTHER';
+export type PetSpecies =
+  | 'DOG'
+  | 'CAT'
+  | 'BIRD'
+  | 'RABBIT'
+  | 'RODENT'
+  | 'FERRET'
+  | 'REPTILE'
+  | 'FISH'
+  | 'OTHER';
 export type PetSex = 'MALE' | 'FEMALE' | 'UNKNOWN';
 
 export type PetSummary = {
@@ -10,6 +19,7 @@ export type PetSummary = {
   birthDate: string | null;
   color: string | null;
   weightKg: string | null;
+  photoUrl: string | null;
   isCastrated: boolean;
   createdAt: string;
 };

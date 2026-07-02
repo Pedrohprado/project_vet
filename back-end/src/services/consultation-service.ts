@@ -10,6 +10,7 @@ import type {
   CreateConsultationInput,
   CreatePrescriptionInput,
   FinishConsultationInput,
+  ListConsultationsQuery,
   UpdateConsultationInput,
 } from '../https/schemas/consultation-schema.js';
 
@@ -19,6 +20,28 @@ const appointmentService = new AppointmentService();
 const notificationService = new NotificationService();
 
 export class ConsultationService {
+  async list(tenantId: string, query: ListConsultationsQuery) {
+    const range =
+      query.start && query.end
+        ? (() => {
+            if (query.start > query.end) {
+              throw new HttpError(
+                'Data inicial deve ser anterior à data final',
+                400,
+              );
+            }
+            return { start: query.start, end: query.end };
+          })()
+        : undefined;
+
+    return consultationRepository.findMany(
+      tenantId,
+      query.page,
+      query.limit,
+      range,
+    );
+  }
+
   async getById(tenantId: string, id: string) {
     const consultation = await consultationRepository.findById(tenantId, id);
 
@@ -32,6 +55,21 @@ export class ConsultationService {
   async getOpenByPet(tenantId: string, petId: string) {
     await petService.getById(tenantId, petId);
     return consultationRepository.findOpenByPet(tenantId, petId);
+  }
+
+  async delete(tenantId: string, id: string) {
+    const consultation = await this.getById(tenantId, id);
+
+    if (consultation.status !== ConsultationStatus.OPEN) {
+      throw new HttpError('Apenas consultas em andamento podem ser canceladas', 400);
+    }
+
+    await consultationRepository.delete(
+      tenantId,
+      id,
+      consultation.appointmentId,
+      consultation.petId,
+    );
   }
 
   async create(
@@ -79,13 +117,13 @@ export class ConsultationService {
       mainComplaint: input.mainComplaint,
       history: input.history,
       physicalExam: input.physicalExam,
-      weightKg: input.weightKg,
       temperature: input.temperature,
       diagnosis: input.diagnosis,
       conduct: input.conduct,
       observations: input.observations,
       needsReturn: input.needsReturn,
       returnDate: input.returnDate,
+      prescriptionDocumentType: input.prescriptionDocumentType,
     }));
   }
 
@@ -107,6 +145,9 @@ export class ConsultationService {
         frequency: input.frequency,
         duration: input.duration,
         instructions: input.instructions,
+        routeOfAdministration: input.routeOfAdministration,
+        pharmacyType: input.pharmacyType,
+        quantity: input.quantity,
       }),
     });
   }
@@ -185,5 +226,30 @@ export class ConsultationService {
     });
 
     return result;
+  }
+
+  async getPrescriptionPdf(tenantId: string, id: string) {
+    const data = await consultationRepository.findPrescriptionPdfData(tenantId, id);
+
+    if (!data) {
+      throw new HttpError('Consulta não encontrada', 404);
+    }
+
+    if (data.status !== ConsultationStatus.FINISHED) {
+      throw new HttpError('Receita disponível apenas após finalizar a consulta', 400);
+    }
+
+    if (data.prescriptions.length === 0) {
+      throw new HttpError('Consulta não possui medicamentos prescritos', 400);
+    }
+
+    const { PrescriptionPdfService } = await import('./prescription-pdf-service.js');
+    const pdfService = new PrescriptionPdfService();
+    const buffer = await pdfService.generate(data);
+
+    return {
+      buffer,
+      filename: `receita-${data.pet.name.replace(/\s+/g, '-').toLowerCase()}.pdf`,
+    };
   }
 }
