@@ -43,9 +43,25 @@ function TutorRow({
   onDelete: (tutor: TutorWithPets) => void;
 }) {
   const navigate = useNavigate();
+  const detailPath = `/tutors/${tutor.id}`;
+
+  function openDetails() {
+    void navigate(detailPath);
+  }
 
   return (
-    <tr className="border-b last:border-0">
+    <tr
+      className="cursor-pointer border-b transition-colors last:border-0 hover:bg-muted/50"
+      onClick={openDetails}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          openDetails();
+        }
+      }}
+      tabIndex={0}
+      aria-label={`Ver detalhes de ${tutor.name}`}
+    >
       <td className="px-4 py-3 text-sm font-medium">{tutor.name}</td>
       <td className="px-4 py-3 text-sm text-muted-foreground whitespace-nowrap">
         {tutor.phone ?? tutor.whatsapp ?? '—'}
@@ -54,7 +70,11 @@ function TutorRow({
       <td className="px-4 py-3">
         <TutorPetAvatarStack pets={tutor.pets} />
       </td>
-      <td className="px-4 py-3 text-right">
+      <td
+        className="px-4 py-3 text-right"
+        onClick={(event) => event.stopPropagation()}
+        onKeyDown={(event) => event.stopPropagation()}
+      >
         <DropdownMenu>
           <DropdownMenuTrigger
             render={
@@ -64,13 +84,13 @@ function TutorRow({
             <EllipsisVertical className="size-4" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => void navigate(`/tutors/${tutor.id}`)}>
+            <DropdownMenuItem onClick={openDetails}>
               <Eye className="size-4" />
               Ver detalhes
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() =>
-                void navigate(`/tutors/${tutor.id}`, { state: { openEdit: true } })
+                void navigate(detailPath, { state: { openEdit: true } })
               }
             >
               <Pencil className="size-4" />

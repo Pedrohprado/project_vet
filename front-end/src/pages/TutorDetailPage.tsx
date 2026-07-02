@@ -34,9 +34,29 @@ type TutorDetailLocationState = {
 
 function PetRow({ tutorId, pet }: { tutorId: string; pet: PetSummary }) {
   const navigate = useNavigate();
+  const detailPath = `/tutors/${tutorId}/pets/${pet.id}`;
+
+  function openDetails() {
+    void navigate(detailPath);
+  }
+
+  function openEdit() {
+    void navigate(detailPath, { state: { openEdit: true } });
+  }
 
   return (
-    <tr className="border-b last:border-0">
+    <tr
+      className="cursor-pointer border-b transition-colors last:border-0 hover:bg-muted/50"
+      onClick={openDetails}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          openDetails();
+        }
+      }}
+      tabIndex={0}
+      aria-label={`Ver detalhes de ${pet.name}`}
+    >
       <td className="px-4 py-3">
         <PetAvatar pet={pet} />
       </td>
@@ -51,7 +71,11 @@ function PetRow({ tutorId, pet }: { tutorId: string; pet: PetSummary }) {
       <td className="px-4 py-3 text-sm text-muted-foreground whitespace-nowrap">
         {formatPetWeight(pet.weightKg)}
       </td>
-      <td className="px-4 py-3 text-right">
+      <td
+        className="px-4 py-3 text-right"
+        onClick={(event) => event.stopPropagation()}
+        onKeyDown={(event) => event.stopPropagation()}
+      >
         <DropdownMenu>
           <DropdownMenuTrigger
             render={
@@ -61,11 +85,13 @@ function PetRow({ tutorId, pet }: { tutorId: string; pet: PetSummary }) {
             <EllipsisVertical className="size-4" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem
-              onClick={() => void navigate(`/tutors/${tutorId}/pets/${pet.id}`)}
-            >
+            <DropdownMenuItem onClick={openDetails}>
               <Eye className="size-4" />
               Ver detalhes
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={openEdit}>
+              <Pencil className="size-4" />
+              Editar
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

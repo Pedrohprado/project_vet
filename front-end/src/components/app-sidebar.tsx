@@ -1,4 +1,4 @@
-import { BarChart3, Calendar, Stethoscope, Users } from 'lucide-react';
+import { Calendar, Home, Stethoscope, Users } from 'lucide-react';
 import { useLocation } from 'react-router';
 import { ClinicHeader } from '@/components/clinic-header';
 import { NavMain } from '@/components/nav-main';
@@ -13,7 +13,7 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 
 const navItems = [
-  { title: 'Estatísticas', url: '/estatisticas', icon: BarChart3 },
+  { title: 'Início', url: '/estatisticas', icon: Home },
   { title: 'Agenda', url: '/agenda', icon: Calendar },
   { title: 'Atendimento', url: '/atendimento', icon: Stethoscope },
   { title: 'Tutores', url: '/tutors', icon: Users },

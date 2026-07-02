@@ -1,4 +1,13 @@
-export type PetSpecies = 'DOG' | 'CAT' | 'OTHER';
+export type PetSpecies =
+  | 'DOG'
+  | 'CAT'
+  | 'BIRD'
+  | 'RABBIT'
+  | 'RODENT'
+  | 'FERRET'
+  | 'REPTILE'
+  | 'FISH'
+  | 'OTHER';
 export type PetSex = 'MALE' | 'FEMALE' | 'UNKNOWN';
 
 export type PetSummary = {

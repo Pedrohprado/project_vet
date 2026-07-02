@@ -27,7 +27,7 @@ function clearCookieOptions() {
 type AuthUser = {
   id: string;
   role: UserRole;
-  clinicId: string;
+  clinicId: string | null;
 };
 
 export async function setAuthCookies(reply: FastifyReply, user: AuthUser) {

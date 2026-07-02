@@ -3,6 +3,7 @@ import { VaccinationService } from '../../services/vaccination-service.js';
 import { HttpError } from '../../services/erros/http-error.js';
 import {
   createVaccinationSchema,
+  dueVaccinationsQuerySchema,
   finishVaccinationSchema,
   listVaccinationsQuerySchema,
   updateVaccinationSchema,
@@ -24,6 +25,22 @@ export async function listVaccinations(
   const result = await vaccinationService.list(request.tenantId, parsed.data);
 
   return reply.status(200).send(result);
+}
+
+export async function listDueVaccinations(
+  request: FastifyRequest,
+  reply: FastifyReply,
+) {
+  const parsed = dueVaccinationsQuerySchema.safeParse(request.query);
+
+  if (!parsed.success) {
+    const firstError = parsed.error.issues[0]?.message ?? 'Parâmetros inválidos';
+    throw new HttpError(firstError, 400);
+  }
+
+  const items = await vaccinationService.listDue(request.tenantId, parsed.data);
+
+  return reply.status(200).send(items);
 }
 
 export async function listVaccineCatalog(

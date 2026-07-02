@@ -1,17 +1,28 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { toast } from 'sonner';
+import { z } from 'zod';
 import { ApiError } from '@/api/http';
 import { Button } from '@/components/ui/button';
 import {
   Field,
   FieldDescription,
+  FieldError,
   FieldGroup,
   FieldLabel,
 } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';
+import { useFormFieldErrors } from '@/hooks/useFormFieldErrors';
+import { getAuthenticatedHome } from '@/routes/ProtectedRoute';
 import { cn } from '@/lib/utils';
+
+const loginSchema = z.object({
+  email: z.string().min(1, 'E-mail é obrigatório').email('E-mail inválido'),
+  password: z.string().min(1, 'Senha é obrigatória'),
+});
+
+type LoginFormData = z.infer<typeof loginSchema>;
 
 const inputClassName =
   'h-11 rounded-xl border-border/80 bg-white px-3.5 text-sm';
@@ -22,23 +33,36 @@ export function LoginForm({
 }: React.ComponentProps<'div'>) {
   const navigate = useNavigate();
   const { login } = useAuth();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState<string>();
+  const [form, setForm] = useState<LoginFormData>({ email: '', password: '' });
+  const { fieldErrors, formError, applyZodError, clearFieldError, clearErrors, setFormError } =
+    useFormFieldErrors<keyof LoginFormData>();
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  function updateField(field: keyof LoginFormData, value: string) {
+    setForm((prev) => ({ ...prev, [field]: value }));
+    clearFieldError(field);
+  }
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
-    setError(undefined);
+
+    const parsed = loginSchema.safeParse(form);
+
+    if (!parsed.success) {
+      applyZodError(parsed.error);
+      return;
+    }
+
+    clearErrors();
     setIsSubmitting(true);
 
     try {
-      await login(email, password);
-      void navigate('/estatisticas');
+      const data = await login(parsed.data.email, parsed.data.password);
+      void navigate(getAuthenticatedHome(data.user));
     } catch (err) {
       const message =
         err instanceof ApiError ? err.message : 'Erro ao fazer login';
-      setError(message);
+      setFormError(message);
       toast.error(message);
     } finally {
       setIsSubmitting(false);
@@ -49,34 +73,36 @@ export function LoginForm({
     <div className={cn('flex flex-col', className)} {...props}>
       <form onSubmit={(e) => void handleSubmit(e)}>
         <FieldGroup className="gap-5">
-          <Field>
-            <FieldLabel htmlFor="email">E-mail de acesso</FieldLabel>
+          <Field data-invalid={Boolean(fieldErrors.email)}>
+            <FieldLabel htmlFor="email">E-mail de acesso *</FieldLabel>
             <Input
               id="email"
               type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              value={form.email}
+              aria-invalid={Boolean(fieldErrors.email)}
+              onChange={(e) => updateField('email', e.target.value)}
               placeholder="voce@exemplo.com"
-              required
               autoComplete="email"
               className={inputClassName}
             />
+            <FieldError>{fieldErrors.email}</FieldError>
           </Field>
-          <Field>
-            <FieldLabel htmlFor="password">Senha</FieldLabel>
+          <Field data-invalid={Boolean(fieldErrors.password)}>
+            <FieldLabel htmlFor="password">Senha *</FieldLabel>
             <Input
               id="password"
               type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              value={form.password}
+              aria-invalid={Boolean(fieldErrors.password)}
+              onChange={(e) => updateField('password', e.target.value)}
               placeholder="Sua senha"
-              required
               autoComplete="current-password"
               className={inputClassName}
             />
+            <FieldError>{fieldErrors.password}</FieldError>
           </Field>
-          {error ? (
-            <p className="text-sm text-destructive">{error}</p>
+          {formError ? (
+            <p className="text-sm text-destructive">{formError}</p>
           ) : null}
           <Field>
             <Button

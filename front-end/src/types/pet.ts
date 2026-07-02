@@ -46,9 +46,27 @@ export type CreatePetPayload = {
 
 export type UpdatePetPayload = Partial<CreatePetPayload>;
 
+export const PET_SPECIES_VALUES = [
+  'DOG',
+  'CAT',
+  'BIRD',
+  'RABBIT',
+  'RODENT',
+  'FERRET',
+  'REPTILE',
+  'FISH',
+  'OTHER',
+] as const satisfies readonly PetSpecies[];
+
 export const PET_SPECIES_LABELS: Record<PetSpecies, string> = {
   DOG: 'Cachorro',
   CAT: 'Gato',
+  BIRD: 'Ave',
+  RABBIT: 'Coelho',
+  RODENT: 'Roedor',
+  FERRET: 'Furão',
+  REPTILE: 'Réptil',
+  FISH: 'Peixe',
   OTHER: 'Outro',
 };
 

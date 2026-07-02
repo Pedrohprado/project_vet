@@ -3,6 +3,7 @@ import {
   addPrescription,
   createConsultation,
   deleteConsultation,
+  downloadPrescriptionPdf,
   finishConsultation,
   getConsultation,
   getOpenConsultationByPet,
@@ -22,6 +23,11 @@ export async function consultationRoutes(app: FastifyInstance) {
     '/pets/:petId/open',
     { preHandler: protectedHandlers },
     getOpenConsultationByPet,
+  );
+  app.get(
+    '/:id/prescription.pdf',
+    { preHandler: protectedHandlers },
+    downloadPrescriptionPdf,
   );
   app.get('/:id', { preHandler: protectedHandlers }, getConsultation);
   app.patch('/:id', { preHandler: protectedHandlers }, updateConsultation);

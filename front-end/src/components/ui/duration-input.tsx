@@ -14,6 +14,7 @@ type DurationInputProps = {
   disabled?: boolean;
   placeholder?: string;
   className?: string;
+  'aria-invalid'?: boolean;
 };
 
 export function DurationInput({
@@ -23,6 +24,7 @@ export function DurationInput({
   disabled = false,
   placeholder = '00:30',
   className,
+  'aria-invalid': ariaInvalid,
 }: DurationInputProps) {
   function handleKeyDown(event: KeyboardEvent<HTMLInputElement>) {
     if (disabled) return;
@@ -57,6 +59,7 @@ export function DurationInput({
       disabled={disabled}
       placeholder={placeholder}
       className={className}
+      aria-invalid={ariaInvalid}
       value={formatDurationFromDigits(value)}
       onKeyDown={handleKeyDown}
       onChange={() => undefined}

@@ -12,6 +12,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { useUpdateTutor } from '@/hooks/useTutors';
+import { useFormFieldErrors } from '@/hooks/useFormFieldErrors';
 import {
   emptyTutorFormData,
   formDataToUpdatePayload,
@@ -30,22 +31,24 @@ type EditTutorDialogProps = {
 export function EditTutorDialog({ open, onOpenChange, tutor }: EditTutorDialogProps) {
   const updateTutor = useUpdateTutor();
   const [form, setForm] = useState<TutorFormData>(emptyTutorFormData);
-  const [error, setError] = useState<string>();
+  const { fieldErrors, formError, applyZodError, clearFieldError, clearErrors, setFormError } =
+    useFormFieldErrors<keyof TutorFormData>('edit-tutor');
 
   useEffect(() => {
     if (open && tutor) {
       setForm(tutorToFormData(tutor));
-      setError(undefined);
+      clearErrors();
     }
-  }, [open, tutor]);
+  }, [open, tutor, clearErrors]);
 
   function updateField(field: keyof TutorFormData, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }));
+    clearFieldError(field);
   }
 
   function handleOpenChange(nextOpen: boolean) {
     if (!nextOpen) {
-      setError(undefined);
+      clearErrors();
       setForm(emptyTutorFormData);
     }
     onOpenChange(nextOpen);
@@ -59,11 +62,11 @@ export function EditTutorDialog({ open, onOpenChange, tutor }: EditTutorDialogPr
     const parsed = tutorFormSchema.safeParse(form);
 
     if (!parsed.success) {
-      setError(parsed.error.issues[0]?.message ?? 'Dados inválidos');
+      applyZodError(parsed.error);
       return;
     }
 
-    setError(undefined);
+    clearErrors();
 
     try {
       await updateTutor.mutateAsync({
@@ -75,14 +78,14 @@ export function EditTutorDialog({ open, onOpenChange, tutor }: EditTutorDialogPr
     } catch (err) {
       const message =
         err instanceof ApiError ? err.message : 'Erro ao atualizar tutor';
-      setError(message);
+      setFormError(message);
       toast.error(message);
     }
   }
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="flex max-h-[85vh] flex-col gap-0 overflow-hidden sm:max-w-lg">
+      <DialogContent className="flex max-h-[85vh] flex-col gap-0 overflow-hidden sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>Editar tutor</DialogTitle>
           {tutor ? (
@@ -95,8 +98,13 @@ export function EditTutorDialog({ open, onOpenChange, tutor }: EditTutorDialogPr
           className="flex min-h-0 flex-1 flex-col overflow-hidden"
         >
           <div className="min-h-0 flex-1 overflow-y-auto px-1 py-4">
-            <TutorFormFields form={form} onChange={updateField} idPrefix="edit-tutor" />
-            {error ? <p className="mt-4 text-sm text-destructive">{error}</p> : null}
+            <TutorFormFields
+              form={form}
+              onChange={updateField}
+              idPrefix="edit-tutor"
+              fieldErrors={fieldErrors}
+            />
+            {formError ? <p className="mt-4 text-sm text-destructive">{formError}</p> : null}
           </div>
 
           <DialogFooter className="gap-2 border-t pt-4 sm:gap-0">

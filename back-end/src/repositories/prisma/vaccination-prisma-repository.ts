@@ -18,6 +18,20 @@ const vaccinationSelect = {
   updatedAt: true,
 } as const;
 
+const vaccinationDueSelect = {
+  id: true,
+  vaccineName: true,
+  nextDoseAt: true,
+  pet: {
+    select: {
+      id: true,
+      name: true,
+      species: true,
+      tutor: { select: { id: true, name: true } },
+    },
+  },
+} as const;
+
 const vaccinationListSelect = {
   id: true,
   vaccineName: true,
@@ -65,6 +79,30 @@ const vaccinationDetailInclude = {
 } as const;
 
 export class VaccinationPrismaRepository {
+  async findDueByNextDoseAt(clinicId: string, start: Date, end: Date) {
+    const items = await prisma.vaccination.findMany({
+      where: {
+        clinicId,
+        appliedAt: { not: null },
+        nextDoseAt: { gte: start, lte: end },
+      },
+      select: vaccinationDueSelect,
+      orderBy: { nextDoseAt: 'asc' },
+    });
+
+    return items.map((item) => ({
+      id: item.id,
+      vaccineName: item.vaccineName,
+      nextDoseAt: item.nextDoseAt,
+      pet: {
+        id: item.pet.id,
+        name: item.pet.name,
+        species: item.pet.species,
+      },
+      tutor: item.pet.tutor,
+    }));
+  }
+
   async findMany(clinicId: string, page: number, limit: number) {
     const where = { clinicId };
 

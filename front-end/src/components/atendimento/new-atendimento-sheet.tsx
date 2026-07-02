@@ -1,13 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
-import {
-  ArrowLeft,
-  PawPrint,
-  Search,
-  Stethoscope,
-  Syringe,
-  UserPlus,
-} from 'lucide-react';
+import { Stethoscope, Syringe, ArrowLeft, PawPrint, Search, UserPlus } from 'lucide-react';
 import { toast } from 'sonner';
 import { ApiError } from '@/api/http';
 import { getOpenConsultationByPet } from '@/api/consultations';
@@ -34,15 +27,32 @@ import { TutorPetAvatarStack } from '@/components/tutor/tutor-pet-avatar-stack';
 import { useCreateConsultation } from '@/hooks/useConsultations';
 import { useCreateVaccination } from '@/hooks/useVaccinations';
 import { useTutor, useTutors } from '@/hooks/useTutors';
+import { formatDateTimeValue } from '@/lib/date-input';
 import { PET_SPECIES_LABELS } from '@/types/pet';
 import type { PetSummary, TutorWithPets } from '@/types/tutor';
 
 type Step = 'tutor' | 'pet' | 'actions';
 
+type SheetMode = 'atendimento' | 'agendamento';
+
 type NewAtendimentoSheetProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  mode?: SheetMode;
+  defaultScheduledDay?: Date;
 };
+
+function dayToDefaultDateTime(day: Date) {
+  const date = new Date(day);
+  const now = new Date();
+
+  if (date.toDateString() === now.toDateString()) {
+    return formatDateTimeValue(now);
+  }
+
+  date.setHours(9, 0, 0, 0);
+  return formatDateTimeValue(date);
+}
 
 function resetState() {
   return {
@@ -324,11 +334,15 @@ function PetStep({
 function ActionsStep({
   tutorId,
   petId,
+  mode,
+  defaultScheduledDay,
   onBack,
   onClose,
 }: {
   tutorId: string;
   petId: string;
+  mode: SheetMode;
+  defaultScheduledDay?: Date;
   onBack: () => void;
   onClose: () => void;
 }) {
@@ -339,6 +353,22 @@ function ActionsStep({
 
   const selectedPet = tutor?.pets.find((pet) => pet.id === petId);
   const isPending = createConsultation.isPending || createVaccination.isPending;
+  const isScheduling = mode === 'agendamento';
+
+  function handleSchedule(type: 'CONSULTATION' | 'VACCINATION') {
+    const params = new URLSearchParams({
+      tutorId,
+      petId,
+      type,
+    });
+
+    if (defaultScheduledDay) {
+      params.set('scheduledAt', new Date(dayToDefaultDateTime(defaultScheduledDay)).toISOString());
+    }
+
+    onClose();
+    void navigate(`/appointments/new?${params}`);
+  }
 
   async function handleStartConsultation() {
     try {
@@ -402,27 +432,49 @@ function ActionsStep({
 
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base">Como deseja prosseguir?</CardTitle>
+          <CardTitle className="text-base">
+            {isScheduling ? 'Como deseja agendar?' : 'Como deseja prosseguir?'}
+          </CardTitle>
           <CardDescription>
-            Escolha se deseja iniciar uma consulta ou uma vacinação.
+            {isScheduling
+              ? 'Escolha se deseja agendar uma consulta ou uma vacinação.'
+              : 'Escolha se deseja iniciar uma consulta ou uma vacinação.'}
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-2 sm:grid-cols-2">
           <Button
             className="h-auto min-h-11 flex-col gap-1.5 py-3"
-            onClick={() => void handleStartConsultation()}
-            disabled={isPending}
+            variant={isScheduling ? 'outline' : 'default'}
+            onClick={() =>
+              isScheduling
+                ? handleSchedule('CONSULTATION')
+                : void handleStartConsultation()
+            }
+            disabled={!isScheduling && isPending}
           >
             <Stethoscope className="size-5" />
-            {createConsultation.isPending ? 'Iniciando...' : 'Iniciar Consulta'}
+            {isScheduling
+              ? 'Agendar Consulta'
+              : createConsultation.isPending
+                ? 'Iniciando...'
+                : 'Iniciar Consulta'}
           </Button>
           <Button
             className="h-auto min-h-11 flex-col gap-1.5 py-3"
-            onClick={() => void handleStartVaccination()}
-            disabled={isPending}
+            variant={isScheduling ? 'outline' : 'default'}
+            onClick={() =>
+              isScheduling
+                ? handleSchedule('VACCINATION')
+                : void handleStartVaccination()
+            }
+            disabled={!isScheduling && isPending}
           >
             <Syringe className="size-5" />
-            {createVaccination.isPending ? 'Iniciando...' : 'Iniciar Vacinação'}
+            {isScheduling
+              ? 'Agendar Vacinação'
+              : createVaccination.isPending
+                ? 'Iniciando...'
+                : 'Iniciar Vacinação'}
           </Button>
         </CardContent>
       </Card>
@@ -430,7 +482,12 @@ function ActionsStep({
   );
 }
 
-export function NewAtendimentoSheet({ open, onOpenChange }: NewAtendimentoSheetProps) {
+export function NewAtendimentoSheet({
+  open,
+  onOpenChange,
+  mode = 'atendimento',
+  defaultScheduledDay,
+}: NewAtendimentoSheetProps) {
   const [step, setStep] = useState<Step>('tutor');
   const [tutorSearch, setTutorSearch] = useState('');
   const [debouncedTutorSearch, setDebouncedTutorSearch] = useState('');
@@ -474,17 +531,26 @@ export function NewAtendimentoSheet({ open, onOpenChange }: NewAtendimentoSheetP
     setStep('actions');
   }
 
-  const stepDescription: Record<Step, string> = {
-    tutor: 'Busque e selecione o tutor do atendimento.',
-    pet: 'Selecione o pet que será atendido.',
-    actions: 'Escolha como prosseguir com o atendimento.',
-  };
+  const stepDescription: Record<Step, string> =
+    mode === 'agendamento'
+      ? {
+          tutor: 'Busque e selecione o tutor do agendamento.',
+          pet: 'Selecione o pet que será agendado.',
+          actions: 'Escolha o tipo de agendamento.',
+        }
+      : {
+          tutor: 'Busque e selecione o tutor do atendimento.',
+          pet: 'Selecione o pet que será atendido.',
+          actions: 'Escolha como prosseguir com o atendimento.',
+        };
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Novo Atendimento</DialogTitle>
+          <DialogTitle>
+            {mode === 'agendamento' ? 'Novo Agendamento' : 'Novo Atendimento'}
+          </DialogTitle>
           <DialogDescription>{stepDescription[step]}</DialogDescription>
         </DialogHeader>
 
@@ -517,6 +583,8 @@ export function NewAtendimentoSheet({ open, onOpenChange }: NewAtendimentoSheetP
             <ActionsStep
               tutorId={selectedTutorId}
               petId={selectedPetId}
+              mode={mode}
+              defaultScheduledDay={defaultScheduledDay}
               onBack={() => {
                 setSelectedPetId(undefined);
                 setStep('pet');

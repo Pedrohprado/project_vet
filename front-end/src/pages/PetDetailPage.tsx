@@ -1,12 +1,15 @@
-import { Link, useNavigate, useParams } from 'react-router';
-import { Calendar, Clock, Plus, Stethoscope, Syringe } from 'lucide-react';
+import { Link, useLocation, useNavigate, useParams } from 'react-router';
+import { useEffect, useState } from 'react';
+import { Calendar, Clock, Pencil, Plus, Stethoscope, Syringe } from 'lucide-react';
 import { toast } from 'sonner';
 import { ApiError } from '@/api/http';
 import { getOpenVaccinationByPet } from '@/api/vaccinations';
+import { EditPetDialog } from '@/components/pet/edit-pet-dialog';
 import { PetAvatar } from '@/components/pet/pet-avatar';
 import { PageBackButton } from '@/components/page-back-button';
 import { PetRegistrationCard } from '@/components/pet/pet-registration-card';
 import { PetVaccinationsCard } from '@/components/pet/pet-vaccinations-card';
+import { PetWeightHistoryCard } from '@/components/pet/pet-weight-history-card';
 import { PetTimeline } from '@/components/pet/pet-timeline';
 import { Button } from '@/components/ui/button';
 import {
@@ -40,9 +43,15 @@ import {
   pageTitleClassName,
 } from '@/lib/mobile-ui';
 
+type PetDetailLocationState = {
+  openEdit?: boolean;
+};
+
 export function PetDetailPage() {
   const { id: tutorId, petId } = useParams<{ id: string; petId: string }>();
+  const location = useLocation();
   const navigate = useNavigate();
+  const [editOpen, setEditOpen] = useState(false);
   const { data: tutor } = useTutor(tutorId);
   const { data: pet, isLoading } = usePet(petId);
   const { data: timeline, isLoading: isLoadingTimeline } = usePetTimeline(petId);
@@ -52,6 +61,14 @@ export function PetDetailPage() {
     useOpenVaccination(petId);
   const createConsultation = useCreateConsultation();
   const createVaccination = useCreateVaccination();
+
+  useEffect(() => {
+    const state = location.state as PetDetailLocationState | null;
+    if (!state?.openEdit || !pet) return;
+
+    setEditOpen(true);
+    void navigate(location.pathname, { replace: true, state: null });
+  }, [location.pathname, location.state, navigate, pet]);
 
   async function handleStartConsultation() {
     if (!tutorId || !petId) return;
@@ -156,7 +173,27 @@ export function PetDetailPage() {
           </p>
           <h1 className={pageTitleClassName}>{pet.name}</h1>
         </div>
-        <div className="shrink-0 sm:hidden">
+        <div className="flex shrink-0 items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="icon-lg"
+            className="size-10 sm:hidden"
+            aria-label="Editar pet"
+            onClick={() => setEditOpen(true)}
+          >
+            <Pencil className="size-5" />
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            className="hidden sm:inline-flex"
+            onClick={() => setEditOpen(true)}
+          >
+            <Pencil className="size-4" />
+            Editar
+          </Button>
+          <div className="sm:hidden">
           <DropdownMenu>
             <DropdownMenuTrigger
               render={
@@ -210,8 +247,11 @@ export function PetDetailPage() {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+          </div>
         </div>
       </div>
+
+      <EditPetDialog open={editOpen} onOpenChange={setEditOpen} pet={pet} />
 
       {hasOpenConsultation && (
         <Card className="border-primary/40 bg-primary/5">
@@ -297,9 +337,11 @@ export function PetDetailPage() {
       </div>
 
       <PetVaccinationsCard
-        petId={petId}
+        petId={pet.id}
         openVaccinationId={hasOpenVaccination ? openVaccination?.id : undefined}
       />
+
+      <PetWeightHistoryCard petId={pet.id} />
 
       <PetTimeline events={timeline} isLoading={isLoadingTimeline} />
     </div>

@@ -71,4 +71,18 @@ export class UserPrismaRepository {
       select: userSelect,
     });
   }
+
+  async updateProfile(
+    id: string,
+    data: { crmv?: string | null; phone?: string | null },
+  ) {
+    return prisma.user.update({
+      where: { id },
+      data: {
+        ...(data.crmv !== undefined ? { crmv: data.crmv } : {}),
+        ...(data.phone !== undefined ? { phone: data.phone } : {}),
+      },
+      select: userSelect,
+    });
+  }
 }

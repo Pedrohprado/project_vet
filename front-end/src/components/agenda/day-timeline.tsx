@@ -126,10 +126,9 @@ function DayTimelineItem({
     }
   }
 
-  const consultationId = event.consultationId;
   const canViewConsultation =
     event.kind === 'CONSULTATION' ||
-    (event.kind === 'APPOINTMENT' && Boolean(consultationId));
+    (event.kind === 'APPOINTMENT' && Boolean(event.consultationId));
 
   const speciesLabel =
     PET_SPECIES_LABELS[event.pet.species as keyof typeof PET_SPECIES_LABELS] ??
@@ -234,9 +233,16 @@ function DayTimelineItem({
               type="button"
               size="sm"
               variant="secondary"
-              onClick={() =>
-                navigate(`/consultations/${consultationId ?? event.id}`)
-              }
+              onClick={() => {
+                const targetId =
+                  event.kind === 'CONSULTATION'
+                    ? event.id
+                    : event.consultationId;
+
+                if (!targetId) return;
+
+                navigate(`/consultations/${targetId}`);
+              }}
             >
               Ver detalhes
             </Button>

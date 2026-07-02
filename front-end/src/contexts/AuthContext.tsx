@@ -8,7 +8,7 @@ import {
 } from 'react';
 import * as authApi from '@/api/auth';
 import { ApiError } from '@/api/http';
-import type { Clinic, RegisterClinicPayload, User, AuthResponse } from '@/types/auth';
+import type { Clinic, RegisterClinicPayload, User, AuthResponse, UpdateProfilePayload } from '@/types/auth';
 
 type AuthContextValue = {
   user: User | null;
@@ -19,6 +19,7 @@ type AuthContextValue = {
   login: (email: string, password: string) => Promise<AuthResponse>;
   register: (payload: RegisterClinicPayload) => Promise<AuthResponse>;
   completeWelcome: () => Promise<void>;
+  updateProfile: (payload: UpdateProfilePayload) => Promise<void>;
   logout: () => Promise<void>;
 };
 
@@ -77,6 +78,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setClinic(data.clinic);
   }, []);
 
+  const updateProfile = useCallback(async (payload: UpdateProfilePayload) => {
+    const data = await authApi.updateProfile(payload);
+    setUser(data.user);
+    setClinic(data.clinic);
+  }, []);
+
   const logout = useCallback(async () => {
     try {
       await authApi.logout();
@@ -98,9 +105,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       login,
       register,
       completeWelcome,
+      updateProfile,
       logout,
     }),
-    [user, clinic, isLoading, login, register, completeWelcome, logout],
+    [user, clinic, isLoading, login, register, completeWelcome, updateProfile, logout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

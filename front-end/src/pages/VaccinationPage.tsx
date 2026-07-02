@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { toast } from 'sonner';
 import { ChevronLeft, ChevronRight, PawPrint, Syringe } from 'lucide-react';
@@ -72,6 +72,14 @@ export function VaccinationPage() {
   const updateVaccination = useUpdateVaccination();
   const finishVaccination = useFinishVaccination();
   const deleteVaccination = useDeleteVaccination();
+
+  const catalogSelectItems = useMemo(
+    () => [
+      ...catalog.map((item) => ({ value: item.id, label: item.name })),
+      { value: OTHER_VACCINE_VALUE, label: 'Outra' },
+    ],
+    [catalog],
+  );
 
   const [currentStep, setCurrentStep] = useState(0);
   const [cancelOpen, setCancelOpen] = useState(false);
@@ -355,6 +363,7 @@ export function VaccinationPage() {
               <div className="space-y-2">
                 <Label>Vacina</Label>
                 <Select
+                  items={catalogSelectItems}
                   value={form.catalogSelection}
                   onValueChange={handleCatalogChange}
                 >
@@ -362,12 +371,11 @@ export function VaccinationPage() {
                     <SelectValue placeholder="Selecione a vacina" />
                   </SelectTrigger>
                   <SelectContent>
-                    {catalog.map((item) => (
-                      <SelectItem key={item.id} value={item.id}>
-                        {item.name}
+                    {catalogSelectItems.map((item) => (
+                      <SelectItem key={item.value} value={item.value}>
+                        {item.label}
                       </SelectItem>
                     ))}
-                    <SelectItem value={OTHER_VACCINE_VALUE}>Outra</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

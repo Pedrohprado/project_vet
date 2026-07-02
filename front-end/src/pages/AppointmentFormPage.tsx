@@ -6,8 +6,8 @@ import { ApiError } from '@/api/http';
 import { Button } from '@/components/ui/button';
 import { DateTimePicker } from '@/components/ui/date-time-picker';
 import { DurationInput } from '@/components/ui/duration-input';
+import { FormField } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
   Card,
   CardContent,
@@ -16,13 +16,14 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { useCreateAppointment } from '@/hooks/useAppointments';
+import { useFormFieldErrors } from '@/hooks/useFormFieldErrors';
 import {
   pageDescriptionClassName,
   pageShellClassName,
   pageTitleClassName,
 } from '@/lib/mobile-ui';
 import { APPOINTMENT_TYPE_LABELS } from '@/types/appointment';
-import { getDefaultDateTimeValue } from '@/lib/date-input';
+import { getDefaultDateTimeValue, formatDateTimeValue } from '@/lib/date-input';
 import {
   minutesToDurationDigits,
   parseDurationDigits,
@@ -39,6 +40,8 @@ const appointmentSchema = z.object({
   description: z.string().optional(),
 });
 
+type AppointmentField = keyof z.infer<typeof appointmentSchema>;
+
 export function AppointmentFormPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -49,22 +52,32 @@ export function AppointmentFormPage() {
   const type = (searchParams.get('type') ?? 'CONSULTATION') as
     | 'CONSULTATION'
     | 'VACCINATION';
+  const scheduledAtParam = searchParams.get('scheduledAt');
+
+  const initialScheduledAt = (() => {
+    if (!scheduledAtParam) return getDefaultDateTimeValue();
+    const parsed = new Date(scheduledAtParam);
+    return Number.isNaN(parsed.getTime())
+      ? getDefaultDateTimeValue()
+      : formatDateTimeValue(parsed);
+  })();
 
   const defaultTitle = type === 'VACCINATION' ? 'Vacinação' : '';
 
   const [form, setForm] = useState({
-    scheduledAt: getDefaultDateTimeValue(),
+    scheduledAt: initialScheduledAt,
     durationDigits: minutesToDurationDigits(30),
     title: defaultTitle,
     description: '',
   });
-  const [error, setError] = useState<string>();
+  const { fieldErrors, formError, applyZodError, clearFieldError, clearErrors, setFormError } =
+    useFormFieldErrors<AppointmentField>();
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
 
     if (!tutorId || !petId) {
-      setError('Tutor ou pet não informados');
+      setFormError('Tutor ou pet não informados');
       return;
     }
 
@@ -74,11 +87,11 @@ export function AppointmentFormPage() {
     });
 
     if (!parsed.success) {
-      setError(parsed.error.issues[0]?.message ?? 'Dados inválidos');
+      applyZodError(parsed.error);
       return;
     }
 
-    setError(undefined);
+    clearErrors();
 
     try {
       await createAppointment.mutateAsync({
@@ -96,7 +109,7 @@ export function AppointmentFormPage() {
     } catch (err) {
       const message =
         err instanceof ApiError ? err.message : 'Erro ao criar agendamento';
-      setError(message);
+      setFormError(message);
       toast.error(message);
     }
   }
@@ -120,49 +133,56 @@ export function AppointmentFormPage() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="scheduledAt">Data e hora *</Label>
+              <FormField
+                id="scheduledAt"
+                label="Data e hora *"
+                error={fieldErrors.scheduledAt}
+              >
                 <DateTimePicker
                   id="scheduledAt"
                   value={form.scheduledAt}
-                  onChange={(scheduledAt) =>
-                    setForm((prev) => ({ ...prev, scheduledAt }))
-                  }
+                  onChange={(scheduledAt) => {
+                    setForm((prev) => ({ ...prev, scheduledAt }));
+                    clearFieldError('scheduledAt');
+                  }}
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="durationMinutes">Duração</Label>
+              </FormField>
+              <FormField id="durationMinutes" label="Duração *" error={fieldErrors.durationMinutes}>
                 <DurationInput
                   id="durationMinutes"
                   value={form.durationDigits}
-                  onChange={(durationDigits) =>
-                    setForm((prev) => ({ ...prev, durationDigits }))
-                  }
+                  aria-invalid={Boolean(fieldErrors.durationMinutes)}
+                  onChange={(durationDigits) => {
+                    setForm((prev) => ({ ...prev, durationDigits }));
+                    clearFieldError('durationMinutes');
+                  }}
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="title">Título</Label>
+              </FormField>
+              <FormField id="title" label="Título" error={fieldErrors.title}>
                 <Input
                   id="title"
                   value={form.title}
-                  onChange={(e) =>
-                    setForm((prev) => ({ ...prev, title: e.target.value }))
-                  }
+                  aria-invalid={Boolean(fieldErrors.title)}
+                  onChange={(e) => {
+                    setForm((prev) => ({ ...prev, title: e.target.value }));
+                    clearFieldError('title');
+                  }}
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="description">Observações</Label>
+              </FormField>
+              <FormField id="description" label="Observações" error={fieldErrors.description}>
                 <Input
                   id="description"
                   value={form.description}
-                  onChange={(e) =>
-                    setForm((prev) => ({ ...prev, description: e.target.value }))
-                  }
+                  aria-invalid={Boolean(fieldErrors.description)}
+                  onChange={(e) => {
+                    setForm((prev) => ({ ...prev, description: e.target.value }));
+                    clearFieldError('description');
+                  }}
                 />
-              </div>
+              </FormField>
             </div>
 
-            {error && <p className="text-sm text-destructive">{error}</p>}
+            {formError && <p className="text-sm text-destructive">{formError}</p>}
 
             <div className="flex flex-col gap-2 sm:flex-row">
               <Button

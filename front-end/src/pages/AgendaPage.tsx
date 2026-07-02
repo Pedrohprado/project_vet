@@ -105,7 +105,12 @@ export function AgendaPage() {
         events={events}
       />
 
-      <NewAtendimentoSheet open={sheetOpen} onOpenChange={setSheetOpen} />
+      <NewAtendimentoSheet
+        open={sheetOpen}
+        onOpenChange={setSheetOpen}
+        mode="agendamento"
+        defaultScheduledDay={selectedDay}
+      />
     </div>
   );
 }

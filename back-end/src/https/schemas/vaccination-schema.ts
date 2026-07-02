@@ -32,7 +32,13 @@ export const listVaccinationsQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).default(20),
 });
 
+export const dueVaccinationsQuerySchema = z.object({
+  start: z.coerce.date(),
+  end: z.coerce.date(),
+});
+
 export type CreateVaccinationInput = z.infer<typeof createVaccinationSchema>;
 export type UpdateVaccinationInput = z.infer<typeof updateVaccinationSchema>;
 export type FinishVaccinationInput = z.infer<typeof finishVaccinationSchema>;
 export type ListVaccinationsQuery = z.infer<typeof listVaccinationsQuerySchema>;
+export type DueVaccinationsQuery = z.infer<typeof dueVaccinationsQuerySchema>;

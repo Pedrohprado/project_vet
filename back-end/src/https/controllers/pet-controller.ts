@@ -28,7 +28,7 @@ export async function updatePet(request: FastifyRequest, reply: FastifyReply) {
     throw new HttpError(firstError, 400);
   }
 
-  const pet = await petService.update(request.tenantId, id, parsed.data);
+  const pet = await petService.update(request.tenantId, request.authUser.id, id, parsed.data);
 
   return reply.status(200).send(pet);
 }

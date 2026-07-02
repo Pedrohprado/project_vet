@@ -16,11 +16,18 @@ enum ClinicPlan {
 enum UserRole {
   VETERINARIAN
   ADMIN
+  SUPER_ADMIN
 }
 
 enum PetSpecies {
   DOG
   CAT
+  BIRD
+  RABBIT
+  RODENT
+  FERRET
+  REPTILE
+  FISH
   OTHER
 }
 
@@ -73,6 +80,22 @@ enum NotificationType {
   GENERAL
 }
 
+enum PetWeightRecordSource {
+  REGISTRATION
+  CONSULTATION
+  MANUAL
+}
+
+enum PrescriptionDocumentType {
+  SIMPLE
+  SPECIAL_CONTROL
+}
+
+enum PrescriptionPharmacyType {
+  HUMAN
+  VETERINARY
+}
+
 model Clinic {
   id           String  @id @default(uuid())
   name         String
@@ -100,6 +123,7 @@ model Clinic {
   vaccinations       Vaccination[]
   vaccineCatalog     VaccineCatalogItem[]
   notifications      Notification[]
+  petWeightRecords   PetWeightRecord[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -116,12 +140,13 @@ model User {
   isActive      Boolean        @default(true)
   lastLoginAt   DateTime?
   appointments  Appointment[]
-  consultations Consultation[]
-  vaccinations  Vaccination[]
-  clinicId      String
-  clinic        Clinic         @relation(fields: [clinicId], references: [id])
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  consultations    Consultation[]
+  vaccinations     Vaccination[]
+  petWeightRecords PetWeightRecord[]
+  clinicId         String?
+  clinic           Clinic?           @relation(fields: [clinicId], references: [id])
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
 
   @@unique([clinicId, email])
 }
@@ -183,16 +208,41 @@ model Pet {
   continuousMedications String?
   notes                 String?
 
-  appointments  Appointment[]
-  consultations Consultation[]
-  vaccinations  Vaccination[]
-  notifications Notification[]
+  appointments     Appointment[]
+  consultations    Consultation[]
+  vaccinations     Vaccination[]
+  notifications    Notification[]
+  weightRecords    PetWeightRecord[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([clinicId])
   @@index([tutorId])
+}
+
+model PetWeightRecord {
+  id       String @id @default(uuid())
+  clinicId String
+  clinic   Clinic @relation(fields: [clinicId], references: [id])
+
+  petId String
+  pet   Pet    @relation(fields: [petId], references: [id])
+
+  weightKg   Decimal               @db.Decimal(6, 2)
+  recordedAt DateTime              @default(now())
+  source     PetWeightRecordSource
+
+  consultationId String?
+  consultation   Consultation? @relation(fields: [consultationId], references: [id])
+
+  veterinarianId String?
+  veterinarian   User?   @relation(fields: [veterinarianId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([clinicId])
+  @@index([petId, recordedAt])
 }
 
 model Appointment {
@@ -266,8 +316,11 @@ model Consultation {
   needsReturn Boolean   @default(false)
   returnDate  DateTime?
 
+  prescriptionDocumentType PrescriptionDocumentType @default(SIMPLE)
+
   prescriptions Prescription[]
   notifications Notification[]
+  weightRecords PetWeightRecord[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -287,6 +340,10 @@ model Prescription {
   frequency    String?
   duration     String?
   instructions String?
+
+  routeOfAdministration String?
+  pharmacyType          PrescriptionPharmacyType?
+  quantity              String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

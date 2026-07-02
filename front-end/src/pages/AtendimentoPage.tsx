@@ -76,8 +76,23 @@ function AtendimentoRow({
       ? `/consultations/${item.id}`
       : `/vaccinations/${item.id}`;
 
+  function openDetails() {
+    void navigate(detailPath);
+  }
+
   return (
-    <tr className="border-b last:border-0">
+    <tr
+      className="cursor-pointer border-b transition-colors last:border-0 hover:bg-muted/50"
+      onClick={openDetails}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          openDetails();
+        }
+      }}
+      tabIndex={0}
+      aria-label={`Ver detalhes do atendimento de ${item.pet.name}`}
+    >
       <td className="px-4 py-3 text-sm whitespace-nowrap">
         {formatDateTime(item.occurredAt)}
       </td>
@@ -105,7 +120,11 @@ function AtendimentoRow({
           {ATENDIMENTO_STATUS_LABELS[item.status]}
         </Badge>
       </td>
-      <td className="px-4 py-3 text-right">
+      <td
+        className="px-4 py-3 text-right"
+        onClick={(event) => event.stopPropagation()}
+        onKeyDown={(event) => event.stopPropagation()}
+      >
         <DropdownMenu>
           <DropdownMenuTrigger
             render={
@@ -119,7 +138,7 @@ function AtendimentoRow({
             <EllipsisVertical className="size-4" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => void navigate(detailPath)}>
+            <DropdownMenuItem onClick={openDetails}>
               <Eye className="size-4" />
               {isOpen ? 'Continuar atendimento' : 'Ver detalhes'}
             </DropdownMenuItem>

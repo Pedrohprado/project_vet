@@ -5,6 +5,7 @@ import {
   finishVaccination,
   getOpenVaccinationByPet,
   getVaccination,
+  listDueVaccinations,
   listVaccinations,
   listVaccinationsByPet,
   listVaccineCatalog,
@@ -18,6 +19,7 @@ const protectedHandlers = [authMiddleware, tenantMiddleware];
 export async function vaccinationRoutes(app: FastifyInstance) {
   app.get('/catalog', { preHandler: protectedHandlers }, listVaccineCatalog);
   app.get('/', { preHandler: protectedHandlers }, listVaccinations);
+  app.get('/due', { preHandler: protectedHandlers }, listDueVaccinations);
   app.post('/', { preHandler: protectedHandlers }, createVaccination);
   app.get(
     '/pets/:petId/open',

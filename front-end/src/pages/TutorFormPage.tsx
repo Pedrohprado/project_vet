@@ -11,7 +11,16 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { useCreateTutor } from '@/hooks/useTutors';
+import { useFormFieldErrors } from '@/hooks/useFormFieldErrors';
 import {
   pageDescriptionClassName,
   pageShellClassName,
@@ -28,10 +37,27 @@ export function TutorFormPage() {
   const navigate = useNavigate();
   const createTutor = useCreateTutor();
   const [form, setForm] = useState<TutorFormData>(emptyTutorFormData);
-  const [error, setError] = useState<string>();
+  const { fieldErrors, formError, applyZodError, clearFieldError, clearErrors, setFormError } =
+    useFormFieldErrors<keyof TutorFormData>('new-tutor');
+  const [createdTutorId, setCreatedTutorId] = useState<string | null>(null);
 
   function updateField(field: keyof TutorFormData, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }));
+    clearFieldError(field);
+  }
+
+  function handleAddPetChoice(addPet: boolean) {
+    if (!createdTutorId) return;
+
+    const tutorId = createdTutorId;
+    setCreatedTutorId(null);
+
+    if (addPet) {
+      void navigate(`/tutors/${tutorId}/pets/new`);
+      return;
+    }
+
+    void navigate('/tutors');
   }
 
   async function handleSubmit(event: React.FormEvent) {
@@ -40,22 +66,22 @@ export function TutorFormPage() {
     const parsed = tutorFormSchema.safeParse(form);
 
     if (!parsed.success) {
-      setError(parsed.error.issues[0]?.message ?? 'Dados inválidos');
+      applyZodError(parsed.error);
       return;
     }
 
-    setError(undefined);
+    clearErrors();
 
     try {
       const tutor = await createTutor.mutateAsync(
         formDataToCreatePayload(parsed.data),
       );
       toast.success('Tutor cadastrado!');
-      void navigate(`/tutors/${tutor.id}/pets/new`);
+      setCreatedTutorId(tutor.id);
     } catch (err) {
       const message =
         err instanceof ApiError ? err.message : 'Erro ao cadastrar tutor';
-      setError(message);
+      setFormError(message);
       toast.error(message);
     }
   }
@@ -65,7 +91,7 @@ export function TutorFormPage() {
       <div>
         <h1 className={pageTitleClassName}>Novo Tutor</h1>
         <p className={pageDescriptionClassName}>
-          Após salvar, você será direcionado para cadastrar o pet.
+          Preencha os dados de contato e endereço do tutor.
         </p>
       </div>
 
@@ -76,9 +102,14 @@ export function TutorFormPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <TutorFormFields form={form} onChange={updateField} idPrefix="new-tutor" />
+            <TutorFormFields
+              form={form}
+              onChange={updateField}
+              idPrefix="new-tutor"
+              fieldErrors={fieldErrors}
+            />
 
-            {error && <p className="text-sm text-destructive">{error}</p>}
+            {formError && <p className="text-sm text-destructive">{formError}</p>}
 
             <div className="flex flex-col gap-2 sm:flex-row">
               <Button type="submit" className="w-full sm:w-auto" disabled={createTutor.isPending}>
@@ -91,6 +122,36 @@ export function TutorFormPage() {
           </form>
         </CardContent>
       </Card>
+
+      <Dialog
+        open={createdTutorId !== null}
+        onOpenChange={(open) => {
+          if (!open && createdTutorId) {
+            handleAddPetChoice(false);
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Adicionar pet?</DialogTitle>
+            <DialogDescription>
+              Deseja adicionar um pet para este tutor agora?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => handleAddPetChoice(false)}
+            >
+              Agora não
+            </Button>
+            <Button type="button" onClick={() => handleAddPetChoice(true)}>
+              Sim, adicionar pet
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

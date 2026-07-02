@@ -10,13 +10,13 @@ export const updateConsultationSchema = z.object({
   mainComplaint: z.string().optional(),
   history: z.string().optional(),
   physicalExam: z.string().optional(),
-  weightKg: z.coerce.number().positive().optional(),
   temperature: z.coerce.number().optional(),
   diagnosis: z.string().optional(),
   conduct: z.string().optional(),
   observations: z.string().optional(),
   needsReturn: z.boolean().optional(),
   returnDate: z.coerce.date().optional(),
+  prescriptionDocumentType: z.enum(['SIMPLE', 'SPECIAL_CONTROL']).optional(),
 });
 
 export const createPrescriptionSchema = z.object({
@@ -25,6 +25,9 @@ export const createPrescriptionSchema = z.object({
   frequency: z.string().optional(),
   duration: z.string().optional(),
   instructions: z.string().optional(),
+  routeOfAdministration: z.string().optional(),
+  pharmacyType: z.enum(['HUMAN', 'VETERINARY']).optional(),
+  quantity: z.string().optional(),
 });
 
 export const finishConsultationSchema = z.object({

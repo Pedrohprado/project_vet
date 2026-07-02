@@ -1,4 +1,5 @@
 import { apiFetch, apiFetchJson, ApiError } from '@/api/http';
+import type { DueVaccinationReminder } from '@/types/home';
 import type { VaccineCatalogItem } from '@/types/vaccine-catalog';
 import type {
   CreateVaccinationPayload,
@@ -19,6 +20,18 @@ export async function listVaccinations(
   });
 
   return apiFetchJson<VaccinationListResponse>(`/vaccinations?${params}`);
+}
+
+export async function listDueVaccinations(params: {
+  start: string;
+  end: string;
+}): Promise<DueVaccinationReminder[]> {
+  const searchParams = new URLSearchParams({
+    start: params.start,
+    end: params.end,
+  });
+
+  return apiFetchJson<DueVaccinationReminder[]>(`/vaccinations/due?${searchParams}`);
 }
 
 export async function listVaccineCatalog(): Promise<VaccineCatalogItem[]> {

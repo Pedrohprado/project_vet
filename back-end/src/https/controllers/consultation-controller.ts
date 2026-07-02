@@ -141,3 +141,19 @@ export async function deleteConsultation(request: FastifyRequest, reply: Fastify
 
   return reply.status(204).send();
 }
+
+export async function downloadPrescriptionPdf(
+  request: FastifyRequest,
+  reply: FastifyReply,
+) {
+  const { id } = request.params as { id: string };
+  const { buffer, filename } = await consultationService.getPrescriptionPdf(
+    request.tenantId,
+    id,
+  );
+
+  return reply
+    .header('Content-Type', 'application/pdf')
+    .header('Content-Disposition', `attachment; filename="${filename}"`)
+    .send(buffer);
+}

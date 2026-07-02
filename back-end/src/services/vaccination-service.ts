@@ -10,6 +10,7 @@ import { PetService } from './pet-service.js';
 import { HttpError } from './erros/http-error.js';
 import type {
   CreateVaccinationInput,
+  DueVaccinationsQuery,
   FinishVaccinationInput,
   UpdateVaccinationInput,
 } from '../https/schemas/vaccination-schema.js';
@@ -57,6 +58,18 @@ export class VaccinationService {
 
   async list(tenantId: string, query: { page: number; limit: number }) {
     return vaccinationRepository.findMany(tenantId, query.page, query.limit);
+  }
+
+  async listDue(tenantId: string, query: DueVaccinationsQuery) {
+    if (query.start > query.end) {
+      throw new HttpError('Data inicial deve ser anterior à data final', 400);
+    }
+
+    return vaccinationRepository.findDueByNextDoseAt(
+      tenantId,
+      query.start,
+      query.end,
+    );
   }
 
   async delete(tenantId: string, id: string) {

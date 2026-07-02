@@ -1,6 +1,8 @@
+import { prisma } from '../lib/prisma.js';
 import type { AppointmentStatus, AppointmentType } from '../generated/prisma/client.js';
 import { PetPrismaRepository } from '../repositories/prisma/pet-prisma-repository.js';
 import { TutorPrismaRepository } from '../repositories/prisma/tutor-prisma-repository.js';
+import { PetWeightService } from './pet-weight-service.js';
 import { pickDefined } from '../lib/pick-defined.js';
 import { HttpError } from './erros/http-error.js';
 import type { CreatePetInput, UpdatePetInput } from '../https/schemas/pet-schema.js';
@@ -22,6 +24,7 @@ const CONSULTATION_STATUS_TITLES: Record<string, string> = {
 
 const petRepository = new PetPrismaRepository();
 const tutorRepository = new TutorPrismaRepository();
+const petWeightService = new PetWeightService();
 
 export class PetService {
   async getById(tenantId: string, id: string) {
@@ -41,43 +44,73 @@ export class PetService {
       throw new HttpError('Tutor não encontrado', 404);
     }
 
-    return petRepository.create(tenantId, tutorId, {
-      name: input.name,
-      species: input.species,
-      sex: input.sex,
-      isCastrated: input.isCastrated,
-      ...pickDefined({
-        breed: input.breed,
-        birthDate: input.birthDate,
-        color: input.color,
-        weightKg: input.weightKg,
-        microchip: input.microchip,
-        allergies: input.allergies,
-        chronicDiseases: input.chronicDiseases,
-        continuousMedications: input.continuousMedications,
-        notes: input.notes,
-      }),
+    return prisma.$transaction(async () => {
+      const pet = await petRepository.create(tenantId, tutorId, {
+        name: input.name,
+        species: input.species,
+        sex: input.sex,
+        isCastrated: input.isCastrated,
+        ...pickDefined({
+          breed: input.breed,
+          birthDate: input.birthDate,
+          color: input.color,
+          weightKg: input.weightKg,
+          microchip: input.microchip,
+          allergies: input.allergies,
+          chronicDiseases: input.chronicDiseases,
+          continuousMedications: input.continuousMedications,
+          notes: input.notes,
+        }),
+      });
+
+      if (input.weightKg !== undefined) {
+        await petWeightService.createRegistrationRecord(
+          tenantId,
+          pet.id,
+          input.weightKg,
+        );
+      }
+
+      return pet;
     });
   }
 
-  async update(tenantId: string, id: string, input: UpdatePetInput) {
-    await this.getById(tenantId, id);
+  async update(tenantId: string, userId: string, id: string, input: UpdatePetInput) {
+    const existing = await this.getById(tenantId, id);
 
-    return petRepository.update(tenantId, id, pickDefined({
+    const updateData = pickDefined({
       name: input.name,
       species: input.species,
       breed: input.breed,
       sex: input.sex,
       birthDate: input.birthDate,
       color: input.color,
-      weightKg: input.weightKg,
       isCastrated: input.isCastrated,
       microchip: input.microchip,
       allergies: input.allergies,
       chronicDiseases: input.chronicDiseases,
       continuousMedications: input.continuousMedications,
       notes: input.notes,
-    }));
+    });
+
+    if (input.weightKg !== undefined) {
+      await petWeightService.createManualRecordIfChanged(
+        tenantId,
+        userId,
+        id,
+        existing.weightKg != null ? Number(existing.weightKg) : null,
+        input.weightKg,
+      );
+    }
+
+    if (Object.keys(updateData).length === 0 && input.weightKg === undefined) {
+      return existing;
+    }
+
+    return petRepository.update(tenantId, id, {
+      ...updateData,
+      ...input.weightKg !== undefined && { weightKg: input.weightKg },
+    });
   }
 
   async getTimeline(tenantId: string, petId: string): Promise<PetTimelineEvent[]> {

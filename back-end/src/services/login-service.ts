@@ -1,4 +1,5 @@
 import { comparePassword } from '../lib/password.js';
+import { UserRole } from '../generated/prisma/client.js';
 import { ClinicPrismaRepository } from '../repositories/prisma/clinic-prisma-repository.js';
 import { UserPrismaRepository } from '../repositories/prisma/user-prisma-repository.js';
 import { HttpError } from './erros/http-error.js';
@@ -23,6 +24,22 @@ export class LoginService {
 
     if (!user.isActive) {
       throw new HttpError('Usuário inativo', 401);
+    }
+
+    if (user.role === UserRole.SUPER_ADMIN) {
+      const isFirstAccess = user.lastLoginAt === null;
+      const { password: _, ...safeUser } = user;
+
+      if (!isFirstAccess) {
+        const updatedUser = await userRepository.updateLastLoginAt(user.id);
+        return { user: updatedUser, clinic: null };
+      }
+
+      return { user: safeUser, clinic: null };
+    }
+
+    if (!user.clinicId) {
+      throw new HttpError('Credenciais inválidas', 401);
     }
 
     const clinic = await clinicRepository.findById(user.clinicId);

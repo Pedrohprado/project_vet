@@ -129,3 +129,31 @@ export async function deleteConsultation(id: string): Promise<void> {
     throw new ApiError(message, response.status);
   }
 }
+
+export async function downloadPrescriptionPdf(consultationId: string): Promise<void> {
+  const response = await apiFetch(`/consultations/${consultationId}/prescription.pdf`);
+
+  if (!response.ok) {
+    let message = 'Erro ao baixar receita';
+
+    try {
+      const body = (await response.json()) as { error?: string };
+      message = body.error ?? message;
+    } catch {
+      // ignore
+    }
+
+    throw new ApiError(message, response.status);
+  }
+
+  const blob = await response.blob();
+  const disposition = response.headers.get('Content-Disposition');
+  const filenameMatch = disposition?.match(/filename="(.+)"/);
+  const filename = filenameMatch?.[1] ?? `receita-${consultationId}.pdf`;
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = filename;
+  anchor.click();
+  URL.revokeObjectURL(url);
+}

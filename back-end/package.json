@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node ./dist/server.js",
     "dev": "tsx --watch ./src/server.ts",
-    "build": "npx prisma generate && tsc -p tsconfig.json"
+    "build": "npx prisma generate && tsc -p tsconfig.json",
+    "seed:platform-admin": "tsx ./src/lib/seed-platform-admin.ts"
   },
   "keywords": [],
   "author": "",
@@ -15,6 +16,7 @@
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^25.2.3",
+    "@types/pdfkit": "^0.17.6",
     "@types/pg": "^8.16.0",
     "prisma": "^7.4.0",
     "tsx": "^4.21.0",
@@ -33,6 +35,7 @@
     "dotenv": "^17.2.4",
     "fastify": "^5.7.4",
     "fastify-raw-body": "^5.0.0",
+    "pdfkit": "^0.19.1",
     "pg": "^8.18.0",
     "zod": "^4.3.6"
   }

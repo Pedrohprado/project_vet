@@ -13,13 +13,18 @@ import { EstatisticasPage } from '@/pages/EstatisticasPage';
 import { LandingPage } from '@/pages/LandingPage';
 import { PetDetailPage } from '@/pages/PetDetailPage';
 import { PetFormPage } from '@/pages/PetFormPage';
+import { ProfilePage } from '@/pages/ProfilePage';
 import { TutorDetailPage } from '@/pages/TutorDetailPage';
 import { TutorFormPage } from '@/pages/TutorFormPage';
 import { TutorListPage } from '@/pages/TutorListPage';
-import { GuestRoute, ProtectedRoute } from '@/routes/ProtectedRoute';
+import { AdminClinicsPage } from '@/pages/admin/AdminClinicsPage';
+import { AdminDashboardPage } from '@/pages/admin/AdminDashboardPage';
+import { AdminFinancePage } from '@/pages/admin/AdminFinancePage';
+import { AdminLayout } from '@/components/layout/AdminLayout';
+import { GuestRoute, ProtectedRoute, SuperAdminRoute, getAuthenticatedHome } from '@/routes/ProtectedRoute';
 
 function RootRedirect() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
 
   if (isLoading) {
     return (
@@ -30,7 +35,7 @@ function RootRedirect() {
   }
 
   if (isAuthenticated) {
-    return <Navigate to="/estatisticas" replace />;
+    return <Navigate to={getAuthenticatedHome(user)} replace />;
   }
 
   return <LandingPage />;
@@ -60,6 +65,15 @@ function App() {
             <Route path="/appointments/new" element={<AppointmentFormPage />} />
             <Route path="/consultations/:id" element={<ConsultationPage />} />
             <Route path="/vaccinations/:id" element={<VaccinationPage />} />
+            <Route path="/perfil" element={<ProfilePage />} />
+          </Route>
+        </Route>
+
+        <Route element={<SuperAdminRoute />}>
+          <Route element={<AdminLayout />}>
+            <Route path="/admin" element={<AdminDashboardPage />} />
+            <Route path="/admin/clinicas" element={<AdminClinicsPage />} />
+            <Route path="/admin/financeiro" element={<AdminFinancePage />} />
           </Route>
         </Route>
       </Routes>

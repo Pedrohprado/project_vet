@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { formatCpf, formatPhone } from '@/lib/masks';
+import { formatCpf, formatCep, formatPhone } from '@/lib/masks';
 import type { CreateTutorPayload, Tutor, UpdateTutorPayload } from '@/types/tutor';
 
 export const tutorFormSchema = z.object({
@@ -46,7 +46,7 @@ export function tutorToFormData(tutor: Tutor): TutorFormData {
     document: tutor.document ? formatCpf(tutor.document) : '',
     mobile: mobile ? formatPhone(mobile) : '',
     email: tutor.email ?? '',
-    zipCode: tutor.zipCode ?? '',
+    zipCode: tutor.zipCode ? formatCep(tutor.zipCode) : '',
     street: tutor.street ?? '',
     number: tutor.number ?? '',
     complement: tutor.complement ?? '',
