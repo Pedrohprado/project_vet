@@ -1,5 +1,7 @@
 import PDFDocument from 'pdfkit';
+import { existsSync } from 'node:fs';
 import type { PetSpecies, PrescriptionPharmacyType, PrescriptionDocumentType } from '../generated/prisma/client.js';
+import { resolveSignatureFilePath } from '../lib/save-user-signature.js';
 
 type PrescriptionPdfData = {
   id: string;
@@ -21,6 +23,7 @@ type PrescriptionPdfData = {
     name: string;
     crmv: string | null;
     phone: string | null;
+    signatureUrl: string | null;
   };
   tutor: {
     name: string;
@@ -292,7 +295,60 @@ export class PrescriptionPdfService {
         y += 16;
       }
 
+      const signaturePath = resolveSignatureFilePath(data.veterinarian.signatureUrl);
+      const hasSignature = signaturePath ? existsSync(signaturePath) : false;
+      const signatureBlockHeight = hasSignature ? 88 : 0;
+      const footerReserve = signatureBlockHeight + 24;
+
+      if (y > doc.page.height - PAGE_MARGIN - footerReserve) {
+        doc.addPage();
+        y = PAGE_MARGIN;
+      }
+
       const consultationDate = data.finishedAt ?? data.startedAt;
+      const footerTop = doc.page.height - PAGE_MARGIN - footerReserve;
+
+      if (hasSignature && signaturePath) {
+        const signatureLineY = footerTop + 4;
+        const signatureImageWidth = 160;
+        const signatureImageHeight = 50;
+        const signatureImageX =
+          PAGE_MARGIN + (contentWidth - signatureImageWidth) / 2;
+
+        doc
+          .moveTo(PAGE_MARGIN + contentWidth * 0.25, signatureLineY)
+          .lineTo(PAGE_MARGIN + contentWidth * 0.75, signatureLineY)
+          .strokeColor('#000000')
+          .lineWidth(0.6)
+          .stroke();
+
+        doc.image(signaturePath, signatureImageX, signatureLineY + 6, {
+          fit: [signatureImageWidth, signatureImageHeight],
+          align: 'center',
+          valign: 'center',
+        });
+
+        doc
+          .font('Helvetica')
+          .fontSize(9)
+          .fillColor('#000000')
+          .text(data.veterinarian.name, PAGE_MARGIN, signatureLineY + 60, {
+            width: contentWidth,
+            align: 'center',
+          });
+
+        if (data.veterinarian.crmv) {
+          doc
+            .font('Helvetica')
+            .fontSize(8)
+            .fillColor('#666666')
+            .text(data.veterinarian.crmv, PAGE_MARGIN, signatureLineY + 72, {
+              width: contentWidth,
+              align: 'center',
+            });
+        }
+      }
+
       doc
         .font('Helvetica')
         .fontSize(9)
@@ -300,7 +356,7 @@ export class PrescriptionPdfService {
         .text(
           `Data: ${formatDate(consultationDate)}`,
           PAGE_MARGIN,
-          doc.page.height - PAGE_MARGIN - 20,
+          doc.page.height - PAGE_MARGIN - 12,
           { width: contentWidth, align: 'right' },
         );
 

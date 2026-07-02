@@ -57,3 +57,17 @@ export async function updateProfile(
     body: JSON.stringify(payload),
   });
 }
+
+export async function saveSignature(signature: string): Promise<AuthResponse> {
+  return apiFetchJson<AuthResponse>('/auth/me/signature', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ signature }),
+  });
+}
+
+export async function deleteSignature(): Promise<AuthResponse> {
+  return apiFetchJson<AuthResponse>('/auth/me/signature', {
+    method: 'DELETE',
+  });
+}

@@ -740,6 +740,19 @@ export function ConsultationPage() {
                   </p>
                 )}
 
+              {!user?.signatureUrl &&
+                !isFinished &&
+                currentStep === 2 &&
+                consultation.prescriptions.length > 0 && (
+                  <p className="rounded-lg border border-dashed bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
+                    Cadastre sua assinatura em{' '}
+                    <Link to="/perfil" className="font-medium text-primary underline-offset-4 hover:underline">
+                      Meu perfil
+                    </Link>{' '}
+                    para incluí-la no final da receita em PDF.
+                  </p>
+                )}
+
               {consultation.prescriptions.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
                   Nenhum medicamento adicionado.

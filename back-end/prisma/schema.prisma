@@ -136,6 +136,7 @@ model User {
   password      String
   phone         String?
   crmv          String?
+  signatureUrl  String?
   role          UserRole       @default(VETERINARIAN)
   isActive      Boolean        @default(true)
   lastLoginAt   DateTime?

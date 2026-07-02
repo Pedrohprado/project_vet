@@ -14,6 +14,10 @@ export default defineConfig({
         target: 'http://127.0.0.1:3333',
         changeOrigin: true,
       },
+      '/uploads': {
+        target: 'http://127.0.0.1:3333',
+        changeOrigin: true,
+      },
     },
   },
   plugins: [react(), tailwindcss()],

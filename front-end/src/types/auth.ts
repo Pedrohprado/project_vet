@@ -22,6 +22,7 @@ export type User = {
   clinicId: string | null;
   phone: string | null;
   crmv: string | null;
+  signatureUrl: string | null;
   isActive: boolean;
   lastLoginAt: string | null;
   createdAt: string;

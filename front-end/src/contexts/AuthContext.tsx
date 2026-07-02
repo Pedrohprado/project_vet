@@ -20,6 +20,8 @@ type AuthContextValue = {
   register: (payload: RegisterClinicPayload) => Promise<AuthResponse>;
   completeWelcome: () => Promise<void>;
   updateProfile: (payload: UpdateProfilePayload) => Promise<void>;
+  saveSignature: (signature: string) => Promise<void>;
+  deleteSignature: () => Promise<void>;
   logout: () => Promise<void>;
 };
 
@@ -84,6 +86,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setClinic(data.clinic);
   }, []);
 
+  const saveSignature = useCallback(async (signature: string) => {
+    const data = await authApi.saveSignature(signature);
+    setUser(data.user);
+    setClinic(data.clinic);
+  }, []);
+
+  const deleteSignature = useCallback(async () => {
+    const data = await authApi.deleteSignature();
+    setUser(data.user);
+    setClinic(data.clinic);
+  }, []);
+
   const logout = useCallback(async () => {
     try {
       await authApi.logout();
@@ -106,9 +120,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       register,
       completeWelcome,
       updateProfile,
+      saveSignature,
+      deleteSignature,
       logout,
     }),
-    [user, clinic, isLoading, login, register, completeWelcome, updateProfile, logout],
+    [user, clinic, isLoading, login, register, completeWelcome, updateProfile, saveSignature, deleteSignature, logout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

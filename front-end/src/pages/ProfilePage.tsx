@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import { toast } from 'sonner';
 import { ApiError } from '@/api/http';
+import { SignaturePadField } from '@/components/profile/signature-pad-field';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -109,6 +110,18 @@ export function ProfilePage() {
               </Button>
             </div>
           </form>
+        </CardContent>
+      </Card>
+
+      <Card className="mt-6 max-w-xl">
+        <CardHeader>
+          <CardTitle>Assinatura eletrônica</CardTitle>
+          <CardDescription>
+            Sua assinatura aparecerá no final das receitas veterinárias em PDF.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <SignaturePadField savedSignatureUrl={user.signatureUrl} />
         </CardContent>
       </Card>
     </div>

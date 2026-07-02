@@ -191,7 +191,7 @@ export class ConsultationPrismaRepository {
         finishedAt: true,
         prescriptionDocumentType: true,
         prescriptions: { select: prescriptionSelect, orderBy: { createdAt: 'asc' } },
-        veterinarian: { select: { name: true, crmv: true, phone: true } },
+        veterinarian: { select: { name: true, crmv: true, phone: true, signatureUrl: true } },
         tutor: {
           select: {
             name: true,
