@@ -1,15 +1,16 @@
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Calendar, ExternalLink, Stethoscope, Syringe } from 'lucide-react';
+import { Calendar, ExternalLink, RotateCcw, Stethoscope, Syringe } from 'lucide-react';
 import { Link, useNavigate } from 'react-router';
 import { toast } from 'sonner';
 import { ApiError } from '@/api/http';
 import { getOpenVaccinationByPet } from '@/api/vaccinations';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { useCreateConsultation } from '@/hooks/useConsultations';
+import { useCreateConsultation, useCreateReturnConsultation } from '@/hooks/useConsultations';
 import { useCreateVaccination } from '@/hooks/useVaccinations';
 import {
+  canContinueReturnFromEvent,
   canStartConsultationFromEvent,
   canStartVaccinationFromEvent,
   formatEventTime,
@@ -31,6 +32,7 @@ function getBadgeVariant(
 ): 'default' | 'secondary' | 'outline' {
   if (event.kind === 'CONSULTATION') {
     if (event.status === 'OPEN') return 'default';
+    if (event.status === 'RETURN_SCHEDULED') return 'secondary';
     if (event.status === 'FINISHED') return 'secondary';
     return 'outline';
   }
@@ -58,17 +60,22 @@ function DayTimelineItem({
 }) {
   const navigate = useNavigate();
   const createConsultation = useCreateConsultation();
+  const createReturnConsultation = useCreateReturnConsultation();
   const createVaccination = useCreateVaccination();
   const isStartingConsultation = createConsultation.isPending;
+  const isStartingReturn = createReturnConsultation.isPending;
   const isStartingVaccination = createVaccination.isPending;
   const isUpcoming = isUpcomingEvent(event);
   const isVaccinationAppointment = event.appointmentType === 'VACCINATION';
+  const isReturnAppointment = event.appointmentType === 'RETURN';
   const Icon =
     event.kind === 'CONSULTATION'
       ? Stethoscope
       : isVaccinationAppointment
         ? Syringe
-        : Calendar;
+        : isReturnAppointment
+          ? RotateCcw
+          : Calendar;
 
   async function handleStartConsultation() {
     if (!event.appointmentId) {
@@ -89,6 +96,29 @@ function DayTimelineItem({
         error instanceof ApiError
           ? error.message
           : 'Não foi possível iniciar a consulta';
+      toast.error(message);
+    }
+  }
+
+  async function handleStartReturn() {
+    if (!event.sourceConsultationId) {
+      return;
+    }
+
+    try {
+      const consultation = await createReturnConsultation.mutateAsync({
+        parentId: event.sourceConsultationId,
+        appointmentId: event.appointmentId,
+        petId: event.pet.id,
+      });
+      toast.success('Retorno iniciado');
+      onConsultationStarted?.();
+      navigate(`/consultations/${consultation.id}`);
+    } catch (error) {
+      const message =
+        error instanceof ApiError
+          ? error.message
+          : 'Não foi possível iniciar o retorno';
       toast.error(message);
     }
   }
@@ -157,10 +187,14 @@ function DayTimelineItem({
                 isUpcoming
                   ? isVaccinationAppointment
                     ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400'
-                    : 'bg-muted text-muted-foreground'
+                    : isReturnAppointment
+                      ? 'bg-amber-500/15 text-amber-700 dark:text-amber-400'
+                      : 'bg-muted text-muted-foreground'
                   : isVaccinationAppointment
                     ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400'
-                    : 'bg-primary/10 text-primary',
+                    : isReturnAppointment
+                      ? 'bg-amber-500/15 text-amber-700 dark:text-amber-400'
+                      : 'bg-primary/10 text-primary',
               )}
             >
               <Icon className="size-4" />
@@ -180,7 +214,9 @@ function DayTimelineItem({
               {event.kind === 'APPOINTMENT'
                 ? isVaccinationAppointment
                   ? 'Vacinação agendada'
-                  : 'Agendamento'
+                  : isReturnAppointment
+                    ? 'Retorno'
+                    : 'Agendamento'
                 : 'Atendimento'}
             </Badge>
           </div>
@@ -196,6 +232,42 @@ function DayTimelineItem({
         ) : null}
 
         <div className="mt-3 flex flex-wrap gap-2">
+          {canContinueReturnFromEvent(event) ? (
+            <Button
+              type="button"
+              size="sm"
+              disabled={isStartingReturn}
+              onClick={() => void handleStartReturn()}
+            >
+              {isStartingReturn ? 'Iniciando...' : 'Iniciar retorno'}
+            </Button>
+          ) : null}
+
+          {event.kind === 'CONSULTATION' &&
+          event.status === 'RETURN_SCHEDULED' &&
+          !event.parentConsultationId ? (
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              onClick={() => navigate(`/consultations/${event.id}`)}
+            >
+              Ver consulta
+            </Button>
+          ) : null}
+
+          {event.kind === 'CONSULTATION' &&
+          event.status === 'OPEN' &&
+          event.parentConsultationId ? (
+            <Button
+              type="button"
+              size="sm"
+              onClick={() => navigate(`/consultations/${event.id}`)}
+            >
+              Continuar retorno
+            </Button>
+          ) : null}
+
           {canStartConsultationFromEvent(event) ? (
             <Button
               type="button"

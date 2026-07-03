@@ -130,9 +130,21 @@ export class PetService {
     ];
 
     for (const consultation of consultations) {
-      const description = [consultation.mainComplaint, consultation.diagnosis]
+      const baseDescription = [consultation.mainComplaint, consultation.diagnosis]
         .filter(Boolean)
         .join(' · ') || null;
+
+      const attachmentCount = consultation._count.attachments;
+      const attachmentSuffix =
+        attachmentCount > 0
+          ? `${baseDescription ? ' · ' : ''}${attachmentCount} exame(s) anexado(s)`
+          : '';
+
+      const description = baseDescription
+        ? `${baseDescription}${attachmentSuffix}`
+        : attachmentCount > 0
+          ? `${attachmentCount} exame(s) anexado(s)`
+          : null;
 
       events.push({
         id: `consultation-${consultation.id}`,

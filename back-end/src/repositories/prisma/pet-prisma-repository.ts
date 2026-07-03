@@ -76,6 +76,7 @@ export class PetPrismaRepository {
           mainComplaint: true,
           diagnosis: true,
           veterinarian: { select: { name: true } },
+          _count: { select: { attachments: true } },
         },
         orderBy: { startedAt: 'desc' },
       }),

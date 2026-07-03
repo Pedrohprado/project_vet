@@ -1,18 +1,31 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { toast } from 'sonner';
-import { ChevronLeft, ChevronRight, FileDown, PawPrint, Pill, Trash2 } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { endOfDay, endOfMonth, startOfDay, startOfMonth } from 'date-fns';
+import {
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  FileDown,
+  PawPrint,
+  Pill,
+  Plus,
+  Trash2,
+} from 'lucide-react';
 import { ApiError } from '@/api/http';
+import { listAppointments } from '@/api/appointments';
 import { downloadPrescriptionPdf } from '@/api/consultations';
+import { ReturnSchedulePicker } from '@/components/consultation/return-schedule-picker';
+import { ParentConsultationReferenceDialog } from '@/components/consultation/parent-consultation-reference-dialog';
 import { PetWeightDialog } from '@/components/pet/pet-weight-dialog';
+import { ConsultationAttachmentsCard } from '@/components/consultation/consultation-attachments-card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { DatePicker } from '@/components/ui/date-picker';
+import { FormField } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
-import { Textarea } from '@/components/ui/textarea';
 import {
   Card,
   CardContent,
@@ -35,11 +48,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import {
@@ -47,12 +56,36 @@ import {
   pageTitleClassName,
   stickyActionBarClassName,
 } from '@/lib/mobile-ui';
+import { Textarea } from '@/components/ui/textarea';
+import { buildFormFieldId } from '@/lib/form-validation';
+import {
+  getConsultationDisplayStatusLabel,
+  isConsultationReadOnly,
+} from '@/lib/consultation-display';
+import {
+  formatDateTimeValue,
+  getTimePartFromDateTime,
+  parseDateTimeValue,
+} from '@/lib/date-input';
+import {
+  minutesToDurationDigits,
+} from '@/lib/duration-input';
+import { isTimeSlotAvailable } from '@/lib/schedule-availability';
+import {
+  prescriptionFormFields,
+  prescriptionFormSchema,
+  type PrescriptionFormField,
+} from '@/lib/prescription-form-validation';
+import { useFormFieldErrors } from '@/hooks/useFormFieldErrors';
 import { formatPetAge, formatPetWeight } from '@/lib/pet-format';
 import {
   useAddPrescription,
+  useCancelScheduledReturn,
   useConsultation,
+  useCreateReturnConsultation,
   useDeleteConsultation,
   useFinishConsultation,
+  useOpenReturnConsultationByParent,
   useRemovePrescription,
   useUpdateConsultation,
 } from '@/hooks/useConsultations';
@@ -74,6 +107,7 @@ import {
 const STEPS = [
   { id: 'anamnesis', label: 'Anamnese' },
   { id: 'diagnosis', label: 'Diagnóstico' },
+  { id: 'exams', label: 'Exames' },
   { id: 'prescription', label: 'Receita' },
   { id: 'return', label: 'Retorno' },
 ] as const;
@@ -85,19 +119,19 @@ function stepStorageKey(consultationId: string) {
 function inferStep(consultation: Consultation): number {
   const hasAnamnesis = Boolean(
     consultation.mainComplaint ||
-      consultation.history ||
-      consultation.physicalExam ||
-      consultation.weightKg ||
-      consultation.temperature,
+    consultation.history ||
+    consultation.physicalExam ||
+    consultation.weightKg ||
+    consultation.temperature,
   );
   const hasDiagnosis = Boolean(consultation.diagnosis || consultation.conduct);
 
   if (!hasAnamnesis) return 0;
   if (!hasDiagnosis) return 1;
-  if (!consultation.needsReturn && consultation.prescriptions.length === 0) {
+  if (consultation.prescriptions.length === 0) {
     return 2;
   }
-  return 3;
+  return 4;
 }
 
 function formatConsultationStart(startedAt: string) {
@@ -111,13 +145,97 @@ function formatConsultationStart(startedAt: string) {
   };
 }
 
+function consultationToAnamnesis(consultation: Consultation) {
+  return {
+    mainComplaint: consultation.mainComplaint ?? '',
+    history: consultation.history ?? '',
+    physicalExam: consultation.physicalExam ?? '',
+    temperature: consultation.temperature ?? '',
+    observations: consultation.observations ?? '',
+  };
+}
+
+function consultationToClinical(consultation: Consultation) {
+  return {
+    diagnosis: consultation.diagnosis ?? '',
+    conduct: consultation.conduct ?? '',
+  };
+}
+
+function consultationToReturnInfo(consultation: Consultation) {
+  return {
+    needsReturn: consultation.needsReturn,
+    returnDate: consultation.returnDate
+      ? formatDateTimeValue(new Date(consultation.returnDate))
+      : '',
+  };
+}
+
 export function ConsultationPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
   const stepRef = useRef<HTMLDivElement>(null);
-  const { data: consultation, isLoading, isError, isFetching } = useConsultation(id);
+  const {
+    data: consultation,
+    isLoading,
+    isError,
+    isFetching,
+  } = useConsultation(id);
   const updateConsultation = useUpdateConsultation();
+  const createReturnConsultation = useCreateReturnConsultation();
+  const cancelScheduledReturn = useCancelScheduledReturn();
+
+  const returnScheduledParentId =
+    consultation?.status === 'RETURN_SCHEDULED' &&
+    !consultation.parentConsultationId
+      ? consultation.id
+      : undefined;
+  const { data: openReturnChild } = useOpenReturnConsultationByParent(
+    returnScheduledParentId,
+  );
+
+  const returnLookupAnchor = consultation?.returnDate
+    ? new Date(consultation.returnDate)
+    : new Date();
+  const returnLookupRange = {
+    start: startOfMonth(returnLookupAnchor),
+    end: endOfMonth(returnLookupAnchor),
+  };
+
+  const { data: pendingReturnAppointment } = useQuery({
+    queryKey: [
+      'pending-return-appointment',
+      consultation?.id,
+      returnLookupRange.start.toISOString(),
+    ],
+    queryFn: async () => {
+      if (!consultation?.id) return null;
+
+      const appointments = await listAppointments({
+        start: returnLookupRange.start.toISOString(),
+        end: returnLookupRange.end.toISOString(),
+      });
+
+      return (
+        appointments.find(
+          (appointment) =>
+            appointment.sourceConsultationId === consultation.id &&
+            appointment.type === 'RETURN' &&
+            (appointment.status === 'SCHEDULED' ||
+              appointment.status === 'CONFIRMED'),
+        ) ?? null
+      );
+    },
+    enabled: Boolean(
+      consultation?.id &&
+        !consultation.parentConsultationId &&
+        (consultation.status === 'RETURN_SCHEDULED' ||
+          (consultation.status === 'OPEN' &&
+            (consultation.needsReturn || consultation.parentConsultationId))),
+    ),
+  });
+
   const addPrescription = useAddPrescription();
   const removePrescription = useRemovePrescription();
   const finishConsultation = useFinishConsultation();
@@ -126,6 +244,9 @@ export function ConsultationPage() {
 
   const [currentStep, setCurrentStep] = useState(0);
   const [cancelOpen, setCancelOpen] = useState(false);
+  const [cancelScheduledReturnOpen, setCancelScheduledReturnOpen] =
+    useState(false);
+  const [parentReferenceOpen, setParentReferenceOpen] = useState(false);
   const [weightDialogOpen, setWeightDialogOpen] = useState(false);
   const [pendingWeightKg, setPendingWeightKg] = useState<number | null>(null);
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
@@ -149,8 +270,14 @@ export function ConsultationPage() {
     needsReturn: false,
     returnDate: '',
   });
+  const [returnDurationMinutes, setReturnDurationMinutes] = useState(30);
+  const [returnDurationDigits, setReturnDurationDigits] = useState(() =>
+    minutesToDurationDigits(30),
+  );
 
-  const { data: weightRecords = [] } = usePetWeightRecords(consultation?.pet.id);
+  const { data: weightRecords = [] } = usePetWeightRecords(
+    consultation?.pet.id,
+  );
 
   const previousWeightKg = useMemo(() => {
     if (!consultation) return null;
@@ -169,8 +296,15 @@ export function ConsultationPage() {
   const displayedConsultationWeight =
     pendingWeightKg !== null
       ? String(pendingWeightKg)
-      : consultation?.weightKg ?? null;
+      : (consultation?.weightKg ?? null);
 
+  const [prescriptionFormOpen, setPrescriptionFormOpen] = useState(false);
+  const {
+    fieldErrors: prescriptionFieldErrors,
+    applyZodError: applyPrescriptionZodError,
+    clearFieldError: clearPrescriptionFieldError,
+    clearErrors: clearPrescriptionErrors,
+  } = useFormFieldErrors<PrescriptionFormField>('prescription');
   const [prescriptionForm, setPrescriptionForm] = useState({
     medicineName: '',
     dosage: '',
@@ -183,46 +317,69 @@ export function ConsultationPage() {
     quantity: '',
   });
 
-  useEffect(() => {
+  const [hydratedConsultationId, setHydratedConsultationId] = useState<
+    string | null
+  >(null);
+  const [
+    initializedStepForConsultationId,
+    setInitializedStepForConsultationId,
+  ] = useState<string | null>(null);
+  const [
+    appliedPendingReturnAppointmentId,
+    setAppliedPendingReturnAppointmentId,
+  ] = useState<string | null>(null);
+
+  if (consultation && consultation.id !== hydratedConsultationId) {
+    setHydratedConsultationId(consultation.id);
     setPendingWeightKg(null);
-  }, [consultation?.id]);
+    setAnamnesis(consultationToAnamnesis(consultation));
+    setClinical(consultationToClinical(consultation));
+    setReturnInfo(consultationToReturnInfo(consultation));
+    setReturnDurationMinutes(30);
+    setReturnDurationDigits(minutesToDurationDigits(30));
+    setAppliedPendingReturnAppointmentId(null);
+    setPrescriptionDocumentType(
+      consultation.prescriptionDocumentType ?? 'SIMPLE',
+    );
+  }
 
-  useEffect(() => {
-    if (!consultation) return;
+  if (
+    pendingReturnAppointment?.durationMinutes &&
+    pendingReturnAppointment.id !== appliedPendingReturnAppointmentId
+  ) {
+    setAppliedPendingReturnAppointmentId(pendingReturnAppointment.id);
+    setReturnDurationMinutes(pendingReturnAppointment.durationMinutes);
+    setReturnDurationDigits(
+      minutesToDurationDigits(pendingReturnAppointment.durationMinutes),
+    );
+  }
 
-    setAnamnesis({
-      mainComplaint: consultation.mainComplaint ?? '',
-      history: consultation.history ?? '',
-      physicalExam: consultation.physicalExam ?? '',
-      temperature: consultation.temperature ?? '',
-      observations: consultation.observations ?? '',
-    });
-
-    setClinical({
-      diagnosis: consultation.diagnosis ?? '',
-      conduct: consultation.conduct ?? '',
-    });
-
-    setReturnInfo({
-      needsReturn: consultation.needsReturn,
-      returnDate: consultation.returnDate
-        ? consultation.returnDate.slice(0, 10)
-        : '',
-    });
-
-    setPrescriptionDocumentType(consultation.prescriptionDocumentType ?? 'SIMPLE');
-  }, [consultation]);
-
-  useEffect(() => {
-    if (!consultation || consultation.status === 'FINISHED') return;
-
+  if (
+    consultation &&
+    consultation.status !== 'FINISHED' &&
+    consultation.status !== 'RETURN_SCHEDULED' &&
+    consultation.id !== initializedStepForConsultationId
+  ) {
     const stored = sessionStorage.getItem(stepStorageKey(consultation.id));
-    if (stored !== null) {
-      setCurrentStep(Number(stored));
-    } else {
-      setCurrentStep(inferStep(consultation));
+    setCurrentStep(stored !== null ? Number(stored) : inferStep(consultation));
+    setInitializedStepForConsultationId(consultation.id);
+  }
+
+  if (
+    consultation &&
+    (consultation.status === 'FINISHED' ||
+      consultation.status === 'RETURN_SCHEDULED') &&
+    consultation.id !== initializedStepForConsultationId
+  ) {
+    setInitializedStepForConsultationId(consultation.id);
+  }
+
+  function goToStep(step: number) {
+    setCurrentStep(step);
+    if (step !== 3) {
+      setPrescriptionFormOpen(false);
     }
-  }, [consultation?.id, consultation?.status]);
+  }
 
   useEffect(() => {
     if (!id || consultation?.status !== 'OPEN') return;
@@ -251,8 +408,7 @@ export function ConsultationPage() {
 
     if (pendingWeightKg === null) return;
 
-    const previous =
-      previousWeightKg != null ? Number(previousWeightKg) : null;
+    const previous = previousWeightKg != null ? Number(previousWeightKg) : null;
 
     if (previous !== null && pendingWeightKg === previous) {
       setPendingWeightKg(null);
@@ -290,12 +446,60 @@ export function ConsultationPage() {
       id,
       data: {
         needsReturn: returnInfo.needsReturn,
-        returnDate: returnInfo.returnDate || undefined,
+        returnDate: returnInfo.returnDate
+          ? new Date(returnInfo.returnDate).toISOString()
+          : undefined,
+        returnDurationMinutes: returnInfo.needsReturn
+          ? returnDurationMinutes
+          : undefined,
       },
     });
   }
 
-  async function handleDocumentTypeChange(value: PrescriptionDocumentType | null) {
+  async function validateReturnSchedule() {
+    if (!returnInfo.needsReturn) return true;
+
+    if (!returnInfo.returnDate) {
+      toast.error('Selecione data e horário do retorno.');
+      return false;
+    }
+
+    if (returnDurationMinutes <= 0) {
+      toast.error('Informe uma duração válida para o retorno.');
+      return false;
+    }
+
+    const parsed = parseDateTimeValue(returnInfo.returnDate);
+    if (!parsed || !user?.id) {
+      toast.error('Data ou horário do retorno inválidos.');
+      return false;
+    }
+
+    const appointments = await listAppointments({
+      start: startOfDay(parsed).toISOString(),
+      end: endOfDay(parsed).toISOString(),
+    });
+
+    const available = isTimeSlotAvailable(
+      parsed,
+      getTimePartFromDateTime(returnInfo.returnDate),
+      returnDurationMinutes,
+      appointments,
+      user.id,
+      pendingReturnAppointment?.id,
+    );
+
+    if (!available) {
+      toast.error('Horário indisponível. Escolha outro horário.');
+      return false;
+    }
+
+    return true;
+  }
+
+  async function handleDocumentTypeChange(
+    value: PrescriptionDocumentType | null,
+  ) {
     if (!id || !value) return;
 
     setPrescriptionDocumentType(value);
@@ -313,35 +517,15 @@ export function ConsultationPage() {
     try {
       await downloadPrescriptionPdf(id);
     } catch (err) {
-      toast.error(err instanceof ApiError ? err.message : 'Erro ao baixar receita');
+      toast.error(
+        err instanceof ApiError ? err.message : 'Erro ao baixar receita',
+      );
     } finally {
       setIsDownloadingPdf(false);
     }
   }
 
-  async function handleAddPrescription(event: React.FormEvent) {
-    event.preventDefault();
-    if (!id || !prescriptionForm.medicineName) return;
-
-    const routeOfAdministration =
-      prescriptionForm.routeOfAdministration === 'OUTRO'
-        ? prescriptionForm.customRoute || undefined
-        : prescriptionForm.routeOfAdministration;
-
-    await addPrescription.mutateAsync({
-      consultationId: id,
-      data: {
-        medicineName: prescriptionForm.medicineName,
-        dosage: prescriptionForm.dosage || undefined,
-        frequency: prescriptionForm.frequency || undefined,
-        duration: prescriptionForm.duration || undefined,
-        instructions: prescriptionForm.instructions || undefined,
-        routeOfAdministration,
-        pharmacyType: prescriptionForm.pharmacyType,
-        quantity: prescriptionForm.quantity || undefined,
-      },
-    });
-
+  function resetPrescriptionForm() {
     setPrescriptionForm({
       medicineName: '',
       dosage: '',
@@ -355,10 +539,56 @@ export function ConsultationPage() {
     });
   }
 
+  function handleCancelPrescriptionForm() {
+    resetPrescriptionForm();
+    clearPrescriptionErrors();
+    setPrescriptionFormOpen(false);
+  }
+
+  async function handleAddPrescription(event: React.FormEvent) {
+    event.preventDefault();
+    if (!id) return;
+
+    const parsed = prescriptionFormSchema.safeParse(prescriptionForm);
+
+    if (!parsed.success) {
+      applyPrescriptionZodError(parsed.error, prescriptionFormFields);
+      return;
+    }
+
+    clearPrescriptionErrors();
+
+    const routeOfAdministration =
+      parsed.data.routeOfAdministration === 'OUTRO'
+        ? parsed.data.customRoute!.trim()
+        : parsed.data.routeOfAdministration;
+
+    await addPrescription.mutateAsync({
+      consultationId: id,
+      data: {
+        medicineName: parsed.data.medicineName,
+        dosage: parsed.data.dosage,
+        frequency: parsed.data.frequency,
+        duration: parsed.data.duration,
+        instructions: parsed.data.instructions,
+        routeOfAdministration,
+        pharmacyType: parsed.data.pharmacyType,
+        quantity: parsed.data.quantity,
+      },
+    });
+
+    resetPrescriptionForm();
+    clearPrescriptionErrors();
+    setPrescriptionFormOpen(false);
+  }
+
   async function handleRemovePrescription(prescriptionId: string) {
     if (!id) return;
 
-    await removePrescription.mutateAsync({ consultationId: id, prescriptionId });
+    await removePrescription.mutateAsync({
+      consultationId: id,
+      prescriptionId,
+    });
   }
 
   async function handleContinue() {
@@ -369,12 +599,13 @@ export function ConsultationPage() {
         await handleSaveAnamnesis();
       } else if (currentStep === 1) {
         await handleSaveClinical();
-      } else if (currentStep === 3) {
+      } else if (currentStep === 4) {
+        if (!(await validateReturnSchedule())) return;
         await handleSaveReturn();
       }
 
       if (currentStep < STEPS.length - 1) {
-        setCurrentStep((step) => step + 1);
+        goToStep(currentStep + 1);
       }
     } catch (err) {
       toast.error(
@@ -387,6 +618,12 @@ export function ConsultationPage() {
     if (!id || !consultation) return;
 
     const hasPrescriptions = consultation.prescriptions.length > 0;
+    const schedulingReturn =
+      returnInfo.needsReturn && Boolean(returnInfo.returnDate);
+
+    if (!(await validateReturnSchedule())) {
+      return;
+    }
 
     try {
       await handleSaveReturn();
@@ -396,13 +633,29 @@ export function ConsultationPage() {
           diagnosis: clinical.diagnosis || undefined,
           conduct: clinical.conduct || undefined,
           needsReturn: returnInfo.needsReturn,
-          returnDate: returnInfo.returnDate || undefined,
+          returnDate: returnInfo.returnDate
+            ? new Date(returnInfo.returnDate).toISOString()
+            : undefined,
+          returnDurationMinutes: returnInfo.needsReturn
+            ? returnDurationMinutes
+            : undefined,
         },
       });
-      toast.success('Consulta finalizada! Notificação pós-consulta registrada.');
+
+      if (schedulingReturn) {
+        toast.success('Retorno agendado com sucesso!');
+        void navigate('/atendimento');
+        return;
+      }
+
+      toast.success(
+        'Consulta finalizada! Notificação pós-consulta registrada.',
+      );
 
       if (!hasPrescriptions) {
-        void navigate(`/tutors/${consultation.tutorId}/pets/${consultation.petId}`);
+        void navigate(
+          `/tutors/${consultation.tutorId}/pets/${consultation.petId}`,
+        );
       }
     } catch (err) {
       toast.error(
@@ -418,10 +671,19 @@ export function ConsultationPage() {
       await deleteConsultation.mutateAsync({
         id,
         petId: consultation.petId,
+        parentId: consultation.parentConsultationId ?? undefined,
       });
-      toast.success('Consulta cancelada.');
+      toast.success(
+        consultation.parentConsultationId
+          ? 'Retorno cancelado.'
+          : 'Consulta cancelada.',
+      );
       setCancelOpen(false);
-      void navigate(`/tutors/${consultation.tutorId}/pets/${consultation.petId}`);
+      void navigate(
+        consultation.parentConsultationId
+          ? `/consultations/${consultation.parentConsultationId}`
+          : `/tutors/${consultation.tutorId}/pets/${consultation.petId}`,
+      );
     } catch (err) {
       toast.error(
         err instanceof ApiError ? err.message : 'Erro ao cancelar consulta',
@@ -429,46 +691,98 @@ export function ConsultationPage() {
     }
   }
 
+  async function handleStartReturnFromDetail() {
+    if (!consultation) return;
+
+    try {
+      const child = await createReturnConsultation.mutateAsync({
+        parentId: consultation.id,
+        appointmentId: pendingReturnAppointment?.id,
+        petId: consultation.petId,
+      });
+      toast.success('Retorno iniciado');
+      void navigate(`/consultations/${child.id}`);
+    } catch (err) {
+      toast.error(
+        err instanceof ApiError ? err.message : 'Erro ao iniciar retorno',
+      );
+    }
+  }
+
+  async function handleConfirmCancelScheduledReturn() {
+    if (!consultation) return;
+
+    try {
+      await cancelScheduledReturn.mutateAsync({
+        parentId: consultation.id,
+        petId: consultation.petId,
+      });
+      toast.success('Retorno agendado cancelado.');
+      setCancelScheduledReturnOpen(false);
+      void navigate('/atendimento');
+    } catch (err) {
+      toast.error(
+        err instanceof ApiError
+          ? err.message
+          : 'Erro ao cancelar retorno agendado',
+      );
+    }
+  }
+
   if (isLoading || (isFetching && !consultation)) {
-    return <p className="text-muted-foreground">Carregando consulta...</p>;
+    return <p className='text-muted-foreground'>Carregando consulta...</p>;
   }
 
   if (isError || !consultation || consultation.id !== id) {
-    return <p className="text-muted-foreground">Consulta não encontrada.</p>;
+    return <p className='text-muted-foreground'>Consulta não encontrada.</p>;
   }
 
-  const isFinished = consultation.status === 'FINISHED';
+  const isReadOnly = isConsultationReadOnly(consultation);
+  const isReturnVisit = Boolean(consultation.parentConsultationId);
+  const isReturnScheduledParent =
+    consultation.status === 'RETURN_SCHEDULED' && !consultation.parentConsultationId;
   const isLastStep = currentStep === STEPS.length - 1;
+  const finishButtonLabel =
+    returnInfo.needsReturn && returnInfo.returnDate
+      ? 'Agendar retorno'
+      : isReturnVisit
+        ? 'Finalizar retorno'
+        : 'Finalizar consulta';
+  const consultationStatusLabel = getConsultationDisplayStatusLabel(consultation);
   const { date: startDate, time: startTime } = formatConsultationStart(
     consultation.startedAt,
   );
 
   return (
     <div className={pageShellClassName}>
-      <div className="flex flex-col gap-3">
-        <div className="min-w-0 space-y-3">
-          <div className="flex flex-wrap items-center gap-2">
-            <Badge variant={isFinished ? 'secondary' : 'default'}>
-              {isFinished ? 'Finalizada' : 'Em andamento'}
+      <div className='flex flex-col gap-3'>
+        <div className='min-w-0 space-y-3'>
+          <div className='flex flex-wrap items-center gap-2'>
+            <Badge variant={isReadOnly ? 'secondary' : 'default'}>
+              {consultationStatusLabel}
             </Badge>
           </div>
-          <h1 className={pageTitleClassName}>Consulta</h1>
-          <div className="space-y-2">
-            <div className="flex items-start gap-2.5">
-              <Avatar className="size-9 shrink-0 sm:size-10">
+          <h1 className={pageTitleClassName}>
+            {isReturnVisit ? 'Retorno' : 'Consulta'}
+          </h1>
+          <div className='space-y-2'>
+            <div className='flex items-start gap-2.5'>
+              <Avatar className='size-9 shrink-0 sm:size-10'>
                 {consultation.pet.photoUrl ? (
                   <AvatarImage
                     src={consultation.pet.photoUrl}
                     alt={consultation.pet.name}
                   />
                 ) : null}
-                <AvatarFallback className="bg-primary/10 text-primary">
-                  <PawPrint className="size-4" />
+                <AvatarFallback className='bg-primary/10 text-primary'>
+                  <PawPrint className='size-4' />
                 </AvatarFallback>
               </Avatar>
-              <div className="min-w-0">
-                <p className="text-base font-semibold sm:text-lg">{consultation.pet.name}</p>
-                <p className="mt-0.5 text-xs text-muted-foreground sm:text-sm">
+              <div className='min-w-0'>
+                <p className='text-base font-semibold sm:text-lg'>
+                  {consultation.pet.name}
+                </p>
+                <p className='mt-0.5 text-xs text-muted-foreground sm:text-sm'>
                   {consultation.pet.birthDate
                     ? formatPetAge(consultation.pet.birthDate)
                     : 'Idade não informada'}{' '}
@@ -479,33 +793,106 @@ export function ConsultationPage() {
                 </p>
               </div>
             </div>
-            <p className="text-sm font-medium sm:text-base">{consultation.tutor.name}</p>
-            <p className="text-xs text-muted-foreground sm:text-sm">
+            <p className='text-sm font-medium sm:text-base'>
+              {consultation.tutor.name}
+            </p>
+            <p className='text-xs text-muted-foreground sm:text-sm'>
               {startDate} · {startTime}
             </p>
-            <p className="text-xs text-muted-foreground sm:text-sm">
+            <p className='text-xs text-muted-foreground sm:text-sm'>
               Veterinário: {consultation.veterinarian.name}
             </p>
+            {isReturnScheduledParent && consultation.returnDate ? (
+              <p className='text-sm font-medium text-amber-800 dark:text-amber-200'>
+                Retorno agendado para{' '}
+                {new Date(consultation.returnDate).toLocaleString('pt-BR', {
+                  dateStyle: 'short',
+                  timeStyle: 'short',
+                })}
+              </p>
+            ) : null}
           </div>
         </div>
-        {!isFinished && (
+        {!isReadOnly && !isReturnVisit && (
           <Button
-            type="button"
-            variant="outline"
-            className="w-full text-destructive hover:text-destructive sm:w-auto sm:self-start"
+            type='button'
+            variant='outline'
+            className='w-full text-destructive hover:text-destructive sm:w-auto sm:self-start'
             onClick={() => setCancelOpen(true)}
             disabled={isFetching || deleteConsultation.isPending}
           >
             Cancelar consulta
           </Button>
         )}
-        {isFinished && (
+        {!isReadOnly && isReturnVisit && (
           <Button
-            type="button"
-            variant="outline"
-            className="w-full sm:w-auto sm:self-start"
+            type='button'
+            variant='outline'
+            className='w-full text-destructive hover:text-destructive sm:w-auto sm:self-start'
+            onClick={() => setCancelOpen(true)}
+            disabled={isFetching || deleteConsultation.isPending}
+          >
+            Cancelar retorno
+          </Button>
+        )}
+        {isReturnScheduledParent ? (
+          <div className='flex flex-wrap gap-2'>
+            {openReturnChild ? (
+              <Button
+                type='button'
+                className='w-full sm:w-auto'
+                onClick={() =>
+                  void navigate(`/consultations/${openReturnChild.id}`)
+                }
+              >
+                Continuar retorno
+              </Button>
+            ) : (
+              <>
+                <Button
+                  type='button'
+                  className='w-full sm:w-auto'
+                  disabled={createReturnConsultation.isPending}
+                  onClick={() => void handleStartReturnFromDetail()}
+                >
+                  {createReturnConsultation.isPending
+                    ? 'Iniciando...'
+                    : 'Iniciar retorno'}
+                </Button>
+                <Button
+                  type='button'
+                  variant='outline'
+                  className='w-full text-destructive hover:text-destructive sm:w-auto'
+                  disabled={cancelScheduledReturn.isPending}
+                  onClick={() => setCancelScheduledReturnOpen(true)}
+                >
+                  Cancelar retorno
+                </Button>
+              </>
+            )}
+            <Button
+              type='button'
+              variant='outline'
+              className='w-full sm:w-auto'
+              render={
+                <Link
+                  to={`/tutors/${consultation.tutorId}/pets/${consultation.petId}`}
+                />
+              }
+            >
+              Ir para ficha do pet
+            </Button>
+          </div>
+        ) : null}
+        {isReadOnly && !isReturnScheduledParent && (
+          <Button
+            type='button'
+            variant='outline'
+            className='w-full sm:w-auto sm:self-start'
             render={
-              <Link to={`/tutors/${consultation.tutorId}/pets/${consultation.petId}`} />
+              <Link
+                to={`/tutors/${consultation.tutorId}/pets/${consultation.petId}`}
+              />
             }
           >
             Ir para ficha do pet
@@ -513,32 +900,71 @@ export function ConsultationPage() {
         )}
       </div>
 
-      {!isFinished && (
-        <nav className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 scrollbar-none sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">
-          {STEPS.map((step, index) => (
-            <button
-              key={step.id}
-              type="button"
-              onClick={() => index <= currentStep && setCurrentStep(index)}
-              disabled={index > currentStep}
-              className={cn(
-                'flex shrink-0 items-center gap-2 rounded-full border px-3 py-2 text-sm transition-colors',
-                index === currentStep
-                  ? 'border-primary bg-primary text-primary-foreground'
-                  : index < currentStep
-                    ? 'border-primary/30 bg-primary/10 text-primary'
-                    : 'border-border text-muted-foreground',
-              )}
+      {!isReadOnly && (
+        <div className='flex items-center justify-between gap-3'>
+          <nav className='-mx-4 flex min-w-0 flex-1 gap-1.5 overflow-x-auto px-4 pb-1 scrollbar-none sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0'>
+            {STEPS.map((step, index) => {
+              const isCompleted = index < currentStep;
+              const isCurrent = index === currentStep;
+
+              return (
+                <button
+                  key={step.id}
+                  type='button'
+                  onClick={() => isCompleted && goToStep(index)}
+                  disabled={index > currentStep}
+                  className={cn(
+                    'flex shrink-0 items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-medium transition-colors',
+                    isCurrent &&
+                      'border-primary bg-primary text-primary-foreground',
+                    isCompleted &&
+                      'border-amber-200/80 bg-amber-100 text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/15 dark:text-amber-200',
+                    !isCurrent &&
+                      !isCompleted &&
+                      'border-border bg-background text-muted-foreground',
+                  )}
+                >
+                  {isCompleted ? (
+                    <Check className='size-3 shrink-0' strokeWidth={2.5} />
+                  ) : (
+                    <span className='tabular-nums'>{index + 1}.</span>
+                  )}
+                  {step.label}
+                </button>
+              );
+            })}
+          </nav>
+
+          {isReturnVisit && consultation.parentConsultationId ? (
+            <Button
+              type='button'
+              variant='outline'
+              size='sm'
+              className='hidden shrink-0 sm:inline-flex'
+              onClick={() => setParentReferenceOpen(true)}
             >
-              <span className="font-medium">{index + 1}.</span>
-              {step.label}
-            </button>
-          ))}
-        </nav>
+              Ver consulta anterior
+            </Button>
+          ) : null}
+        </div>
       )}
 
+      {!isReadOnly &&
+      isReturnVisit &&
+      consultation.parentConsultationId ? (
+        <Button
+          type='button'
+          variant='outline'
+          size='sm'
+          className='w-full sm:hidden'
+          onClick={() => setParentReferenceOpen(true)}
+        >
+          Ver consulta anterior
+        </Button>
+      ) : null}
+
       <div ref={stepRef}>
-        {(isFinished || currentStep === 0) && (
+        {(isReadOnly || currentStep === 0) && (
           <Card>
             <CardHeader>
               <CardTitle>1. Anamnese</CardTitle>
@@ -546,13 +972,13 @@ export function ConsultationPage() {
                 Queixa principal, histórico e exame físico.
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 gap-4">
-                <div className="space-y-2">
+            <CardContent className='space-y-4'>
+              <div className='grid grid-cols-1 gap-4'>
+                <div className='space-y-2'>
                   <Label>Queixa principal</Label>
                   <Textarea
                     value={anamnesis.mainComplaint}
-                    disabled={isFinished}
+                    disabled={isReadOnly}
                     onChange={(e) =>
                       setAnamnesis((prev) => ({
                         ...prev,
@@ -561,21 +987,24 @@ export function ConsultationPage() {
                     }
                   />
                 </div>
-                <div className="space-y-2">
+                <div className='space-y-2'>
                   <Label>Histórico</Label>
                   <Textarea
                     value={anamnesis.history}
-                    disabled={isFinished}
+                    disabled={isReadOnly}
                     onChange={(e) =>
-                      setAnamnesis((prev) => ({ ...prev, history: e.target.value }))
+                      setAnamnesis((prev) => ({
+                        ...prev,
+                        history: e.target.value,
+                      }))
                     }
                   />
                 </div>
-                <div className="space-y-2">
+                <div className='space-y-2'>
                   <Label>Exame físico</Label>
                   <Textarea
                     value={anamnesis.physicalExam}
-                    disabled={isFinished}
+                    disabled={isReadOnly}
                     onChange={(e) =>
                       setAnamnesis((prev) => ({
                         ...prev,
@@ -584,17 +1013,17 @@ export function ConsultationPage() {
                     }
                   />
                 </div>
-                <div className="space-y-2">
+                <div className='space-y-2'>
                   <Label>Peso (kg)</Label>
-                  <p className="text-xs text-muted-foreground">
+                  <p className='text-xs text-muted-foreground'>
                     Peso anterior:{' '}
                     {previousWeightKg
                       ? formatPetWeight(previousWeightKg)
                       : 'Não informado'}
                   </p>
                   <button
-                    type="button"
-                    disabled={isFinished}
+                    type='button'
+                    disabled={isReadOnly}
                     onClick={() => setWeightDialogOpen(true)}
                     className={cn(
                       'flex h-9 w-full items-center rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-colors',
@@ -612,13 +1041,13 @@ export function ConsultationPage() {
                         : 'Informar peso'}
                   </button>
                 </div>
-                <div className="space-y-2">
+                <div className='space-y-2'>
                   <Label>Temperatura (°C)</Label>
                   <Input
-                    type="number"
-                    step="0.1"
+                    type='number'
+                    step='0.1'
                     value={anamnesis.temperature}
-                    disabled={isFinished}
+                    disabled={isReadOnly}
                     onChange={(e) =>
                       setAnamnesis((prev) => ({
                         ...prev,
@@ -627,11 +1056,11 @@ export function ConsultationPage() {
                     }
                   />
                 </div>
-                <div className="space-y-2">
+                <div className='space-y-2'>
                   <Label>Observações</Label>
                   <Textarea
                     value={anamnesis.observations}
-                    disabled={isFinished}
+                    disabled={isReadOnly}
                     onChange={(e) =>
                       setAnamnesis((prev) => ({
                         ...prev,
@@ -645,29 +1074,37 @@ export function ConsultationPage() {
           </Card>
         )}
 
-        {(isFinished || currentStep === 1) && (
-          <Card className={!isFinished && currentStep === 1 ? '' : 'mt-4 sm:mt-6'}>
+        {(isReadOnly || currentStep === 1) && (
+          <Card
+            className={!isReadOnly && currentStep === 1 ? '' : 'mt-4 sm:mt-6'}
+          >
             <CardHeader>
               <CardTitle>2. Diagnóstico e conduta</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
+            <CardContent className='space-y-4'>
+              <div className='space-y-2'>
                 <Label>Diagnóstico</Label>
                 <Textarea
                   value={clinical.diagnosis}
-                  disabled={isFinished}
+                  disabled={isReadOnly}
                   onChange={(e) =>
-                    setClinical((prev) => ({ ...prev, diagnosis: e.target.value }))
+                    setClinical((prev) => ({
+                      ...prev,
+                      diagnosis: e.target.value,
+                    }))
                   }
                 />
               </div>
-              <div className="space-y-2">
+              <div className='space-y-2'>
                 <Label>Conduta</Label>
                 <Textarea
                   value={clinical.conduct}
-                  disabled={isFinished}
+                  disabled={isReadOnly}
                   onChange={(e) =>
-                    setClinical((prev) => ({ ...prev, conduct: e.target.value }))
+                    setClinical((prev) => ({
+                      ...prev,
+                      conduct: e.target.value,
+                    }))
                   }
                 />
               </div>
@@ -675,51 +1112,74 @@ export function ConsultationPage() {
           </Card>
         )}
 
-        {(isFinished || currentStep === 2) && (
-          <Card className="mt-4 sm:mt-6">
-            <CardHeader className="gap-3 sm:flex-row sm:items-start sm:justify-between">
-              <div className="space-y-1">
-                <CardTitle>3. Receita</CardTitle>
-                <CardDescription>Medicamentos prescritos na consulta.</CardDescription>
+        {(isReadOnly || currentStep === 2) && id ? (
+          <ConsultationAttachmentsCard
+            consultationId={id}
+            petId={consultation.petId}
+            attachments={consultation.attachments ?? []}
+            canManage={
+              consultation.status === 'OPEN' ||
+              consultation.status === 'FINISHED'
+            }
+            className={
+              !isReadOnly && currentStep === 2 ? 'mt-0! sm:mt-0!' : undefined
+            }
+          />
+        ) : null}
+
+        {(isReadOnly || currentStep === 3) && (
+          <Card className='mt-4 sm:mt-6'>
+            <CardHeader className='gap-3 sm:flex-row sm:items-start sm:justify-between'>
+              <div className='space-y-1'>
+                <CardTitle>4. Receita</CardTitle>
+                <CardDescription>
+                  Medicamentos prescritos na consulta.
+                </CardDescription>
               </div>
-              {isFinished && consultation.prescriptions.length > 0 && (
+              {isReadOnly && consultation.prescriptions.length > 0 && (
                 <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full sm:w-auto"
+                  type='button'
+                  variant='outline'
+                  className='w-full sm:w-auto'
                   onClick={() => void handleDownloadPrescription()}
                   disabled={isDownloadingPdf}
                 >
-                  <FileDown className="size-4" />
+                  <FileDown className='size-4' />
                   {isDownloadingPdf ? 'Baixando...' : 'Baixar receita (PDF)'}
                 </Button>
               )}
             </CardHeader>
-            <CardContent className="space-y-4">
-              {!isFinished && currentStep === 2 && (
-                <div className="space-y-2">
+            <CardContent className='space-y-4'>
+              {!isReadOnly && currentStep === 3 && (
+                <div className='space-y-2'>
                   <Label>Tipo de receita</Label>
                   <Select
                     items={[
-                      { value: 'SIMPLE', label: PRESCRIPTION_DOCUMENT_TYPE_LABELS.SIMPLE },
+                      {
+                        value: 'SIMPLE',
+                        label: PRESCRIPTION_DOCUMENT_TYPE_LABELS.SIMPLE,
+                      },
                       {
                         value: 'SPECIAL_CONTROL',
-                        label: PRESCRIPTION_DOCUMENT_TYPE_LABELS.SPECIAL_CONTROL,
+                        label:
+                          PRESCRIPTION_DOCUMENT_TYPE_LABELS.SPECIAL_CONTROL,
                       },
                     ]}
                     value={prescriptionDocumentType}
                     onValueChange={(value) =>
-                      void handleDocumentTypeChange(value as PrescriptionDocumentType | null)
+                      void handleDocumentTypeChange(
+                        value as PrescriptionDocumentType | null,
+                      )
                     }
                   >
-                    <SelectTrigger className="w-full sm:max-w-xs">
+                    <SelectTrigger className='w-full sm:max-w-xs'>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="SIMPLE">
+                      <SelectItem value='SIMPLE'>
                         {PRESCRIPTION_DOCUMENT_TYPE_LABELS.SIMPLE}
                       </SelectItem>
-                      <SelectItem value="SPECIAL_CONTROL">
+                      <SelectItem value='SPECIAL_CONTROL'>
                         {PRESCRIPTION_DOCUMENT_TYPE_LABELS.SPECIAL_CONTROL}
                       </SelectItem>
                     </SelectContent>
@@ -728,12 +1188,15 @@ export function ConsultationPage() {
               )}
 
               {!user?.crmv &&
-                !isFinished &&
-                currentStep === 2 &&
+                !isReadOnly &&
+                currentStep === 3 &&
                 consultation.prescriptions.length > 0 && (
-                  <p className="rounded-lg border border-dashed bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
+                  <p className='rounded-lg border border-dashed bg-muted/40 px-3 py-2 text-sm text-muted-foreground'>
                     Cadastre seu CRMV em{' '}
-                    <Link to="/perfil" className="font-medium text-primary underline-offset-4 hover:underline">
+                    <Link
+                      to='/perfil'
+                      className='font-medium text-primary underline-offset-4 hover:underline'
+                    >
                       Meu perfil
                     </Link>{' '}
                     para incluí-lo na receita impressa.
@@ -741,12 +1204,15 @@ export function ConsultationPage() {
                 )}
 
               {!user?.signatureUrl &&
-                !isFinished &&
-                currentStep === 2 &&
+                !isReadOnly &&
+                currentStep === 3 &&
                 consultation.prescriptions.length > 0 && (
-                  <p className="rounded-lg border border-dashed bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
+                  <p className='rounded-lg border border-dashed bg-muted/40 px-3 py-2 text-sm text-muted-foreground'>
                     Cadastre sua assinatura em{' '}
-                    <Link to="/perfil" className="font-medium text-primary underline-offset-4 hover:underline">
+                    <Link
+                      to='/perfil'
+                      className='font-medium text-primary underline-offset-4 hover:underline'
+                    >
                       Meu perfil
                     </Link>{' '}
                     para incluí-la no final da receita em PDF.
@@ -754,11 +1220,11 @@ export function ConsultationPage() {
                 )}
 
               {consultation.prescriptions.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
+                <p className='text-sm text-muted-foreground'>
                   Nenhum medicamento adicionado.
                 </p>
               ) : (
-                <div className="space-y-2">
+                <div className='space-y-2'>
                   {consultation.prescriptions.map((item) => {
                     const details = [item.dosage, item.frequency, item.duration]
                       .filter(Boolean)
@@ -776,33 +1242,41 @@ export function ConsultationPage() {
                     return (
                       <div
                         key={item.id}
-                        className="flex items-center gap-3 rounded-lg border bg-card p-3"
+                        className='flex items-center gap-3 rounded-lg border bg-card p-3'
                       >
-                        <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                          <Pill className="size-4" />
+                        <div className='flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary'>
+                          <Pill className='size-4' />
                         </div>
-                        <div className="min-w-0 flex-1 space-y-0.5">
-                          <p className="font-medium leading-snug">{item.medicineName}</p>
+                        <div className='min-w-0 flex-1 space-y-0.5'>
+                          <p className='font-medium leading-snug'>
+                            {item.medicineName}
+                          </p>
                           {meta ? (
-                            <p className="text-xs text-muted-foreground">{meta}</p>
+                            <p className='text-xs text-muted-foreground'>
+                              {meta}
+                            </p>
                           ) : null}
                           {details ? (
-                            <p className="text-sm text-muted-foreground">{details}</p>
+                            <p className='text-sm text-muted-foreground'>
+                              {details}
+                            </p>
                           ) : null}
                           {item.instructions ? (
-                            <p className="text-xs text-muted-foreground">{item.instructions}</p>
+                            <p className='text-xs text-muted-foreground'>
+                              {item.instructions}
+                            </p>
                           ) : null}
                         </div>
-                        {!isFinished && currentStep === 2 && (
+                        {!isReadOnly && currentStep === 3 && (
                           <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon-sm"
-                            className="shrink-0 text-muted-foreground hover:text-destructive"
+                            type='button'
+                            variant='ghost'
+                            size='icon-sm'
+                            className='shrink-0 text-muted-foreground hover:text-destructive'
                             aria-label={`Remover ${item.medicineName}`}
                             onClick={() => handleRemovePrescription(item.id)}
                           >
-                            <Trash2 className="size-4" />
+                            <Trash2 className='size-4' />
                           </Button>
                         )}
                       </div>
@@ -811,251 +1285,397 @@ export function ConsultationPage() {
                 </div>
               )}
 
-              {!isFinished && currentStep === 2 && (
-                <>
-                  <Separator />
-                  <form
-                    onSubmit={handleAddPrescription}
-                    className="grid grid-cols-1 gap-3 sm:grid-cols-2"
-                  >
-                    <div className="space-y-2 sm:col-span-2">
-                      <Label>Medicamento</Label>
-                      <Input
-                        value={prescriptionForm.medicineName}
-                        onChange={(e) =>
-                          setPrescriptionForm((prev) => ({
-                            ...prev,
-                            medicineName: e.target.value,
-                          }))
-                        }
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Via de administração</Label>
-                      <Select
-                        items={[
-                          ...PRESCRIPTION_ROUTE_OPTIONS.map((route) => ({
-                            value: route,
-                            label: route,
-                          })),
-                          { value: 'OUTRO', label: 'Outro' },
-                        ]}
-                        value={prescriptionForm.routeOfAdministration}
-                        onValueChange={(value) =>
-                          setPrescriptionForm((prev) => ({
-                            ...prev,
-                            routeOfAdministration: value ?? 'USO ORAL',
-                          }))
-                        }
+              {!isReadOnly && currentStep === 3 && !prescriptionFormOpen && (
+                <Button
+                  type='button'
+                  variant='outline'
+                  className='w-full sm:w-auto'
+                  onClick={() => {
+                    clearPrescriptionErrors();
+                    setPrescriptionFormOpen(true);
+                  }}
+                >
+                  <Plus className='size-4' />
+                  Adicionar medicamento
+                </Button>
+              )}
+
+              {!isReadOnly && currentStep === 3 && (
+                <div
+                  className={cn(
+                    'grid transition-[grid-template-rows,opacity,margin] duration-300 ease-out',
+                    prescriptionFormOpen
+                      ? 'mt-0 grid-rows-[1fr] opacity-100'
+                      : 'mt-0 grid-rows-[0fr] opacity-0',
+                  )}
+                >
+                  <div className='min-h-0 overflow-hidden'>
+                    <form
+                      onSubmit={handleAddPrescription}
+                      className='grid grid-cols-1 gap-3 rounded-lg border border-dashed bg-muted/20 p-4 sm:grid-cols-2'
+                    >
+                      <FormField
+                        id={buildFormFieldId('prescription', 'medicineName')}
+                        label='Medicamento *'
+                        error={prescriptionFieldErrors.medicineName}
+                        className='sm:col-span-2'
                       >
-                        <SelectTrigger className="w-full">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {PRESCRIPTION_ROUTE_OPTIONS.map((route) => (
-                            <SelectItem key={route} value={route}>
-                              {route}
-                            </SelectItem>
-                          ))}
-                          <SelectItem value="OUTRO">Outro</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    {prescriptionForm.routeOfAdministration === 'OUTRO' && (
-                      <div className="space-y-2">
-                        <Label>Via personalizada</Label>
                         <Input
-                          value={prescriptionForm.customRoute}
-                          onChange={(e) =>
+                          id={buildFormFieldId('prescription', 'medicineName')}
+                          value={prescriptionForm.medicineName}
+                          aria-invalid={Boolean(
+                            prescriptionFieldErrors.medicineName,
+                          )}
+                          onChange={(e) => {
                             setPrescriptionForm((prev) => ({
                               ...prev,
-                              customRoute: e.target.value,
-                            }))
-                          }
-                          placeholder="Ex.: USO AURICULAR"
+                              medicineName: e.target.value,
+                            }));
+                            clearPrescriptionFieldError('medicineName');
+                          }}
                         />
-                      </div>
-                    )}
-                    <div className="space-y-2">
-                      <Label>Tipo de farmácia</Label>
-                      <Select
-                        items={[
-                          { value: 'VETERINARY', label: PRESCRIPTION_PHARMACY_TYPE_LABELS.VETERINARY },
-                          { value: 'HUMAN', label: PRESCRIPTION_PHARMACY_TYPE_LABELS.HUMAN },
-                        ]}
-                        value={prescriptionForm.pharmacyType}
-                        onValueChange={(value) =>
-                          setPrescriptionForm((prev) => ({
-                            ...prev,
-                            pharmacyType: (value ?? 'VETERINARY') as PrescriptionPharmacyType,
-                          }))
-                        }
+                      </FormField>
+                      <FormField
+                        id={buildFormFieldId(
+                          'prescription',
+                          'routeOfAdministration',
+                        )}
+                        label='Via de administração *'
+                        error={prescriptionFieldErrors.routeOfAdministration}
                       >
-                        <SelectTrigger className="w-full">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="VETERINARY">
-                            {PRESCRIPTION_PHARMACY_TYPE_LABELS.VETERINARY}
-                          </SelectItem>
-                          <SelectItem value="HUMAN">
-                            {PRESCRIPTION_PHARMACY_TYPE_LABELS.HUMAN}
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Quantidade</Label>
-                      <Input
-                        value={prescriptionForm.quantity}
-                        onChange={(e) =>
-                          setPrescriptionForm((prev) => ({
-                            ...prev,
-                            quantity: e.target.value,
-                          }))
-                        }
-                        placeholder="Ex.: 4 UNIDADES"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Dosagem</Label>
-                      <Input
-                        value={prescriptionForm.dosage}
-                        onChange={(e) =>
-                          setPrescriptionForm((prev) => ({
-                            ...prev,
-                            dosage: e.target.value,
-                          }))
-                        }
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Frequência</Label>
-                      <Input
-                        value={prescriptionForm.frequency}
-                        onChange={(e) =>
-                          setPrescriptionForm((prev) => ({
-                            ...prev,
-                            frequency: e.target.value,
-                          }))
-                        }
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Duração</Label>
-                      <Input
-                        value={prescriptionForm.duration}
-                        onChange={(e) =>
-                          setPrescriptionForm((prev) => ({
-                            ...prev,
-                            duration: e.target.value,
-                          }))
-                        }
-                        placeholder="Ex.: 30 dias"
-                      />
-                    </div>
-                    <div className="space-y-2 sm:col-span-2">
-                      <Label>Instruções</Label>
-                      <Textarea
-                        value={prescriptionForm.instructions}
-                        onChange={(e) =>
-                          setPrescriptionForm((prev) => ({
-                            ...prev,
-                            instructions: e.target.value,
-                          }))
-                        }
-                        placeholder="Ex.: Dar 6 ml a cada 12 horas"
-                      />
-                    </div>
-                    <div className="space-y-2 sm:col-span-2">
-                      <Button type="submit" className="w-full sm:w-auto" disabled={addPrescription.isPending}>
-                        Adicionar medicamento
-                      </Button>
-                    </div>
-                  </form>
-                </>
-              )}
-            </CardContent>
-          </Card>
-        )}
-
-        {(isFinished || currentStep === 3) && (
-          <Card className="mt-4 sm:mt-6">
-            <CardHeader>
-              <CardTitle>4. Retorno</CardTitle>
-              <CardDescription>
-                Agende retorno se necessário e finalize a consulta.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex min-h-11 items-center gap-3">
-                <Checkbox
-                  id="needsReturn"
-                  checked={returnInfo.needsReturn}
-                  disabled={isFinished}
-                  onCheckedChange={(checked) =>
-                    setReturnInfo((prev) => ({
-                      ...prev,
-                      needsReturn: checked === true,
-                    }))
-                  }
-                />
-                <Label htmlFor="needsReturn" className="cursor-pointer">
-                  Necessita retorno
-                </Label>
-              </div>
-              {returnInfo.needsReturn && (
-                <div className="space-y-2">
-                  <Label>Data do retorno</Label>
-                  <DatePicker
-                    value={returnInfo.returnDate}
-                    disabled={isFinished}
-                    fromDate={new Date()}
-                    onChange={(returnDate) =>
-                      setReturnInfo((prev) => ({
-                        ...prev,
-                        returnDate,
-                      }))
-                    }
-                  />
+                        <Select
+                          items={[
+                            ...PRESCRIPTION_ROUTE_OPTIONS.map((route) => ({
+                              value: route,
+                              label: route,
+                            })),
+                            { value: 'OUTRO', label: 'Outro' },
+                          ]}
+                          value={prescriptionForm.routeOfAdministration}
+                          onValueChange={(value) => {
+                            setPrescriptionForm((prev) => ({
+                              ...prev,
+                              routeOfAdministration: value ?? 'USO ORAL',
+                            }));
+                            clearPrescriptionFieldError(
+                              'routeOfAdministration',
+                            );
+                            clearPrescriptionFieldError('customRoute');
+                          }}
+                        >
+                          <SelectTrigger
+                            id={buildFormFieldId(
+                              'prescription',
+                              'routeOfAdministration',
+                            )}
+                            className='w-full'
+                            aria-invalid={Boolean(
+                              prescriptionFieldErrors.routeOfAdministration,
+                            )}
+                          >
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {PRESCRIPTION_ROUTE_OPTIONS.map((route) => (
+                              <SelectItem key={route} value={route}>
+                                {route}
+                              </SelectItem>
+                            ))}
+                            <SelectItem value='OUTRO'>Outro</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </FormField>
+                      {prescriptionForm.routeOfAdministration === 'OUTRO' && (
+                        <FormField
+                          id={buildFormFieldId('prescription', 'customRoute')}
+                          label='Via personalizada *'
+                          error={prescriptionFieldErrors.customRoute}
+                        >
+                          <Input
+                            id={buildFormFieldId('prescription', 'customRoute')}
+                            value={prescriptionForm.customRoute}
+                            aria-invalid={Boolean(
+                              prescriptionFieldErrors.customRoute,
+                            )}
+                            onChange={(e) => {
+                              setPrescriptionForm((prev) => ({
+                                ...prev,
+                                customRoute: e.target.value,
+                              }));
+                              clearPrescriptionFieldError('customRoute');
+                            }}
+                            placeholder='Ex.: USO AURICULAR'
+                          />
+                        </FormField>
+                      )}
+                      <FormField
+                        id={buildFormFieldId('prescription', 'pharmacyType')}
+                        label='Tipo de farmácia *'
+                        error={prescriptionFieldErrors.pharmacyType}
+                      >
+                        <Select
+                          items={[
+                            {
+                              value: 'VETERINARY',
+                              label:
+                                PRESCRIPTION_PHARMACY_TYPE_LABELS.VETERINARY,
+                            },
+                            {
+                              value: 'HUMAN',
+                              label: PRESCRIPTION_PHARMACY_TYPE_LABELS.HUMAN,
+                            },
+                          ]}
+                          value={prescriptionForm.pharmacyType}
+                          onValueChange={(value) => {
+                            setPrescriptionForm((prev) => ({
+                              ...prev,
+                              pharmacyType: (value ??
+                                'VETERINARY') as PrescriptionPharmacyType,
+                            }));
+                            clearPrescriptionFieldError('pharmacyType');
+                          }}
+                        >
+                          <SelectTrigger
+                            id={buildFormFieldId(
+                              'prescription',
+                              'pharmacyType',
+                            )}
+                            className='w-full'
+                            aria-invalid={Boolean(
+                              prescriptionFieldErrors.pharmacyType,
+                            )}
+                          >
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value='VETERINARY'>
+                              {PRESCRIPTION_PHARMACY_TYPE_LABELS.VETERINARY}
+                            </SelectItem>
+                            <SelectItem value='HUMAN'>
+                              {PRESCRIPTION_PHARMACY_TYPE_LABELS.HUMAN}
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </FormField>
+                      <FormField
+                        id={buildFormFieldId('prescription', 'quantity')}
+                        label='Quantidade *'
+                        error={prescriptionFieldErrors.quantity}
+                      >
+                        <Input
+                          id={buildFormFieldId('prescription', 'quantity')}
+                          value={prescriptionForm.quantity}
+                          aria-invalid={Boolean(
+                            prescriptionFieldErrors.quantity,
+                          )}
+                          onChange={(e) => {
+                            setPrescriptionForm((prev) => ({
+                              ...prev,
+                              quantity: e.target.value,
+                            }));
+                            clearPrescriptionFieldError('quantity');
+                          }}
+                          placeholder='Ex.: 4 UNIDADES'
+                        />
+                      </FormField>
+                      <FormField
+                        id={buildFormFieldId('prescription', 'dosage')}
+                        label='Dosagem *'
+                        error={prescriptionFieldErrors.dosage}
+                      >
+                        <Input
+                          id={buildFormFieldId('prescription', 'dosage')}
+                          value={prescriptionForm.dosage}
+                          aria-invalid={Boolean(prescriptionFieldErrors.dosage)}
+                          onChange={(e) => {
+                            setPrescriptionForm((prev) => ({
+                              ...prev,
+                              dosage: e.target.value,
+                            }));
+                            clearPrescriptionFieldError('dosage');
+                          }}
+                        />
+                      </FormField>
+                      <FormField
+                        id={buildFormFieldId('prescription', 'frequency')}
+                        label='Frequência *'
+                        error={prescriptionFieldErrors.frequency}
+                      >
+                        <Input
+                          id={buildFormFieldId('prescription', 'frequency')}
+                          value={prescriptionForm.frequency}
+                          aria-invalid={Boolean(
+                            prescriptionFieldErrors.frequency,
+                          )}
+                          onChange={(e) => {
+                            setPrescriptionForm((prev) => ({
+                              ...prev,
+                              frequency: e.target.value,
+                            }));
+                            clearPrescriptionFieldError('frequency');
+                          }}
+                        />
+                      </FormField>
+                      <FormField
+                        id={buildFormFieldId('prescription', 'duration')}
+                        label='Duração *'
+                        error={prescriptionFieldErrors.duration}
+                      >
+                        <Input
+                          id={buildFormFieldId('prescription', 'duration')}
+                          value={prescriptionForm.duration}
+                          aria-invalid={Boolean(
+                            prescriptionFieldErrors.duration,
+                          )}
+                          onChange={(e) => {
+                            setPrescriptionForm((prev) => ({
+                              ...prev,
+                              duration: e.target.value,
+                            }));
+                            clearPrescriptionFieldError('duration');
+                          }}
+                          placeholder='Ex.: 30 dias'
+                        />
+                      </FormField>
+                      <FormField
+                        id={buildFormFieldId('prescription', 'instructions')}
+                        label='Instruções *'
+                        error={prescriptionFieldErrors.instructions}
+                        className='sm:col-span-2'
+                      >
+                        <Textarea
+                          id={buildFormFieldId('prescription', 'instructions')}
+                          value={prescriptionForm.instructions}
+                          aria-invalid={Boolean(
+                            prescriptionFieldErrors.instructions,
+                          )}
+                          onChange={(e) => {
+                            setPrescriptionForm((prev) => ({
+                              ...prev,
+                              instructions: e.target.value,
+                            }));
+                            clearPrescriptionFieldError('instructions');
+                          }}
+                          placeholder='Ex.: Dar 6 ml a cada 12 horas'
+                        />
+                      </FormField>
+                      <div className='flex justify-end gap-2 sm:col-span-2'>
+                        <Button
+                          type='button'
+                          variant='outline'
+                          onClick={handleCancelPrescriptionForm}
+                          disabled={addPrescription.isPending}
+                        >
+                          Cancelar
+                        </Button>
+                        <Button
+                          type='submit'
+                          disabled={addPrescription.isPending}
+                        >
+                          {addPrescription.isPending
+                            ? 'Adicionando...'
+                            : 'Adicionar'}
+                        </Button>
+                      </div>
+                    </form>
+                  </div>
                 </div>
               )}
             </CardContent>
           </Card>
         )}
+
+        {(isReadOnly || currentStep === 4) && (
+          <Card className='mt-4 sm:mt-6'>
+            <CardHeader>
+              <CardTitle>5. Retorno</CardTitle>
+              <CardDescription>
+                Agende retorno se necessário. Com retorno marcado, o status da
+                consulta passa a ser &quot;Retorno agendado&quot; até a visita.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className='space-y-4'>
+              <div className='flex min-h-11 items-center gap-3'>
+                <Checkbox
+                  id='needsReturn'
+                  checked={returnInfo.needsReturn}
+                  disabled={isReadOnly}
+                  onCheckedChange={(checked) =>
+                    setReturnInfo((prev) => ({
+                      needsReturn: checked === true,
+                      returnDate:
+                        checked === true && !prev.returnDate
+                          ? formatDateTimeValue(new Date())
+                          : prev.returnDate,
+                    }))
+                  }
+                />
+                <Label htmlFor='needsReturn' className='cursor-pointer'>
+                  Necessita retorno
+                </Label>
+              </div>
+              {returnInfo.needsReturn && user?.id ? (
+                <ReturnSchedulePicker
+                  value={returnInfo.returnDate}
+                  durationMinutes={returnDurationMinutes}
+                  durationDigits={returnDurationDigits}
+                  disabled={isReadOnly}
+                  veterinarianId={user.id}
+                  excludeAppointmentId={pendingReturnAppointment?.id}
+                  onChange={(returnDate) =>
+                    setReturnInfo((prev) => ({ ...prev, returnDate }))
+                  }
+                  onDurationChange={(minutes, digits) => {
+                    setReturnDurationMinutes(minutes);
+                    setReturnDurationDigits(digits);
+                  }}
+                />
+              ) : null}
+              {returnInfo.needsReturn && !user?.id ? (
+                <p className='text-sm text-destructive'>
+                  Não foi possível identificar o veterinário logado.
+                </p>
+              ) : null}
+            </CardContent>
+          </Card>
+        )}
       </div>
 
-      {!isFinished && (
+      {!isReadOnly && (
         <div className={stickyActionBarClassName}>
-          <div className="flex flex-col gap-2 sm:flex-row sm:justify-between">
+          <div className='flex w-full gap-2'>
             <Button
-              type="button"
-              variant="outline"
-              className="w-full sm:w-auto"
+              type='button'
+              variant='outline'
+              className='flex-1'
               disabled={currentStep === 0}
-              onClick={() => setCurrentStep((step) => step - 1)}
+              onClick={() => goToStep(currentStep - 1)}
             >
-              <ChevronLeft className="size-4" />
+              <ChevronLeft className='size-4' />
               Voltar
             </Button>
 
             {isLastStep ? (
               <Button
-                size="lg"
-                className="w-full sm:w-auto"
+                size='lg'
+                className='flex-1'
                 onClick={handleFinish}
                 disabled={finishConsultation.isPending}
               >
-                {finishConsultation.isPending ? 'Finalizando...' : 'Finalizar consulta'}
+                {finishConsultation.isPending
+                  ? returnInfo.needsReturn && returnInfo.returnDate
+                    ? 'Agendando...'
+                    : 'Finalizando...'
+                  : finishButtonLabel}
               </Button>
             ) : (
               <Button
-                className="w-full sm:w-auto"
+                className='flex-1'
                 onClick={handleContinue}
                 disabled={updateConsultation.isPending}
               >
                 Salvar e continuar
-                <ChevronRight className="size-4" />
+                <ChevronRight className='size-4' />
               </Button>
             )}
           </div>
@@ -1063,34 +1683,95 @@ export function ConsultationPage() {
       )}
 
       <Dialog open={cancelOpen} onOpenChange={setCancelOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className='sm:max-w-md'>
           <DialogHeader>
-            <DialogTitle>Cancelar consulta?</DialogTitle>
+            <DialogTitle>
+              {isReturnVisit ? 'Cancelar retorno?' : 'Cancelar consulta?'}
+            </DialogTitle>
             <DialogDescription>
-              A consulta em andamento de <strong>{consultation.pet.name}</strong> será
-              removida permanentemente. Esta ação não tem volta.
+              {isReturnVisit ? (
+                <>
+                  O retorno em andamento de{' '}
+                  <strong>{consultation.pet.name}</strong> será removido e o
+                  agendamento voltará a ficar disponível para iniciar novamente.
+                </>
+              ) : (
+                <>
+                  A consulta em andamento de{' '}
+                  <strong>{consultation.pet.name}</strong> será removida
+                  permanentemente. Esta ação não tem volta.
+                </>
+              )}
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="gap-2 sm:gap-0">
+          <DialogFooter className='gap-2 sm:gap-0'>
             <Button
-              type="button"
-              variant="outline"
+              type='button'
+              variant='outline'
               onClick={() => setCancelOpen(false)}
               disabled={deleteConsultation.isPending}
             >
               Voltar
             </Button>
             <Button
-              type="button"
-              variant="destructive"
+              type='button'
+              variant='destructive'
               onClick={() => void handleConfirmCancel()}
               disabled={deleteConsultation.isPending}
             >
-              {deleteConsultation.isPending ? 'Cancelando...' : 'Cancelar consulta'}
+              {deleteConsultation.isPending
+                ? 'Cancelando...'
+                : isReturnVisit
+                  ? 'Cancelar retorno'
+                  : 'Cancelar consulta'}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog
+        open={cancelScheduledReturnOpen}
+        onOpenChange={setCancelScheduledReturnOpen}
+      >
+        <DialogContent className='sm:max-w-md'>
+          <DialogHeader>
+            <DialogTitle>Cancelar retorno agendado?</DialogTitle>
+            <DialogDescription>
+              O retorno agendado de <strong>{consultation.pet.name}</strong>{' '}
+              será cancelado e a consulta original passará a constar como
+              finalizada, sem retorno pendente.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className='gap-2 sm:gap-0'>
+            <Button
+              type='button'
+              variant='outline'
+              onClick={() => setCancelScheduledReturnOpen(false)}
+              disabled={cancelScheduledReturn.isPending}
+            >
+              Voltar
+            </Button>
+            <Button
+              type='button'
+              variant='destructive'
+              onClick={() => void handleConfirmCancelScheduledReturn()}
+              disabled={cancelScheduledReturn.isPending}
+            >
+              {cancelScheduledReturn.isPending
+                ? 'Cancelando...'
+                : 'Cancelar retorno'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {consultation && consultation.parentConsultationId ? (
+        <ParentConsultationReferenceDialog
+          parentConsultationId={consultation.parentConsultationId}
+          open={parentReferenceOpen}
+          onOpenChange={setParentReferenceOpen}
+        />
+      ) : null}
 
       {consultation ? (
         <PetWeightDialog
@@ -1101,7 +1782,7 @@ export function ConsultationPage() {
           initialWeightKg={
             pendingWeightKg !== null
               ? String(pendingWeightKg)
-              : consultation.weightKg ?? previousWeightKg
+              : (consultation.weightKg ?? previousWeightKg)
           }
           onConfirm={setPendingWeightKg}
         />

@@ -24,6 +24,8 @@ export type Appointment = {
   description: string | null;
   scheduledAt: string;
   durationMinutes: number;
+  sourceConsultationId: string | null;
+  sourceVaccinationId: string | null;
   createdAt: string;
   updatedAt: string;
   tutor?: { id: string; name: string };

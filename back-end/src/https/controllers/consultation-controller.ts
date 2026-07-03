@@ -4,6 +4,7 @@ import { HttpError } from '../../services/erros/http-error.js';
 import {
   createConsultationSchema,
   createPrescriptionSchema,
+  createReturnConsultationSchema,
   finishConsultationSchema,
   listConsultationsQuerySchema,
   updateConsultationSchema,
@@ -36,6 +37,23 @@ export async function getOpenConsultationByPet(
 
   if (!consultation) {
     throw new HttpError('Nenhuma consulta em andamento', 404);
+  }
+
+  return reply.status(200).send(consultation);
+}
+
+export async function getReturnScheduledConsultationByPet(
+  request: FastifyRequest,
+  reply: FastifyReply,
+) {
+  const { petId } = request.params as { petId: string };
+  const consultation = await consultationService.getReturnScheduledByPet(
+    request.tenantId,
+    petId,
+  );
+
+  if (!consultation) {
+    throw new HttpError('Nenhum retorno agendado', 404);
   }
 
   return reply.status(200).send(consultation);
@@ -116,6 +134,58 @@ export async function removePrescription(request: FastifyRequest, reply: Fastify
   return reply.status(204).send();
 }
 
+export async function createReturnConsultation(
+  request: FastifyRequest,
+  reply: FastifyReply,
+) {
+  const { parentId } = request.params as { parentId: string };
+  const parsed = createReturnConsultationSchema.safeParse(request.body ?? {});
+
+  if (!parsed.success) {
+    const firstError = parsed.error.issues[0]?.message ?? 'Dados inválidos';
+    throw new HttpError(firstError, 400);
+  }
+
+  const consultation = await consultationService.createReturn(
+    request.tenantId,
+    request.authUser.id,
+    parentId,
+    parsed.data,
+  );
+
+  return reply.status(201).send(consultation);
+}
+
+export async function getOpenReturnConsultationByParent(
+  request: FastifyRequest,
+  reply: FastifyReply,
+) {
+  const { parentId } = request.params as { parentId: string };
+  const consultation = await consultationService.getOpenReturnByParentId(
+    request.tenantId,
+    parentId,
+  );
+
+  if (!consultation) {
+    throw new HttpError('Nenhum retorno em andamento', 404);
+  }
+
+  return reply.status(200).send(consultation);
+}
+
+export async function cancelScheduledReturn(
+  request: FastifyRequest,
+  reply: FastifyReply,
+) {
+  const { parentId } = request.params as { parentId: string };
+  const consultation = await consultationService.cancelScheduledReturn(
+    request.tenantId,
+    parentId,
+  );
+
+  return reply.status(200).send(consultation);
+}
+
 export async function finishConsultation(request: FastifyRequest, reply: FastifyReply) {
   const { id } = request.params as { id: string };
   const parsed = finishConsultationSchema.safeParse(request.body);
@@ -138,6 +208,80 @@ export async function finishConsultation(request: FastifyRequest, reply: Fastify
 export async function deleteConsultation(request: FastifyRequest, reply: FastifyReply) {
   const { id } = request.params as { id: string };
   await consultationService.delete(request.tenantId, id);
+
+  return reply.status(204).send();
+}
+
+export async function listConsultationAttachments(
+  request: FastifyRequest,
+  reply: FastifyReply,
+) {
+  const { id } = request.params as { id: string };
+  const attachments = await consultationService.listAttachments(
+    request.tenantId,
+    id,
+  );
+
+  return reply.status(200).send(attachments);
+}
+
+export async function addConsultationAttachment(
+  request: FastifyRequest,
+  reply: FastifyReply,
+) {
+  const { id } = request.params as { id: string };
+
+  let fileBuffer: Buffer | null = null;
+  let fileName = 'exame.pdf';
+  let mimeType: string | undefined;
+  let label: string | undefined;
+
+  const parts = request.parts();
+
+  for await (const part of parts) {
+    if (part.type === 'file') {
+      fileBuffer = await part.toBuffer();
+      fileName = part.filename || fileName;
+      mimeType = part.mimetype;
+    } else if (part.type === 'field' && part.fieldname === 'label') {
+      const value = String(part.value).trim();
+      label = value || undefined;
+    }
+  }
+
+  if (!fileBuffer) {
+    throw new HttpError('Arquivo PDF é obrigatório', 400);
+  }
+
+  const attachment = await consultationService.addAttachment(
+    request.tenantId,
+    request.authUser.id,
+    id,
+    {
+      buffer: fileBuffer,
+      fileName,
+      ...(mimeType ? { mimeType } : {}),
+      ...(label ? { label } : {}),
+    },
+  );
+
+  return reply.status(201).send(attachment);
+}
+
+export async function removeConsultationAttachment(
+  request: FastifyRequest,
+  reply: FastifyReply,
+) {
+  const { id, attachmentId } = request.params as {
+    id: string;
+    attachmentId: string;
+  };
+
+  await consultationService.removeAttachment(
+    request.tenantId,
+    id,
+    attachmentId,
+  );
 
   return reply.status(204).send();
 }

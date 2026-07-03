@@ -1,6 +1,7 @@
 import { apiFetch, apiFetchJson, ApiError } from '@/api/http';
 import type {
   Consultation,
+  ConsultationAttachment,
   ConsultationListResponse,
   CreateConsultationPayload,
   CreatePrescriptionPayload,
@@ -51,6 +52,56 @@ export async function getOpenConsultationByPet(
     }
     throw error;
   }
+}
+
+export async function getReturnScheduledConsultationByPet(
+  petId: string,
+): Promise<Consultation | null> {
+  try {
+    return await apiFetchJson<Consultation>(
+      `/consultations/pets/${petId}/return-scheduled`,
+    );
+  } catch (error) {
+    if (error instanceof ApiError && error.statusCode === 404) {
+      return null;
+    }
+    throw error;
+  }
+}
+
+export async function createReturnConsultation(
+  parentId: string,
+  payload: { appointmentId?: string } = {},
+): Promise<Consultation> {
+  return apiFetchJson<Consultation>(`/consultations/${parentId}/return`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function getOpenReturnConsultationByParent(
+  parentId: string,
+): Promise<Pick<Consultation, 'id'> | null> {
+  try {
+    return await apiFetchJson<Pick<Consultation, 'id'>>(
+      `/consultations/${parentId}/open-return`,
+    );
+  } catch (error) {
+    if (error instanceof ApiError && error.statusCode === 404) {
+      return null;
+    }
+    throw error;
+  }
+}
+
+export async function cancelScheduledReturn(
+  parentId: string,
+): Promise<Consultation> {
+  return apiFetchJson<Consultation>(
+    `/consultations/${parentId}/return-scheduled`,
+    { method: 'DELETE' },
+  );
 }
 
 export async function getConsultation(id: string): Promise<Consultation> {
@@ -156,4 +207,48 @@ export async function downloadPrescriptionPdf(consultationId: string): Promise<v
   anchor.download = filename;
   anchor.click();
   URL.revokeObjectURL(url);
+}
+
+export async function uploadConsultationAttachment(
+  consultationId: string,
+  file: File,
+  label?: string,
+): Promise<ConsultationAttachment> {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  if (label?.trim()) {
+    formData.append('label', label.trim());
+  }
+
+  return apiFetchJson<ConsultationAttachment>(
+    `/consultations/${consultationId}/attachments`,
+    {
+      method: 'POST',
+      body: formData,
+    },
+  );
+}
+
+export async function deleteConsultationAttachment(
+  consultationId: string,
+  attachmentId: string,
+): Promise<void> {
+  const response = await apiFetch(
+    `/consultations/${consultationId}/attachments/${attachmentId}`,
+    { method: 'DELETE' },
+  );
+
+  if (!response.ok) {
+    let message = 'Erro ao remover anexo';
+
+    try {
+      const body = (await response.json()) as { error?: string };
+      message = body.error ?? message;
+    } catch {
+      // ignore
+    }
+
+    throw new ApiError(message, response.status);
+  }
 }

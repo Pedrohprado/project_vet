@@ -16,6 +16,7 @@ export const updateConsultationSchema = z.object({
   observations: z.string().optional(),
   needsReturn: z.boolean().optional(),
   returnDate: z.coerce.date().optional(),
+  returnDurationMinutes: z.coerce.number().int().min(1).max(5999).optional(),
   prescriptionDocumentType: z.enum(['SIMPLE', 'SPECIAL_CONTROL']).optional(),
 });
 
@@ -35,6 +36,11 @@ export const finishConsultationSchema = z.object({
   conduct: z.string().optional(),
   needsReturn: z.boolean().default(false),
   returnDate: z.coerce.date().optional(),
+  returnDurationMinutes: z.coerce.number().int().min(1).max(5999).default(30),
+});
+
+export const createReturnConsultationSchema = z.object({
+  appointmentId: z.string().uuid().optional(),
 });
 
 export const listConsultationsQuerySchema = z.object({
@@ -48,4 +54,7 @@ export type CreateConsultationInput = z.infer<typeof createConsultationSchema>;
 export type UpdateConsultationInput = z.infer<typeof updateConsultationSchema>;
 export type CreatePrescriptionInput = z.infer<typeof createPrescriptionSchema>;
 export type FinishConsultationInput = z.infer<typeof finishConsultationSchema>;
+export type CreateReturnConsultationInput = z.infer<
+  typeof createReturnConsultationSchema
+>;
 export type ListConsultationsQuery = z.infer<typeof listConsultationsQuerySchema>;

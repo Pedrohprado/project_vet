@@ -32,3 +32,16 @@ export function scrollToFormField(fieldId: string) {
     document.getElementById(fieldId)?.focus({ preventScroll: true });
   });
 }
+
+export function scrollToFirstFieldError<TField extends string>(
+  errors: Partial<Record<TField, string>>,
+  fieldOrder: readonly TField[],
+  idPrefix?: string,
+) {
+  for (const field of fieldOrder) {
+    if (errors[field]) {
+      scrollToFormField(buildFormFieldId(idPrefix, field));
+      return;
+    }
+  }
+}

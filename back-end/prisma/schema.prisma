@@ -55,6 +55,7 @@ enum AppointmentStatus {
 
 enum ConsultationStatus {
   OPEN
+  RETURN_SCHEDULED
   FINISHED
   CANCELLED
 }
@@ -122,8 +123,9 @@ model Clinic {
   consultations      Consultation[]
   vaccinations       Vaccination[]
   vaccineCatalog     VaccineCatalogItem[]
-  notifications      Notification[]
-  petWeightRecords   PetWeightRecord[]
+  notifications           Notification[]
+  petWeightRecords        PetWeightRecord[]
+  consultationAttachments ConsultationAttachment[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -142,9 +144,10 @@ model User {
   lastLoginAt   DateTime?
   appointments  Appointment[]
   consultations    Consultation[]
-  vaccinations     Vaccination[]
-  petWeightRecords PetWeightRecord[]
-  clinicId         String?
+  vaccinations              Vaccination[]
+  petWeightRecords          PetWeightRecord[]
+  consultationAttachments   ConsultationAttachment[]
+  clinicId                  String?
   clinic           Clinic?           @relation(fields: [clinicId], references: [id])
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
@@ -269,6 +272,12 @@ model Appointment {
   scheduledAt     DateTime
   durationMinutes Int      @default(30)
 
+  sourceConsultationId String?
+  sourceConsultation   Consultation? @relation("ReturnSourceConsultation", fields: [sourceConsultationId], references: [id])
+
+  sourceVaccinationId String?
+  sourceVaccination   Vaccination? @relation("NextDoseSource", fields: [sourceVaccinationId], references: [id])
+
   consultation Consultation?
   vaccination  Vaccination?
 
@@ -280,6 +289,8 @@ model Appointment {
   @@index([clinicId, scheduledAt])
   @@index([petId])
   @@index([tutorId])
+  @@index([sourceConsultationId])
+  @@index([sourceVaccinationId])
 }
 
 model Consultation {
@@ -317,17 +328,42 @@ model Consultation {
   needsReturn Boolean   @default(false)
   returnDate  DateTime?
 
+  parentConsultationId String?
+  parentConsultation   Consultation?  @relation("ConsultationReturns", fields: [parentConsultationId], references: [id])
+  returnConsultations  Consultation[] @relation("ConsultationReturns")
+
   prescriptionDocumentType PrescriptionDocumentType @default(SIMPLE)
 
   prescriptions Prescription[]
   notifications Notification[]
   weightRecords PetWeightRecord[]
+  returnAppointments Appointment[] @relation("ReturnSourceConsultation")
+  attachments        ConsultationAttachment[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([clinicId])
   @@index([petId])
+  @@index([parentConsultationId])
+}
+
+model ConsultationAttachment {
+  id             String       @id @default(uuid())
+  clinicId       String
+  clinic         Clinic       @relation(fields: [clinicId], references: [id])
+  consultationId String
+  consultation   Consultation @relation(fields: [consultationId], references: [id], onDelete: Cascade)
+  fileName       String
+  fileUrl        String
+  mimeType       String
+  label          String?
+  uploadedById   String
+  uploadedBy     User         @relation(fields: [uploadedById], references: [id])
+  createdAt      DateTime     @default(now())
+
+  @@index([clinicId])
+  @@index([consultationId, createdAt])
 }
 
 model Prescription {
@@ -396,6 +432,7 @@ model Vaccination {
   notes String?
 
   notifications Notification[]
+  nextDoseAppointments Appointment[] @relation("NextDoseSource")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

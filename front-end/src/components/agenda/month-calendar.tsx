@@ -29,6 +29,9 @@ function getEventChipClass(event: CalendarEvent) {
     if (event.status === 'OPEN') {
       return 'bg-primary/20 text-foreground';
     }
+    if (event.status === 'RETURN_SCHEDULED') {
+      return 'bg-amber-500/20 text-amber-950 dark:text-amber-100';
+    }
     if (event.status === 'FINISHED') {
       return 'bg-secondary text-secondary-foreground';
     }

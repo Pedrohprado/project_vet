@@ -171,6 +171,7 @@ export class VaccinationService {
 
   async finish(
     tenantId: string,
+    userId: string,
     id: string,
     input: FinishVaccinationInput,
   ) {
@@ -249,6 +250,14 @@ export class VaccinationService {
           petName: updated.pet.name,
           vaccineName: vaccineName.trim(),
           nextDoseAt,
+        });
+
+        await appointmentService.upsertNextDose(tenantId, userId, {
+          sourceVaccinationId: id,
+          tutorId: tutor.id,
+          petId: updated.petId,
+          scheduledAt: nextDoseAt,
+          vaccineName: vaccineName.trim(),
         });
       }
 

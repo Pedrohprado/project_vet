@@ -37,9 +37,21 @@ const consultationSelect = {
   observations: true,
   needsReturn: true,
   returnDate: true,
+  parentConsultationId: true,
   prescriptionDocumentType: true,
   createdAt: true,
   updatedAt: true,
+} as const;
+
+const attachmentSelect = {
+  id: true,
+  fileName: true,
+  fileUrl: true,
+  mimeType: true,
+  label: true,
+  uploadedById: true,
+  createdAt: true,
+  uploadedBy: { select: { id: true, name: true } },
 } as const;
 
 const consultationListSelect = {
@@ -47,6 +59,7 @@ const consultationListSelect = {
   status: true,
   startedAt: true,
   finishedAt: true,
+  parentConsultationId: true,
   tutor: { select: { id: true, name: true } },
   pet: { select: { id: true, name: true, species: true } },
   veterinarian: { select: { id: true, name: true } },
@@ -104,11 +117,57 @@ export class ConsultationPrismaRepository {
       select: {
         ...consultationSelect,
         prescriptions: { select: prescriptionSelect, orderBy: { createdAt: 'asc' } },
+        attachments: { select: attachmentSelect, orderBy: { createdAt: 'asc' } },
         tutor: { select: { id: true, name: true, phone: true, whatsapp: true } },
         pet: { select: { id: true, name: true, species: true, breed: true, photoUrl: true, birthDate: true, weightKg: true } },
         veterinarian: { select: { id: true, name: true } },
       },
       orderBy: { startedAt: 'desc' },
+    });
+  }
+
+  async findReturnScheduledByPet(clinicId: string, petId: string) {
+    return prisma.consultation.findFirst({
+      where: {
+        clinicId,
+        petId,
+        status: ConsultationStatus.RETURN_SCHEDULED,
+        parentConsultationId: null,
+      },
+      select: {
+        ...consultationSelect,
+        prescriptions: { select: prescriptionSelect, orderBy: { createdAt: 'asc' } },
+        attachments: { select: attachmentSelect, orderBy: { createdAt: 'asc' } },
+        tutor: { select: { id: true, name: true, phone: true, whatsapp: true } },
+        pet: { select: { id: true, name: true, species: true, breed: true, photoUrl: true, birthDate: true, weightKg: true } },
+        veterinarian: { select: { id: true, name: true } },
+      },
+      orderBy: { startedAt: 'desc' },
+    });
+  }
+
+  async findBlockingConsultationForNewInitial(clinicId: string, petId: string) {
+    return prisma.consultation.findFirst({
+      where: {
+        clinicId,
+        petId,
+        OR: [
+          { status: ConsultationStatus.OPEN },
+          { status: ConsultationStatus.RETURN_SCHEDULED, parentConsultationId: null },
+        ],
+      },
+      select: { id: true, status: true, parentConsultationId: true },
+    });
+  }
+
+  async findOpenReturnByParentId(clinicId: string, parentConsultationId: string) {
+    return prisma.consultation.findFirst({
+      where: {
+        clinicId,
+        parentConsultationId,
+        status: ConsultationStatus.OPEN,
+      },
+      select: consultationSelect,
     });
   }
 
@@ -118,6 +177,7 @@ export class ConsultationPrismaRepository {
       select: {
         ...consultationSelect,
         prescriptions: { select: prescriptionSelect, orderBy: { createdAt: 'asc' } },
+        attachments: { select: attachmentSelect, orderBy: { createdAt: 'asc' } },
         tutor: { select: { id: true, name: true, phone: true, whatsapp: true } },
         pet: { select: { id: true, name: true, species: true, breed: true, photoUrl: true, birthDate: true, weightKg: true } },
         veterinarian: { select: { id: true, name: true } },
@@ -130,12 +190,14 @@ export class ConsultationPrismaRepository {
     petId: string;
     veterinarianId: string;
     appointmentId?: string;
+    parentConsultationId?: string;
   }) {
     return prisma.consultation.create({
       data: { ...data, clinicId },
       select: {
         ...consultationSelect,
         prescriptions: { select: prescriptionSelect },
+        attachments: { select: attachmentSelect, orderBy: { createdAt: 'asc' } },
       },
     });
   }
@@ -150,7 +212,7 @@ export class ConsultationPrismaRepository {
     conduct?: string;
     observations?: string;
     needsReturn?: boolean;
-    returnDate?: Date;
+    returnDate?: Date | null;
     status?: ConsultationStatus;
     finishedAt?: Date;
     prescriptionDocumentType?: 'SIMPLE' | 'SPECIAL_CONTROL';
@@ -161,6 +223,7 @@ export class ConsultationPrismaRepository {
       select: {
         ...consultationSelect,
         prescriptions: { select: prescriptionSelect, orderBy: { createdAt: 'asc' } },
+        attachments: { select: attachmentSelect, orderBy: { createdAt: 'asc' } },
       },
     });
   }

@@ -64,22 +64,27 @@ export function mapAppointmentToCalendarEvent(
     veterinarian: appointment.veterinarian,
     appointmentId: appointment.id,
     appointmentType: appointment.type,
+    sourceConsultationId: appointment.sourceConsultationId ?? undefined,
+    sourceVaccinationId: appointment.sourceVaccinationId ?? undefined,
   };
 }
 
 export function mapConsultationToCalendarEvent(
   consultation: ConsultationListItem,
 ): CalendarEvent {
+  const isReturnVisit = Boolean(consultation.parentConsultationId);
+
   return {
     id: consultation.id,
     kind: 'CONSULTATION',
     startsAt: consultation.startedAt,
-    title: 'Atendimento',
+    title: isReturnVisit ? 'Retorno' : 'Atendimento',
     status: consultation.status,
     tutor: consultation.tutor,
     pet: consultation.pet,
     veterinarian: consultation.veterinarian,
     consultationId: consultation.id,
+    parentConsultationId: consultation.parentConsultationId ?? undefined,
   };
 }
 
@@ -121,5 +126,14 @@ export function canStartVaccinationFromEvent(event: CalendarEvent) {
     event.appointmentType === 'VACCINATION' &&
     (event.status === 'SCHEDULED' || event.status === 'CONFIRMED') &&
     Boolean(event.appointmentId)
+  );
+}
+
+export function canContinueReturnFromEvent(event: CalendarEvent) {
+  return (
+    event.kind === 'APPOINTMENT' &&
+    event.appointmentType === 'RETURN' &&
+    Boolean(event.sourceConsultationId) &&
+    (event.status === 'SCHEDULED' || event.status === 'CONFIRMED')
   );
 }

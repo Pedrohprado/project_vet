@@ -29,6 +29,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import {
   useCreateConsultation,
   useOpenConsultation,
+  useReturnScheduledConsultation,
 } from '@/hooks/useConsultations';
 import { usePetTimeline } from '@/hooks/usePetTimeline';
 import { usePet } from '@/hooks/usePets';
@@ -57,6 +58,7 @@ export function PetDetailPage() {
   const { data: timeline, isLoading: isLoadingTimeline } = usePetTimeline(petId);
   const { data: openConsultation, isLoading: isLoadingOpenConsultation } =
     useOpenConsultation(petId);
+  const { data: returnScheduledConsultation } = useReturnScheduledConsultation(petId);
   const { data: openVaccination, isLoading: isLoadingOpenVaccination } =
     useOpenVaccination(petId);
   const createConsultation = useCreateConsultation();
@@ -152,7 +154,12 @@ export function PetDetailPage() {
     return <p className="text-sm text-muted-foreground">Pet não encontrado.</p>;
   }
 
-  const hasOpenConsultation = openConsultation?.status === 'OPEN';
+  const hasOpenReturnVisit =
+    openConsultation?.status === 'OPEN' &&
+    Boolean(openConsultation.parentConsultationId);
+  const hasOpenInitialConsultation =
+    openConsultation?.status === 'OPEN' && !openConsultation.parentConsultationId;
+  const hasReturnScheduled = returnScheduledConsultation?.status === 'RETURN_SCHEDULED';
   const hasOpenVaccination = Boolean(openVaccination && !openVaccination.appliedAt);
 
   return (
@@ -207,7 +214,7 @@ export function PetDetailPage() {
               <Plus className="size-5" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
-              {!hasOpenConsultation && (
+              {!hasOpenInitialConsultation && !hasOpenReturnVisit && !hasReturnScheduled && (
                 <DropdownMenuItem
                   onClick={() => void handleStartConsultation()}
                   disabled={createConsultation.isPending}
@@ -253,7 +260,7 @@ export function PetDetailPage() {
 
       <EditPetDialog open={editOpen} onOpenChange={setEditOpen} pet={pet} />
 
-      {hasOpenConsultation && (
+      {hasOpenInitialConsultation && openConsultation && (
         <Card className="border-primary/40 bg-primary/5">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
@@ -268,6 +275,55 @@ export function PetDetailPage() {
           <CardContent>
             <Button className="w-full sm:w-auto" onClick={handleContinueConsultation}>
               Continuar consulta
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {hasOpenReturnVisit && openConsultation && (
+        <Card className="border-primary/40 bg-primary/5">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Clock className="size-5 shrink-0" />
+              Retorno em andamento
+            </CardTitle>
+            <CardDescription>
+              Iniciado em{' '}
+              {new Date(openConsultation.startedAt).toLocaleString('pt-BR')}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button className="w-full sm:w-auto" onClick={handleContinueConsultation}>
+              Continuar retorno
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {hasReturnScheduled && returnScheduledConsultation && (
+        <Card className="border-amber-500/30 bg-amber-500/5">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Clock className="size-5 shrink-0" />
+              Retorno agendado
+            </CardTitle>
+            <CardDescription>
+              Consulta finalizada em{' '}
+              {new Date(returnScheduledConsultation.startedAt).toLocaleString('pt-BR')}
+              {returnScheduledConsultation.returnDate
+                ? ` · Retorno em ${new Date(returnScheduledConsultation.returnDate).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}`
+                : null}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button
+              className="w-full sm:w-auto"
+              variant="outline"
+              onClick={() =>
+                void navigate(`/consultations/${returnScheduledConsultation.id}`)
+              }
+            >
+              Ver consulta
             </Button>
           </CardContent>
         </Card>
@@ -295,7 +351,7 @@ export function PetDetailPage() {
 
       <div className="relative">
         <div className="absolute right-0 bottom-full z-10 mb-2 hidden max-w-full flex-col items-end gap-2 sm:flex sm:flex-row sm:flex-wrap sm:justify-end">
-          {!hasOpenConsultation && (
+          {!hasOpenInitialConsultation && !hasOpenReturnVisit && !hasReturnScheduled && (
             <Button
               className="w-auto"
               onClick={handleStartConsultation}
