@@ -51,6 +51,7 @@ export class PetPrismaRepository {
     birthDate?: Date;
     color?: string;
     weightKg?: number;
+    photoUrl?: string | null;
     isCastrated?: boolean;
     microchip?: string;
     allergies?: string;
@@ -122,6 +123,7 @@ export class PetPrismaRepository {
     birthDate?: Date;
     color?: string;
     weightKg?: number;
+    photoUrl?: string | null;
     isCastrated?: boolean;
     microchip?: string;
     allergies?: string;

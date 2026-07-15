@@ -22,6 +22,7 @@ function TimelineEventItem({ event }: { event: PetTimelineEvent }) {
   const navigate = useNavigate();
   const Icon = kindIcons[event.kind];
   const isUpcoming = isUpcomingTimelineEvent(event.status);
+  const isCancelled = event.status === 'CANCELLED';
   const isClickable =
     event.linkTo?.type === 'consultation' ||
     event.linkTo?.type === 'vaccination';
@@ -49,6 +50,7 @@ function TimelineEventItem({ event }: { event: PetTimelineEvent }) {
           'rounded-lg border p-3 transition-colors',
           isClickable && 'cursor-pointer hover:bg-muted/50',
           isUpcoming && 'border-dashed bg-muted/20',
+          isCancelled && 'opacity-60',
         )}
         onClick={isClickable ? handleClick : undefined}
         onKeyDown={
@@ -76,7 +78,7 @@ function TimelineEventItem({ event }: { event: PetTimelineEvent }) {
             >
               <Icon className='size-4' />
             </div>
-            <div className='min-w-0'>
+            <div className={cn('min-w-0', isCancelled && 'line-through')}>
               <p className='text-sm font-medium'>{event.title}</p>
               <p className='mt-0.5 text-xs text-muted-foreground'>
                 {formatTimelineDate(event.occurredAt)}
@@ -92,16 +94,6 @@ function TimelineEventItem({ event }: { event: PetTimelineEvent }) {
             </Badge>
           ) : null}
         </div>
-        {event.description ? (
-          <p className='mt-2 text-sm text-muted-foreground'>
-            {event.description}
-          </p>
-        ) : null}
-        {event.veterinarianName ? (
-          <p className='mt-1 text-xs text-muted-foreground'>
-            Veterinário: {event.veterinarianName}
-          </p>
-        ) : null}
       </div>
     </li>
   );

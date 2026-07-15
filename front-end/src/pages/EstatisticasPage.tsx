@@ -64,7 +64,7 @@ export function EstatisticasPage() {
     data: atendimentosData,
     isLoading: isLoadingAtendimentos,
     error: atendimentosError,
-  } = useAtendimentos(1, 5);
+  } = useAtendimentos(1, 10);
   const [isDismissing, setIsDismissing] = useState(false);
 
   const onboarding = stats?.onboarding ?? {
@@ -152,12 +152,6 @@ export function EstatisticasPage() {
           </Card>
         ) : null}
 
-        <HomeStatsGrid
-          stats={stats}
-          isLoading={isLoadingStats}
-          error={Boolean(statsError)}
-        />
-
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           <HomeWeekReminders
             items={weekReminders}
@@ -170,6 +164,12 @@ export function EstatisticasPage() {
             error={Boolean(atendimentosError)}
           />
         </div>
+
+        <HomeStatsGrid
+          stats={stats}
+          isLoading={isLoadingStats}
+          error={Boolean(statsError)}
+        />
       </div>
     </div>
   );

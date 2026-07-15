@@ -96,18 +96,16 @@ export function HomeRecentServices({
 
   return (
     <Card className="rounded-2xl border border-border/50 bg-white/90 shadow-xl shadow-black/4 backdrop-blur-sm">
-      <CardHeader className="space-y-3">
-        <div className="flex justify-end">
-          <Button variant="outline" size="sm" asChild>
-            <Link to="/atendimento">Ver atendimentos</Link>
-          </Button>
-        </div>
+      <CardHeader className="flex flex-col gap-3 space-y-0 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
         <div className="space-y-1">
           <CardTitle>Últimos serviços</CardTitle>
           <CardDescription>
             Consultas e vacinações recentes da clínica.
           </CardDescription>
         </div>
+        <Button variant="outline" size="sm" className="w-fit shrink-0" asChild>
+          <Link to="/atendimento">Ver atendimentos</Link>
+        </Button>
       </CardHeader>
       <CardContent className="space-y-2">
         {error ? (
@@ -121,16 +119,28 @@ export function HomeRecentServices({
             <Skeleton className="h-16 w-full rounded-xl" />
           </>
         ) : visibleItems.length === 0 ? (
-          <div className="py-8 text-center">
-            <p className="text-sm text-muted-foreground">
-              Nenhum atendimento registrado ainda.
+          <div className="flex flex-col items-center py-8 text-center">
+            <img
+              src="/sniff_dog.png"
+              alt="Cachorro farejando"
+              className="size-40 object-contain"
+            />
+            <p className="ellipsis-dots -mt-8 text-xs text-muted-foreground">
+              Nenhum atendimento encontrado ainda
+              <span>.</span>
+              <span>.</span>
+              <span>.</span>
             </p>
             <Button size="sm" className="mt-3" asChild>
               <Link to="/atendimento">Iniciar atendimento</Link>
             </Button>
           </div>
         ) : (
-          visibleItems.map((item) => <ServiceRow key={`${item.kind}-${item.id}`} item={item} />)
+          <div className="max-h-72 space-y-2 overflow-y-auto pr-1">
+            {visibleItems.map((item) => (
+              <ServiceRow key={`${item.kind}-${item.id}`} item={item} />
+            ))}
+          </div>
         )}
       </CardContent>
     </Card>

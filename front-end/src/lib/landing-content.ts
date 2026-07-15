@@ -1,22 +1,16 @@
 import type { LucideIcon } from 'lucide-react';
 import {
-  Building2,
   Calendar,
   CalendarX,
-  GraduationCap,
   Heart,
   HeartOff,
-  Home,
   MessageCircle,
   PawPrint,
   Bell,
   Pill,
-  Smartphone,
   Sparkles,
-  Star,
   Stethoscope,
   Syringe,
-  TrendingUp,
 } from 'lucide-react';
 
 export const heroContent = {
@@ -24,7 +18,6 @@ export const heroContent = {
   subtitle:
     'A BoxVet organiza consultas, vacinação e pós-consulta para que sua clínica mantenha contato com o tutor antes, durante e depois do atendimento.',
   primaryCta: 'Conhecer os planos',
-  secondaryCta: 'Ver demonstração',
   plansHref: '#planos',
 };
 
@@ -169,32 +162,6 @@ export const features = [
   },
 ] as const;
 
-export const differentialContent = {
-  title: 'Seu atendimento continua mesmo depois da consulta.',
-  items: [
-    { icon: Smartphone, title: 'Mensagem pós-consulta' },
-    { icon: Syringe, title: 'Lembrete de vacinação' },
-    { icon: Calendar, title: 'Lembrete de retorno' },
-    { icon: Heart, title: 'Mais proximidade com o tutor' },
-    { icon: Star, title: 'Mais fidelização' },
-    { icon: TrendingUp, title: 'Mais retornos para sua clínica' },
-  ] as const,
-};
-
-export const demoSlides = [
-  { id: 'dashboard', label: 'Dashboard', variant: 'dashboard' as const },
-  { id: 'tutor', label: 'Cadastro Tutor', variant: 'tutor' as const },
-  { id: 'consultation', label: 'Consulta', variant: 'consultation' as const },
-  { id: 'message', label: 'Mensagem enviada', variant: 'message' as const },
-];
-
-export const audienceItems = [
-  { icon: GraduationCap, title: 'Veterinários recém-formados' },
-  { icon: Building2, title: 'Clínicas' },
-  { icon: Home, title: 'Atendimento domiciliar' },
-  { icon: Syringe, title: 'Clínicas de vacinação' },
-] as const;
-
 export const testimonials = [
   {
     quote: 'Finalmente um sistema que não é complicado.',
@@ -212,32 +179,6 @@ export const testimonials = [
     role: 'Clínica Pet',
   },
 ] as const;
-
-export type ComparisonCell =
-  | { type: 'yes' }
-  | { type: 'no' }
-  | { type: 'partial' }
-  | { type: 'text'; value: string };
-
-export const comparisonRows: {
-  feature: string;
-  boxvet: ComparisonCell;
-  erp: ComparisonCell;
-}[] = [
-  { feature: 'Fácil de usar', boxvet: { type: 'yes' }, erp: { type: 'no' } },
-  { feature: 'Pós-consulta', boxvet: { type: 'yes' }, erp: { type: 'no' } },
-  {
-    feature: 'Lembretes automáticos',
-    boxvet: { type: 'yes' },
-    erp: { type: 'partial' },
-  },
-  { feature: 'CRM para tutores', boxvet: { type: 'yes' }, erp: { type: 'no' } },
-  {
-    feature: 'Curva de aprendizado',
-    boxvet: { type: 'text', value: 'Baixa' },
-    erp: { type: 'text', value: 'Alta' },
-  },
-];
 
 export const pricingPlans = [
   {

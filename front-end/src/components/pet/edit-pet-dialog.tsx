@@ -2,6 +2,10 @@ import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { ApiError } from '@/api/http';
 import { PetFormFields } from '@/components/pet/pet-form-fields';
+import {
+  emptyPetPhotoSelection,
+  type PetPhotoSelection,
+} from '@/components/pet/pet-photo-field';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -11,7 +15,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { useUpdatePet } from '@/hooks/usePets';
+import {
+  useDeletePetPhoto,
+  useUpdatePet,
+  useUploadPetPhoto,
+} from '@/hooks/usePets';
 import { useFormFieldErrors } from '@/hooks/useFormFieldErrors';
 import {
   emptyPetFormData,
@@ -30,13 +38,20 @@ type EditPetDialogProps = {
 
 export function EditPetDialog({ open, onOpenChange, pet }: EditPetDialogProps) {
   const updatePet = useUpdatePet();
+  const uploadPhoto = useUploadPetPhoto();
+  const deletePhoto = useDeletePetPhoto();
   const [form, setForm] = useState<PetFormData>(emptyPetFormData);
+  const [photo, setPhoto] = useState<PetPhotoSelection>(emptyPetPhotoSelection);
   const { fieldErrors, formError, applyZodError, clearFieldError, clearErrors, setFormError } =
     useFormFieldErrors<keyof PetFormData>('edit-pet');
+
+  const isSaving =
+    updatePet.isPending || uploadPhoto.isPending || deletePhoto.isPending;
 
   useEffect(() => {
     if (open && pet) {
       setForm(petToFormData(pet));
+      setPhoto(emptyPetPhotoSelection());
       clearErrors();
     }
   }, [open, pet, clearErrors]);
@@ -50,6 +65,7 @@ export function EditPetDialog({ open, onOpenChange, pet }: EditPetDialogProps) {
     if (!nextOpen) {
       clearErrors();
       setForm(emptyPetFormData);
+      setPhoto(emptyPetPhotoSelection());
     }
     onOpenChange(nextOpen);
   }
@@ -73,6 +89,13 @@ export function EditPetDialog({ open, onOpenChange, pet }: EditPetDialogProps) {
         id: pet.id,
         data: formDataToUpdatePetPayload(parsed.data),
       });
+
+      if (photo.file) {
+        await uploadPhoto.mutateAsync({ id: pet.id, file: photo.file });
+      } else if (photo.removeExisting && pet.photoUrl) {
+        await deletePhoto.mutateAsync(pet.id);
+      }
+
       toast.success('Pet atualizado.');
       handleOpenChange(false);
     } catch (err) {
@@ -103,6 +126,10 @@ export function EditPetDialog({ open, onOpenChange, pet }: EditPetDialogProps) {
               onChange={updateField}
               idPrefix="edit-pet"
               fieldErrors={fieldErrors}
+              photo={photo}
+              onPhotoChange={setPhoto}
+              currentPhotoUrl={pet?.photoUrl}
+              photoDisabled={isSaving}
             />
             {formError ? <p className="mt-4 text-sm text-destructive">{formError}</p> : null}
           </div>
@@ -112,12 +139,12 @@ export function EditPetDialog({ open, onOpenChange, pet }: EditPetDialogProps) {
               type="button"
               variant="outline"
               onClick={() => handleOpenChange(false)}
-              disabled={updatePet.isPending}
+              disabled={isSaving}
             >
               Cancelar
             </Button>
-            <Button type="submit" disabled={updatePet.isPending}>
-              {updatePet.isPending ? 'Salvando...' : 'Salvar'}
+            <Button type="submit" disabled={isSaving}>
+              {isSaving ? 'Salvando...' : 'Salvar'}
             </Button>
           </DialogFooter>
         </form>

@@ -221,10 +221,10 @@ function TutorStep({
       </div>
 
       <div className="border-t pt-4">
-        <Button asChild variant="ghost" className="w-full" onClick={onClose}>
+        <Button asChild variant="ghost" className="w-full min-w-0" onClick={onClose}>
           <Link to="/tutors/new">
-            <UserPlus className="size-4" />
-            Cadastrar novo tutor
+            <UserPlus className="size-4 shrink-0" />
+            <span className="truncate">Cadastrar novo tutor</span>
           </Link>
         </Button>
       </div>
@@ -318,10 +318,10 @@ function PetStep({
           </div>
 
           <div className="border-t pt-4">
-            <Button asChild variant="ghost" className="w-full" onClick={onClose}>
+            <Button asChild variant="ghost" className="w-full min-w-0" onClick={onClose}>
               <Link to={`/tutors/${tutor.id}/pets/new`}>
-                <PawPrint className="size-4" />
-                Cadastrar novo pet
+                <PawPrint className="size-4 shrink-0" />
+                <span className="truncate">Cadastrar novo pet</span>
               </Link>
             </Button>
           </div>
@@ -546,7 +546,7 @@ export function NewAtendimentoSheet({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+      <DialogContent className="max-h-[90vh] overflow-x-hidden overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>
             {mode === 'agendamento' ? 'Novo Agendamento' : 'Novo Atendimento'}
@@ -554,7 +554,7 @@ export function NewAtendimentoSheet({
           <DialogDescription>{stepDescription[step]}</DialogDescription>
         </DialogHeader>
 
-        <div>
+        <div className="min-w-0">
           {step === 'tutor' && (
             <TutorStep
               tutorSearch={tutorSearch}

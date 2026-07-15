@@ -1,12 +1,6 @@
 import { Scale } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { usePetWeightRecords } from '@/hooks/usePetWeightRecords';
 import { formatPetWeight } from '@/lib/pet-format';
@@ -28,7 +22,7 @@ function formatRecordDate(recordedAt: string) {
   });
 }
 
-function WeightRecordRow({
+function WeightRecordItem({
   record,
   isLatest,
 }: {
@@ -36,22 +30,28 @@ function WeightRecordRow({
   isLatest: boolean;
 }) {
   return (
-    <div className="flex flex-wrap items-start justify-between gap-2 border-b py-3 last:border-b-0">
-      <div className="min-w-0 space-y-1">
-        <p className={cn('font-medium', isLatest && 'text-primary')}>
-          {formatPetWeight(record.weightKg)}
-        </p>
-        <p className="text-xs text-muted-foreground">
-          {formatRecordDate(record.recordedAt)}
-          {record.veterinarian?.name
-            ? ` · ${record.veterinarian.name}`
-            : ''}
-        </p>
+    <li className="relative pb-6 last:pb-0">
+      <span
+        className={cn(
+          'absolute -left-6.5 top-1 flex size-3 rounded-full border-2 border-background',
+          isLatest ? 'bg-primary' : 'bg-muted-foreground/40',
+        )}
+        aria-hidden="true"
+      />
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div className="min-w-0">
+          <p className={cn('text-sm font-medium', isLatest && 'text-primary')}>
+            {formatPetWeight(record.weightKg)}
+          </p>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            {formatRecordDate(record.recordedAt)}
+          </p>
+        </div>
+        <Badge variant={isLatest ? 'default' : 'outline'} className="shrink-0">
+          {PET_WEIGHT_RECORD_SOURCE_LABELS[record.source]}
+        </Badge>
       </div>
-      <Badge variant={isLatest ? 'default' : 'outline'}>
-        {PET_WEIGHT_RECORD_SOURCE_LABELS[record.source]}
-      </Badge>
-    </div>
+    </li>
   );
 }
 
@@ -65,9 +65,6 @@ export function PetWeightHistoryCard({ petId }: PetWeightHistoryCardProps) {
           <Scale className="size-5 shrink-0" />
           Histórico de peso
         </CardTitle>
-        <CardDescription>
-          Evolução do peso registrado ao longo do tempo.
-        </CardDescription>
       </CardHeader>
       <CardContent>
         {isLoading ? (
@@ -80,15 +77,15 @@ export function PetWeightHistoryCard({ petId }: PetWeightHistoryCardProps) {
             Nenhum registro de peso.
           </p>
         ) : (
-          <div className="divide-y">
+          <ol className="ml-4 border-l border-border pl-6">
             {records.map((record, index) => (
-              <WeightRecordRow
+              <WeightRecordItem
                 key={record.id}
                 record={record}
                 isLatest={index === 0}
               />
             ))}
-          </div>
+          </ol>
         )}
       </CardContent>
     </Card>

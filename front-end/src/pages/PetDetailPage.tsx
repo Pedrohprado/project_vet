@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate, useParams } from 'react-router';
 import { useEffect, useState } from 'react';
-import { Calendar, Clock, Pencil, Plus, Stethoscope, Syringe } from 'lucide-react';
+import { Calendar, Clock, Menu, Pencil, Plus, Stethoscope, Syringe } from 'lucide-react';
 import { toast } from 'sonner';
 import { ApiError } from '@/api/http';
 import { getOpenVaccinationByPet } from '@/api/vaccinations';
@@ -162,12 +162,59 @@ export function PetDetailPage() {
   const hasReturnScheduled = returnScheduledConsultation?.status === 'RETURN_SCHEDULED';
   const hasOpenVaccination = Boolean(openVaccination && !openVaccination.appliedAt);
 
+  const actionMenuItems = (
+    <>
+      {!hasOpenInitialConsultation && !hasOpenReturnVisit && !hasReturnScheduled && (
+        <DropdownMenuItem
+          className="gap-2 px-2 py-2.5"
+          onClick={() => void handleStartConsultation()}
+          disabled={createConsultation.isPending}
+        >
+          <Stethoscope className="size-4" />
+          {createConsultation.isPending ? 'Iniciando...' : 'Iniciar Consulta'}
+        </DropdownMenuItem>
+      )}
+      {!hasOpenVaccination && (
+        <DropdownMenuItem
+          className="gap-2 px-2 py-2.5"
+          onClick={() => void handleStartVaccination()}
+          disabled={createVaccination.isPending}
+        >
+          <Syringe className="size-4" />
+          {createVaccination.isPending ? 'Iniciando...' : 'Iniciar Vacinação'}
+        </DropdownMenuItem>
+      )}
+      <DropdownMenuItem
+        className="gap-2 px-2 py-2.5"
+        onClick={() =>
+          void navigate(
+            `/appointments/new?tutorId=${tutorId}&petId=${petId}&type=CONSULTATION`,
+          )
+        }
+      >
+        <Calendar className="size-4" />
+        Agendar Consulta
+      </DropdownMenuItem>
+      <DropdownMenuItem
+        className="gap-2 px-2 py-2.5"
+        onClick={() =>
+          void navigate(
+            `/appointments/new?tutorId=${tutorId}&petId=${petId}&type=VACCINATION`,
+          )
+        }
+      >
+        <Syringe className="size-4" />
+        Agendar Vacinação
+      </DropdownMenuItem>
+    </>
+  );
+
   return (
     <div className={pageShellClassName}>
       <PageBackButton to={`/tutors/${tutorId}`} />
 
       <div className="flex min-w-0 items-center gap-2">
-        <PetAvatar pet={pet} size="lg" />
+        <PetAvatar pet={pet} size="lg" className="rounded-full border border-border" />
         <div className="min-w-0 flex-1">
           <p className={`${pageDescriptionClassName} text-sm`}>
             Tutor:{' '}
@@ -201,59 +248,37 @@ export function PetDetailPage() {
             Editar
           </Button>
           <div className="sm:hidden">
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              render={
-                <Button
-                  size="icon-lg"
-                  className="size-10"
-                  aria-label="Ações do pet"
-                />
-              }
-            >
-              <Plus className="size-5" />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              {!hasOpenInitialConsultation && !hasOpenReturnVisit && !hasReturnScheduled && (
-                <DropdownMenuItem
-                  onClick={() => void handleStartConsultation()}
-                  disabled={createConsultation.isPending}
-                >
-                  <Stethoscope className="size-4" />
-                  {createConsultation.isPending ? 'Iniciando...' : 'Iniciar Consulta'}
-                </DropdownMenuItem>
-              )}
-              {!hasOpenVaccination && (
-                <DropdownMenuItem
-                  onClick={() => void handleStartVaccination()}
-                  disabled={createVaccination.isPending}
-                >
-                  <Syringe className="size-4" />
-                  {createVaccination.isPending ? 'Iniciando...' : 'Iniciar Vacinação'}
-                </DropdownMenuItem>
-              )}
-              <DropdownMenuItem
-                onClick={() =>
-                  void navigate(
-                    `/appointments/new?tutorId=${tutorId}&petId=${petId}&type=CONSULTATION`,
-                  )
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={
+                  <Button
+                    size="icon-lg"
+                    className="size-10"
+                    aria-label="Ações do pet"
+                  />
                 }
               >
-                <Calendar className="size-4" />
-                Agendar Consulta
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() =>
-                  void navigate(
-                    `/appointments/new?tutorId=${tutorId}&petId=${petId}&type=VACCINATION`,
-                  )
+                <Plus className="size-5" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56 p-1.5">
+                {actionMenuItems}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+          <div className="hidden sm:block">
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={
+                  <Button variant="outline" aria-label="Ações do pet" />
                 }
               >
-                <Syringe className="size-4" />
-                Agendar Vacinação
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+                <Menu className="size-4" />
+                Ações
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56 p-1.5">
+                {actionMenuItems}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </div>
@@ -349,48 +374,7 @@ export function PetDetailPage() {
         </Card>
       )}
 
-      <div className="relative">
-        <div className="absolute right-0 bottom-full z-10 mb-2 hidden max-w-full flex-col items-end gap-2 sm:flex sm:flex-row sm:flex-wrap sm:justify-end">
-          {!hasOpenInitialConsultation && !hasOpenReturnVisit && !hasReturnScheduled && (
-            <Button
-              className="w-auto"
-              onClick={handleStartConsultation}
-              disabled={createConsultation.isPending}
-            >
-              <Stethoscope className="size-4" />
-              {createConsultation.isPending ? 'Iniciando...' : 'Iniciar Consulta'}
-            </Button>
-          )}
-          {!hasOpenVaccination && (
-            <Button
-              className="w-auto"
-              onClick={handleStartVaccination}
-              disabled={createVaccination.isPending}
-            >
-              <Syringe className="size-4" />
-              {createVaccination.isPending ? 'Iniciando...' : 'Iniciar Vacinação'}
-            </Button>
-          )}
-          <Button variant="outline" className="w-auto" asChild>
-            <Link
-              to={`/appointments/new?tutorId=${tutorId}&petId=${petId}&type=CONSULTATION`}
-            >
-              <Calendar className="size-4" />
-              Agendar Consulta
-            </Link>
-          </Button>
-          <Button variant="outline" className="w-auto" asChild>
-            <Link
-              to={`/appointments/new?tutorId=${tutorId}&petId=${petId}&type=VACCINATION`}
-            >
-              <Syringe className="size-4" />
-              Agendar Vacinação
-            </Link>
-          </Button>
-        </div>
-
-        <PetRegistrationCard pet={pet} />
-      </div>
+      <PetRegistrationCard pet={pet} />
 
       <PetVaccinationsCard
         petId={pet.id}
