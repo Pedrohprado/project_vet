@@ -13,7 +13,7 @@ export function AuthPage() {
       subtitle={
         isRegister
           ? 'Cadastre sua clínica e comece a gerenciar seus atendimentos.'
-          : 'Acesse sua clínica veterinária. Simples, rápido e organizado.'
+          : 'Preencha os campos para acessar sua clínica.'
       }
     >
       {isRegister ? <RegisterForm /> : <LoginForm />}

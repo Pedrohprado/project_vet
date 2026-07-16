@@ -178,6 +178,41 @@ export const testimonials = [
     name: 'Carolina',
     role: 'Clínica Pet',
   },
+  {
+    quote: 'A agenda ficou organizada e a equipe alinhada.',
+    name: 'Marcos',
+    role: 'Dono de Clínica',
+  },
+  {
+    quote: 'Os tutores adoram acompanhar o histórico pelo celular.',
+    name: 'Juliana',
+    role: 'Recepção',
+  },
+  {
+    quote: 'Prontuário digital sem papelada nem planilha.',
+    name: 'Ricardo',
+    role: 'Médico Veterinário',
+  },
+  {
+    quote: 'Em uma tarde já estávamos usando no dia a dia.',
+    name: 'Patrícia',
+    role: 'Gestora de Clínica',
+  },
+  {
+    quote: 'O peso e as vacinas ficam registrados sem esforço.',
+    name: 'André',
+    role: 'Veterinário',
+  },
+  {
+    quote: 'Menos ligações cobrando retorno. Mais tempo no consultório.',
+    name: 'Camila',
+    role: 'Médica Veterinária',
+  },
+  {
+    quote: 'Simples de ensinar para a equipe toda.',
+    name: 'Thiago',
+    role: 'Sócio da Clínica',
+  },
 ] as const;
 
 export const pricingPlans = [

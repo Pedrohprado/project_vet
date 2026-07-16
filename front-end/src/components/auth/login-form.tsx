@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
-import { toast } from 'sonner';
 import { z } from 'zod';
 import { ApiError } from '@/api/http';
 import { Button } from '@/components/ui/button';
@@ -63,7 +62,6 @@ export function LoginForm({
       const message =
         err instanceof ApiError ? err.message : 'Erro ao fazer login';
       setFormError(message);
-      toast.error(message);
     } finally {
       setIsSubmitting(false);
     }
@@ -105,13 +103,21 @@ export function LoginForm({
             <p className="text-sm text-destructive">{formError}</p>
           ) : null}
           <Field>
-            <Button
-              type="submit"
-              className="h-11 w-full rounded-xl bg-foreground text-sm text-background hover:bg-foreground/90"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? 'Entrando...' : 'Entrar'}
-            </Button>
+            <div className="group relative mt-2">
+              <img
+                src="/head_cat.png"
+                alt=""
+                aria-hidden
+                className="pointer-events-none absolute right-1 bottom-full z-10 h-24 w-auto translate-y-[30%] opacity-0 transition-opacity duration-500 ease-out group-hover:opacity-100"
+              />
+              <Button
+                type="submit"
+                className="h-11 w-full rounded-xl bg-foreground text-sm text-background hover:bg-foreground/90"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? 'Entrando...' : 'Entrar'}
+              </Button>
+            </div>
             <FieldDescription className="text-center text-xs">
               Ainda não tem conta?{' '}
               <button

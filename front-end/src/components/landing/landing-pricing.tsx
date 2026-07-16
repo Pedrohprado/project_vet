@@ -10,7 +10,7 @@ export function LandingPricing() {
     <LandingSection
       id="planos"
       title="Planos"
-      subtitle="Starter para quem está começando. Pro para clínicas em crescimento."
+      subtitle="Preços simples e transparentes. Escolha o plano ideal para sua clínica."
     >
       <div className="mx-auto grid max-w-4xl gap-6 md:grid-cols-2">
         {pricingPlans.map((plan) => (

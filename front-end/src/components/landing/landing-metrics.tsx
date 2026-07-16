@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { metrics } from '@/lib/landing-content';
 import { landingCardClassName } from './landing-section';
+import { ScrollReveal } from './scroll-reveal';
 
 type MetricCounterProps = {
   end: number;
@@ -82,24 +83,26 @@ export function LandingMetrics() {
   return (
     <section className="scroll-mt-20">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {metrics.map((metric) => (
-            <div
-              key={metric.label}
-              className={landingCardClassName + ' text-center'}
-            >
-              <MetricCounter
-                end={metric.end}
-                prefix={metric.prefix}
-                suffix={metric.suffix}
-                localeFormat={metric.localeFormat}
-              />
-              <p className="mt-2 text-sm text-muted-foreground">
-                {metric.label}
-              </p>
-            </div>
-          ))}
-        </div>
+        <ScrollReveal>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {metrics.map((metric) => (
+              <div
+                key={metric.label}
+                className={landingCardClassName + ' text-center'}
+              >
+                <MetricCounter
+                  end={metric.end}
+                  prefix={metric.prefix}
+                  suffix={metric.suffix}
+                  localeFormat={metric.localeFormat}
+                />
+                <p className="mt-2 text-sm text-muted-foreground">
+                  {metric.label}
+                </p>
+              </div>
+            ))}
+          </div>
+        </ScrollReveal>
       </div>
     </section>
   );
