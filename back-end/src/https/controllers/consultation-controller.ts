@@ -7,10 +7,13 @@ import {
   createReturnConsultationSchema,
   finishConsultationSchema,
   listConsultationsQuerySchema,
+  postSummarySchema,
   updateConsultationSchema,
 } from '../schemas/consultation-schema.js';
+import { ConsultationSummaryService } from '../../services/consultation-summary-service.js';
 
 const consultationService = new ConsultationService();
+const consultationSummaryService = new ConsultationSummaryService();
 
 export async function listConsultations(request: FastifyRequest, reply: FastifyReply) {
   const parsed = listConsultationsQuerySchema.safeParse(request.query);
@@ -203,6 +206,52 @@ export async function finishConsultation(request: FastifyRequest, reply: Fastify
   );
 
   return reply.status(200).send(consultation);
+}
+
+export async function generatePostSummary(
+  request: FastifyRequest,
+  reply: FastifyReply,
+) {
+  const { id } = request.params as { id: string };
+  const parsed = postSummarySchema.safeParse(request.body ?? {});
+
+  if (!parsed.success) {
+    const firstError = parsed.error.issues[0]?.message ?? 'Dados inválidos';
+    throw new HttpError(firstError, 400);
+  }
+
+  const consultation = await consultationService.getById(request.tenantId, id);
+  const draft = parsed.data;
+
+  const diagnosis = draft.diagnosis ?? consultation.diagnosis;
+  const conduct = draft.conduct ?? consultation.conduct;
+  const needsReturn = draft.needsReturn ?? consultation.needsReturn;
+  const returnDate =
+    needsReturn && (draft.returnDate ?? consultation.returnDate)
+      ? (draft.returnDate ?? consultation.returnDate)
+      : null;
+
+  const message =
+    await consultationSummaryService.generatePostConsultationMessage({
+      tutorName: consultation.tutor.name,
+      petName: consultation.pet.name,
+      petSpecies: consultation.pet.species,
+      veterinarianName: consultation.veterinarian.name,
+      mainComplaint: consultation.mainComplaint,
+      diagnosis,
+      conduct,
+      needsReturn: Boolean(needsReturn && returnDate),
+      returnDate,
+      prescriptions: consultation.prescriptions.map((prescription) => ({
+        medicineName: prescription.medicineName,
+        dosage: prescription.dosage,
+        frequency: prescription.frequency,
+        duration: prescription.duration,
+        instructions: prescription.instructions,
+      })),
+    });
+
+  return reply.status(200).send({ message });
 }
 
 export async function deleteConsultation(request: FastifyRequest, reply: FastifyReply) {

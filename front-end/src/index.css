@@ -335,6 +335,15 @@
       -webkit-mask-image: none;
       overflow: visible;
     }
+
+    .boxvet-loading-bird {
+      animation: none !important;
+    }
+
+    .boxvet-loading-bird {
+      opacity: 1;
+      transform: translate3d(0, 0, 0);
+    }
   }
 }
 
@@ -523,5 +532,36 @@
 
   to {
     transform: translateX(0);
+  }
+}
+
+.boxvet-loading-scene {
+  aspect-ratio: 3 / 2;
+}
+
+.boxvet-loading-bird {
+  opacity: 0;
+  animation: boxvet-loading-bird-cycle 3.6s ease-in-out infinite;
+  transform: translate3d(0, 5px, 0) scale(0.94);
+  transform-origin: center bottom;
+}
+
+@keyframes boxvet-loading-bird-cycle {
+  0%,
+  18% {
+    opacity: 0;
+    transform: translate3d(0, 5px, 0) scale(0.94);
+  }
+
+  35%,
+  68% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+
+  85%,
+  100% {
+    opacity: 0;
+    transform: translate3d(0, 5px, 0) scale(0.94);
   }
 }

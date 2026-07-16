@@ -10,6 +10,7 @@ import {
   cancelScheduledReturn,
   deleteConsultation,
   finishConsultation,
+  generateConsultationPostSummary,
   getConsultation,
   getOpenConsultationByPet,
   getOpenReturnConsultationByParent,
@@ -20,6 +21,7 @@ import {
   uploadConsultationAttachment,
   deleteConsultationAttachment,
 } from '@/api/consultations';
+import { clearConsultationDraft } from '@/lib/consultation-draft';
 
 export function useConsultations(page = 1, limit = 20) {
   return useQuery({
@@ -229,9 +231,22 @@ export function useFinishConsultation() {
         queryKey: [PET_TIMELINE_QUERY_KEY, consultation.petId],
       });
       sessionStorage.removeItem(`consultation-step-${id}`);
+      clearConsultationDraft(id);
 
       return consultation;
     },
+  });
+}
+
+export function useGenerateConsultationPostSummary() {
+  return useMutation({
+    mutationFn: ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: Parameters<typeof generateConsultationPostSummary>[1];
+    }) => generateConsultationPostSummary(id, data),
   });
 }
 
@@ -280,6 +295,7 @@ export function useDeleteConsultation() {
       }
 
       sessionStorage.removeItem(`consultation-step-${id}`);
+      clearConsultationDraft(id);
     },
   });
 }

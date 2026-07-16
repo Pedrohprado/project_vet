@@ -8,6 +8,7 @@ import {
   ChevronLeft,
   ChevronRight,
   FileDown,
+  MessageCircle,
   PawPrint,
   Pill,
   Plus,
@@ -16,8 +17,10 @@ import {
 import { ApiError } from '@/api/http';
 import { listAppointments } from '@/api/appointments';
 import { downloadPrescriptionPdf } from '@/api/consultations';
+import { ConsultationWeightTimeline } from '@/components/consultation/consultation-weight-timeline';
 import { ReturnSchedulePicker } from '@/components/consultation/return-schedule-picker';
 import { ParentConsultationReferenceDialog } from '@/components/consultation/parent-consultation-reference-dialog';
+import { ConsultationWhatsAppReviewDialog } from '@/components/consultation/consultation-whatsapp-review-dialog';
 import { PetWeightDialog } from '@/components/pet/pet-weight-dialog';
 import { ConsultationAttachmentsCard } from '@/components/consultation/consultation-attachments-card';
 import { Badge } from '@/components/ui/badge';
@@ -79,20 +82,38 @@ import {
 import { useFormFieldErrors } from '@/hooks/useFormFieldErrors';
 import { formatPetAge, formatPetWeight } from '@/lib/pet-format';
 import {
+  formatTemperatureFromDigits,
+  handleTemperatureDigitsChange,
+  parseTemperatureDigits,
+  TEMPERATURE_INPUT_PLACEHOLDER,
+  temperatureValueToDigits,
+} from '@/lib/temperature-input';
+import {
+  buildConsultationWhatsAppMessage,
+  buildWhatsAppUrl,
+} from '@/lib/whatsapp';
+import {
   useAddPrescription,
   useCancelScheduledReturn,
   useConsultation,
   useCreateReturnConsultation,
   useDeleteConsultation,
   useFinishConsultation,
+  useGenerateConsultationPostSummary,
   useOpenReturnConsultationByParent,
   useRemovePrescription,
   useUpdateConsultation,
 } from '@/hooks/useConsultations';
+import { useConsultationDraft } from '@/hooks/useConsultationDraft';
 import {
   useCreatePetWeightRecord,
   usePetWeightRecords,
 } from '@/hooks/usePetWeightRecords';
+import {
+  readConsultationDraft,
+  writeConsultationDraft,
+  type ConsultationDraft,
+} from '@/lib/consultation-draft';
 import type {
   Consultation,
   PrescriptionDocumentType,
@@ -150,7 +171,7 @@ function consultationToAnamnesis(consultation: Consultation) {
     mainComplaint: consultation.mainComplaint ?? '',
     history: consultation.history ?? '',
     physicalExam: consultation.physicalExam ?? '',
-    temperature: consultation.temperature ?? '',
+    temperature: temperatureValueToDigits(consultation.temperature),
     observations: consultation.observations ?? '',
   };
 }
@@ -170,6 +191,18 @@ function consultationToReturnInfo(consultation: Consultation) {
       : '',
   };
 }
+
+const EMPTY_PRESCRIPTION_FORM = {
+  medicineName: '',
+  dosage: '',
+  frequency: '',
+  duration: '',
+  instructions: '',
+  routeOfAdministration: 'USO ORAL',
+  customRoute: '',
+  pharmacyType: 'VETERINARY' as PrescriptionPharmacyType,
+  quantity: '',
+};
 
 export function ConsultationPage() {
   const { id } = useParams<{ id: string }>();
@@ -239,6 +272,7 @@ export function ConsultationPage() {
   const addPrescription = useAddPrescription();
   const removePrescription = useRemovePrescription();
   const finishConsultation = useFinishConsultation();
+  const generatePostSummary = useGenerateConsultationPostSummary();
   const deleteConsultation = useDeleteConsultation();
   const createWeightRecord = useCreatePetWeightRecord();
 
@@ -248,6 +282,12 @@ export function ConsultationPage() {
     useState(false);
   const [parentReferenceOpen, setParentReferenceOpen] = useState(false);
   const [weightDialogOpen, setWeightDialogOpen] = useState(false);
+  const [whatsappReviewOpen, setWhatsappReviewOpen] = useState(false);
+  const [whatsappMessage, setWhatsappMessage] = useState('');
+  const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
+  const [whatsappReviewMode, setWhatsappReviewMode] = useState<
+    'finish' | 'resend'
+  >('finish');
   const [pendingWeightKg, setPendingWeightKg] = useState<number | null>(null);
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
   const [prescriptionDocumentType, setPrescriptionDocumentType] =
@@ -293,11 +333,6 @@ export function ConsultationPage() {
     return consultation.pet.weightKg;
   }, [consultation, weightRecords]);
 
-  const displayedConsultationWeight =
-    pendingWeightKg !== null
-      ? String(pendingWeightKg)
-      : (consultation?.weightKg ?? null);
-
   const [prescriptionFormOpen, setPrescriptionFormOpen] = useState(false);
   const {
     fieldErrors: prescriptionFieldErrors,
@@ -305,17 +340,9 @@ export function ConsultationPage() {
     clearFieldError: clearPrescriptionFieldError,
     clearErrors: clearPrescriptionErrors,
   } = useFormFieldErrors<PrescriptionFormField>('prescription');
-  const [prescriptionForm, setPrescriptionForm] = useState({
-    medicineName: '',
-    dosage: '',
-    frequency: '',
-    duration: '',
-    instructions: '',
-    routeOfAdministration: 'USO ORAL',
-    customRoute: '',
-    pharmacyType: 'VETERINARY' as PrescriptionPharmacyType,
-    quantity: '',
-  });
+  const [prescriptionForm, setPrescriptionForm] = useState(
+    EMPTY_PRESCRIPTION_FORM,
+  );
 
   const [hydratedConsultationId, setHydratedConsultationId] = useState<
     string | null
@@ -328,19 +355,34 @@ export function ConsultationPage() {
     appliedPendingReturnAppointmentId,
     setAppliedPendingReturnAppointmentId,
   ] = useState<string | null>(null);
+  const restoredReturnDurationFromDraftRef = useRef(false);
 
   if (consultation && consultation.id !== hydratedConsultationId) {
     setHydratedConsultationId(consultation.id);
-    setPendingWeightKg(null);
-    setAnamnesis(consultationToAnamnesis(consultation));
-    setClinical(consultationToClinical(consultation));
-    setReturnInfo(consultationToReturnInfo(consultation));
-    setReturnDurationMinutes(30);
-    setReturnDurationDigits(minutesToDurationDigits(30));
     setAppliedPendingReturnAppointmentId(null);
-    setPrescriptionDocumentType(
-      consultation.prescriptionDocumentType ?? 'SIMPLE',
+
+    const draft =
+      consultation.status === 'OPEN'
+        ? readConsultationDraft(consultation.id)
+        : null;
+
+    restoredReturnDurationFromDraftRef.current = Boolean(draft);
+
+    setAnamnesis(draft?.anamnesis ?? consultationToAnamnesis(consultation));
+    setClinical(draft?.clinical ?? consultationToClinical(consultation));
+    setReturnInfo(draft?.returnInfo ?? consultationToReturnInfo(consultation));
+    setReturnDurationMinutes(draft?.returnDurationMinutes ?? 30);
+    setReturnDurationDigits(
+      draft?.returnDurationDigits ?? minutesToDurationDigits(30),
     );
+    setPendingWeightKg(draft?.pendingWeightKg ?? null);
+    setPrescriptionDocumentType(
+      draft?.prescriptionDocumentType ??
+        consultation.prescriptionDocumentType ??
+        'SIMPLE',
+    );
+    setPrescriptionFormOpen(draft?.prescriptionFormOpen ?? false);
+    setPrescriptionForm(draft?.prescriptionForm ?? EMPTY_PRESCRIPTION_FORM);
   }
 
   if (
@@ -348,10 +390,13 @@ export function ConsultationPage() {
     pendingReturnAppointment.id !== appliedPendingReturnAppointmentId
   ) {
     setAppliedPendingReturnAppointmentId(pendingReturnAppointment.id);
-    setReturnDurationMinutes(pendingReturnAppointment.durationMinutes);
-    setReturnDurationDigits(
-      minutesToDurationDigits(pendingReturnAppointment.durationMinutes),
-    );
+    if (!restoredReturnDurationFromDraftRef.current) {
+      setReturnDurationMinutes(pendingReturnAppointment.durationMinutes);
+      setReturnDurationDigits(
+        minutesToDurationDigits(pendingReturnAppointment.durationMinutes),
+      );
+    }
+    restoredReturnDurationFromDraftRef.current = false;
   }
 
   if (
@@ -386,6 +431,39 @@ export function ConsultationPage() {
     sessionStorage.setItem(stepStorageKey(id), String(currentStep));
   }, [id, consultation?.status, currentStep]);
 
+  const consultationDraft = useMemo<ConsultationDraft>(
+    () => ({
+      anamnesis,
+      clinical,
+      returnInfo,
+      returnDurationMinutes,
+      returnDurationDigits,
+      pendingWeightKg,
+      prescriptionDocumentType,
+      prescriptionFormOpen,
+      prescriptionForm,
+    }),
+    [
+      anamnesis,
+      clinical,
+      returnInfo,
+      returnDurationMinutes,
+      returnDurationDigits,
+      pendingWeightKg,
+      prescriptionDocumentType,
+      prescriptionFormOpen,
+      prescriptionForm,
+    ],
+  );
+
+  useConsultationDraft({
+    consultationId: id,
+    enabled:
+      consultation?.status === 'OPEN' &&
+      hydratedConsultationId === consultation.id,
+    draft: consultationDraft,
+  });
+
   useEffect(() => {
     stepRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }, [currentStep]);
@@ -399,19 +477,24 @@ export function ConsultationPage() {
         mainComplaint: anamnesis.mainComplaint || undefined,
         history: anamnesis.history || undefined,
         physicalExam: anamnesis.physicalExam || undefined,
-        temperature: anamnesis.temperature
-          ? Number(anamnesis.temperature)
-          : undefined,
+        temperature: (() => {
+          const parsed = parseTemperatureDigits(anamnesis.temperature);
+          return parsed !== null ? parsed : undefined;
+        })(),
         observations: anamnesis.observations || undefined,
       },
     });
 
-    if (pendingWeightKg === null) return;
+    if (pendingWeightKg === null) {
+      persistDraftSnapshot();
+      return;
+    }
 
     const previous = previousWeightKg != null ? Number(previousWeightKg) : null;
 
     if (previous !== null && pendingWeightKg === previous) {
       setPendingWeightKg(null);
+      persistDraftSnapshot({ pendingWeightKg: null });
       return;
     }
 
@@ -425,6 +508,7 @@ export function ConsultationPage() {
     });
 
     setPendingWeightKg(null);
+    persistDraftSnapshot({ pendingWeightKg: null });
   }
 
   async function handleSaveClinical() {
@@ -437,6 +521,8 @@ export function ConsultationPage() {
         conduct: clinical.conduct || undefined,
       },
     });
+
+    persistDraftSnapshot();
   }
 
   async function handleSaveReturn() {
@@ -454,6 +540,8 @@ export function ConsultationPage() {
           : undefined,
       },
     });
+
+    persistDraftSnapshot();
   }
 
   async function validateReturnSchedule() {
@@ -526,17 +614,12 @@ export function ConsultationPage() {
   }
 
   function resetPrescriptionForm() {
-    setPrescriptionForm({
-      medicineName: '',
-      dosage: '',
-      frequency: '',
-      duration: '',
-      instructions: '',
-      routeOfAdministration: 'USO ORAL',
-      customRoute: '',
-      pharmacyType: 'VETERINARY',
-      quantity: '',
-    });
+    setPrescriptionForm(EMPTY_PRESCRIPTION_FORM);
+  }
+
+  function persistDraftSnapshot(overrides?: Partial<ConsultationDraft>) {
+    if (!id || consultation?.status !== 'OPEN') return;
+    writeConsultationDraft(id, { ...consultationDraft, ...overrides });
   }
 
   function handleCancelPrescriptionForm() {
@@ -614,16 +697,81 @@ export function ConsultationPage() {
     }
   }
 
-  async function handleFinish() {
+  async function openPostSummaryReview(mode: 'finish' | 'resend') {
     if (!id || !consultation) return;
 
-    const hasPrescriptions = consultation.prescriptions.length > 0;
-    const schedulingReturn =
-      returnInfo.needsReturn && Boolean(returnInfo.returnDate);
+    const fallbackMessage = buildConsultationWhatsAppMessage({
+      tutorName: consultation.tutor.name,
+      petName: consultation.pet.name,
+      petSpecies: consultation.pet.species,
+      diagnosis: clinical.diagnosis,
+      conduct: clinical.conduct,
+      returnDate:
+        returnInfo.needsReturn && returnInfo.returnDate
+          ? returnInfo.returnDate
+          : null,
+      veterinarianName: consultation.veterinarian.name,
+      prescriptions: consultation.prescriptions,
+    });
+
+    setWhatsappReviewMode(mode);
+    setWhatsappMessage('');
+    setIsGeneratingSummary(true);
+    setWhatsappReviewOpen(true);
+
+    try {
+      const { message } = await generatePostSummary.mutateAsync({
+        id,
+        data: {
+          diagnosis: clinical.diagnosis || undefined,
+          conduct: clinical.conduct || undefined,
+          needsReturn: returnInfo.needsReturn,
+          returnDate:
+            returnInfo.needsReturn && returnInfo.returnDate
+              ? new Date(returnInfo.returnDate).toISOString()
+              : undefined,
+        },
+      });
+      setWhatsappMessage(message.trim() || fallbackMessage);
+    } catch {
+      setWhatsappMessage(fallbackMessage);
+    } finally {
+      setIsGeneratingSummary(false);
+    }
+  }
+
+  async function handleFinish() {
+    if (!id || !consultation) return;
 
     if (!(await validateReturnSchedule())) {
       return;
     }
+
+    await openPostSummaryReview('finish');
+  }
+
+  async function handleResendPostSummary() {
+    await openPostSummaryReview('resend');
+  }
+
+  async function handleConfirmFinish() {
+    if (!id || !consultation) return;
+
+    const tutorPhone =
+      consultation.tutor.whatsapp ?? consultation.tutor.phone;
+
+    if (whatsappReviewMode === 'resend') {
+      const whatsappUrl = buildWhatsAppUrl(tutorPhone, whatsappMessage.trim());
+      if (whatsappUrl) {
+        window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
+      }
+      setWhatsappReviewOpen(false);
+      return;
+    }
+
+    const hasPrescriptions = consultation.prescriptions.length > 0;
+    const schedulingReturn =
+      returnInfo.needsReturn && Boolean(returnInfo.returnDate);
 
     try {
       await handleSaveReturn();
@@ -642,15 +790,20 @@ export function ConsultationPage() {
         },
       });
 
+      const whatsappUrl = buildWhatsAppUrl(tutorPhone, whatsappMessage.trim());
+      if (whatsappUrl) {
+        window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
+      }
+
+      setWhatsappReviewOpen(false);
+
       if (schedulingReturn) {
         toast.success('Retorno agendado com sucesso!');
         void navigate('/atendimento');
         return;
       }
 
-      toast.success(
-        'Consulta finalizada! Notificação pós-consulta registrada.',
-      );
+      toast.success('Consulta finalizada!');
 
       if (!hasPrescriptions) {
         void navigate(
@@ -874,6 +1027,16 @@ export function ConsultationPage() {
               type='button'
               variant='outline'
               className='w-full sm:w-auto'
+              disabled={isGeneratingSummary || whatsappReviewOpen}
+              onClick={() => void handleResendPostSummary()}
+            >
+              <MessageCircle className='size-4' />
+              Pós-consulta enviado
+            </Button>
+            <Button
+              type='button'
+              variant='outline'
+              className='w-full sm:w-auto'
               render={
                 <Link
                   to={`/tutors/${consultation.tutorId}/pets/${consultation.petId}`}
@@ -885,18 +1048,32 @@ export function ConsultationPage() {
           </div>
         ) : null}
         {isReadOnly && !isReturnScheduledParent && (
-          <Button
-            type='button'
-            variant='outline'
-            className='w-full sm:w-auto sm:self-start'
-            render={
-              <Link
-                to={`/tutors/${consultation.tutorId}/pets/${consultation.petId}`}
-              />
-            }
-          >
-            Ir para ficha do pet
-          </Button>
+          <div className='flex flex-col gap-2 sm:flex-row sm:self-start'>
+            {consultation.status === 'FINISHED' ? (
+              <Button
+                type='button'
+                variant='outline'
+                className='w-full sm:w-auto'
+                disabled={isGeneratingSummary || whatsappReviewOpen}
+                onClick={() => void handleResendPostSummary()}
+              >
+                <MessageCircle className='size-4' />
+                Pós-consulta enviado
+              </Button>
+            ) : null}
+            <Button
+              type='button'
+              variant='outline'
+              className='w-full sm:w-auto'
+              render={
+                <Link
+                  to={`/tutors/${consultation.tutorId}/pets/${consultation.petId}`}
+                />
+              }
+            >
+              Ir para ficha do pet
+            </Button>
+          </div>
         )}
       </div>
 
@@ -918,14 +1095,17 @@ export function ConsultationPage() {
                     isCurrent &&
                       'border-primary bg-primary text-primary-foreground',
                     isCompleted &&
-                      'border-amber-200/80 bg-amber-100 text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/15 dark:text-amber-200',
+                      'border-emerald-950 bg-emerald-50 text-emerald-950! hover:bg-emerald-100',
                     !isCurrent &&
                       !isCompleted &&
                       'border-border bg-background text-muted-foreground',
                   )}
                 >
                   {isCompleted ? (
-                    <Check className='size-3 shrink-0' strokeWidth={2.5} />
+                    <Check
+                      className='size-3 shrink-0 text-emerald-950'
+                      strokeWidth={2.5}
+                    />
                   ) : (
                     <span className='tabular-nums'>{index + 1}.</span>
                   )}
@@ -1013,45 +1193,28 @@ export function ConsultationPage() {
                     }
                   />
                 </div>
-                <div className='space-y-2'>
-                  <Label>Peso (kg)</Label>
-                  <p className='text-xs text-muted-foreground'>
-                    Peso anterior:{' '}
-                    {previousWeightKg
-                      ? formatPetWeight(previousWeightKg)
-                      : 'Não informado'}
-                  </p>
-                  <button
-                    type='button'
-                    disabled={isReadOnly}
-                    onClick={() => setWeightDialogOpen(true)}
-                    className={cn(
-                      'flex h-9 w-full items-center rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-colors',
-                      'hover:bg-accent hover:text-accent-foreground',
-                      'disabled:cursor-not-allowed disabled:opacity-50',
-                      !displayedConsultationWeight &&
-                        !previousWeightKg &&
-                        'text-muted-foreground',
-                    )}
-                  >
-                    {displayedConsultationWeight
-                      ? formatPetWeight(displayedConsultationWeight)
-                      : previousWeightKg
-                        ? formatPetWeight(previousWeightKg)
-                        : 'Informar peso'}
-                  </button>
-                </div>
+                <ConsultationWeightTimeline
+                  records={weightRecords}
+                  consultationId={consultation.id}
+                  pendingWeightKg={pendingWeightKg}
+                  disabled={isReadOnly}
+                  onAddClick={() => setWeightDialogOpen(true)}
+                />
                 <div className='space-y-2'>
                   <Label>Temperatura (°C)</Label>
                   <Input
-                    type='number'
-                    step='0.1'
-                    value={anamnesis.temperature}
+                    type="text"
+                    inputMode="decimal"
+                    placeholder={TEMPERATURE_INPUT_PLACEHOLDER}
+                    value={formatTemperatureFromDigits(anamnesis.temperature)}
                     disabled={isReadOnly}
                     onChange={(e) =>
                       setAnamnesis((prev) => ({
                         ...prev,
-                        temperature: e.target.value,
+                        temperature: handleTemperatureDigitsChange(
+                          e.target.value,
+                          prev.temperature,
+                        ),
                       }))
                     }
                   />
@@ -1659,14 +1822,12 @@ export function ConsultationPage() {
               <Button
                 size='lg'
                 className='flex-1'
-                onClick={handleFinish}
-                disabled={finishConsultation.isPending}
+                onClick={() => void handleFinish()}
+                disabled={
+                  finishConsultation.isPending || whatsappReviewOpen
+                }
               >
-                {finishConsultation.isPending
-                  ? returnInfo.needsReturn && returnInfo.returnDate
-                    ? 'Agendando...'
-                    : 'Finalizando...'
-                  : finishButtonLabel}
+                {finishButtonLabel}
               </Button>
             ) : (
               <Button
@@ -1681,6 +1842,36 @@ export function ConsultationPage() {
           </div>
         </div>
       )}
+
+      <ConsultationWhatsAppReviewDialog
+        open={whatsappReviewOpen}
+        onOpenChange={(open) => {
+          if (
+            !finishConsultation.isPending &&
+            !updateConsultation.isPending &&
+            !isGeneratingSummary
+          ) {
+            setWhatsappReviewOpen(open);
+          }
+        }}
+        tutorName={consultation.tutor.name}
+        tutorPhone={
+          consultation.tutor.whatsapp ?? consultation.tutor.phone
+        }
+        message={whatsappMessage}
+        onMessageChange={setWhatsappMessage}
+        onConfirm={() => void handleConfirmFinish()}
+        confirmLabel={
+          whatsappReviewMode === 'resend' ? 'Enviar no WhatsApp' : 'Concluir'
+        }
+        confirmingLabel={
+          whatsappReviewMode === 'resend' ? 'Abrindo...' : 'Concluindo...'
+        }
+        isConfirming={
+          finishConsultation.isPending || updateConsultation.isPending
+        }
+        isGenerating={isGeneratingSummary}
+      />
 
       <Dialog open={cancelOpen} onOpenChange={setCancelOpen}>
         <DialogContent className='sm:max-w-md'>

@@ -8,6 +8,7 @@ import {
   deleteConsultation,
   downloadPrescriptionPdf,
   finishConsultation,
+  generatePostSummary,
   getConsultation,
   getOpenConsultationByPet,
   getOpenReturnConsultationByParent,
@@ -80,5 +81,10 @@ export async function consultationRoutes(app: FastifyInstance) {
     removePrescription,
   );
   app.post('/:id/finish', { preHandler: protectedHandlers }, finishConsultation);
+  app.post(
+    '/:id/post-summary',
+    { preHandler: protectedHandlers },
+    generatePostSummary,
+  );
   app.delete('/:id', { preHandler: protectedHandlers }, deleteConsultation);
 }

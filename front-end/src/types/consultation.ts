@@ -171,3 +171,14 @@ export type FinishConsultationPayload = {
   returnDate?: string;
   returnDurationMinutes?: number;
 };
+
+export type PostSummaryPayload = {
+  diagnosis?: string;
+  conduct?: string;
+  needsReturn?: boolean;
+  returnDate?: string;
+};
+
+export type PostSummaryResponse = {
+  message: string;
+};

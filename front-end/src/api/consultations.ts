@@ -6,6 +6,8 @@ import type {
   CreateConsultationPayload,
   CreatePrescriptionPayload,
   FinishConsultationPayload,
+  PostSummaryPayload,
+  PostSummaryResponse,
   Prescription,
   UpdateConsultationPayload,
 } from '@/types/consultation';
@@ -162,6 +164,20 @@ export async function finishConsultation(
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   });
+}
+
+export async function generateConsultationPostSummary(
+  id: string,
+  payload: PostSummaryPayload,
+): Promise<PostSummaryResponse> {
+  return apiFetchJson<PostSummaryResponse>(
+    `/consultations/${id}/post-summary`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    },
+  );
 }
 
 export async function deleteConsultation(id: string): Promise<void> {
