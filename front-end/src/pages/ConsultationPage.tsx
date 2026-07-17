@@ -1148,9 +1148,11 @@ export function ConsultationPage() {
           <Card>
             <CardHeader>
               <CardTitle>1. Anamnese</CardTitle>
-              <CardDescription>
-                Queixa principal, histórico e exame físico.
-              </CardDescription>
+              {!isReadOnly && (
+                <CardDescription>
+                  Queixa principal, histórico e exame físico.
+                </CardDescription>
+              )}
             </CardHeader>
             <CardContent className='space-y-4'>
               <div className='grid grid-cols-1 gap-4'>
@@ -1284,6 +1286,7 @@ export function ConsultationPage() {
               consultation.status === 'OPEN' ||
               consultation.status === 'FINISHED'
             }
+            showDescription={!isReadOnly}
             className={
               !isReadOnly && currentStep === 2 ? 'mt-0! sm:mt-0!' : undefined
             }
@@ -1295,9 +1298,11 @@ export function ConsultationPage() {
             <CardHeader className='gap-3 sm:flex-row sm:items-start sm:justify-between'>
               <div className='space-y-1'>
                 <CardTitle>4. Receita</CardTitle>
-                <CardDescription>
-                  Medicamentos prescritos na consulta.
-                </CardDescription>
+                {!isReadOnly && (
+                  <CardDescription>
+                    Medicamentos prescritos na consulta.
+                  </CardDescription>
+                )}
               </div>
               {isReadOnly && consultation.prescriptions.length > 0 && (
                 <Button
@@ -1752,53 +1757,63 @@ export function ConsultationPage() {
           <Card className='mt-4 sm:mt-6'>
             <CardHeader>
               <CardTitle>5. Retorno</CardTitle>
-              <CardDescription>
-                Agende retorno se necessário. Com retorno marcado, o status da
-                consulta passa a ser &quot;Retorno agendado&quot; até a visita.
-              </CardDescription>
+              {!isReadOnly && (
+                <CardDescription>
+                  Agende retorno se necessário. Com retorno marcado, o status da
+                  consulta passa a ser &quot;Retorno agendado&quot; até a visita.
+                </CardDescription>
+              )}
             </CardHeader>
             <CardContent className='space-y-4'>
-              <div className='flex min-h-11 items-center gap-3'>
-                <Checkbox
-                  id='needsReturn'
-                  checked={returnInfo.needsReturn}
-                  disabled={isReadOnly}
-                  onCheckedChange={(checked) =>
-                    setReturnInfo((prev) => ({
-                      needsReturn: checked === true,
-                      returnDate:
-                        checked === true && !prev.returnDate
-                          ? formatDateTimeValue(new Date())
-                          : prev.returnDate,
-                    }))
-                  }
-                />
-                <Label htmlFor='needsReturn' className='cursor-pointer'>
-                  Necessita retorno
-                </Label>
-              </div>
-              {returnInfo.needsReturn && user?.id ? (
-                <ReturnSchedulePicker
-                  value={returnInfo.returnDate}
-                  durationMinutes={returnDurationMinutes}
-                  durationDigits={returnDurationDigits}
-                  disabled={isReadOnly}
-                  veterinarianId={user.id}
-                  excludeAppointmentId={pendingReturnAppointment?.id}
-                  onChange={(returnDate) =>
-                    setReturnInfo((prev) => ({ ...prev, returnDate }))
-                  }
-                  onDurationChange={(minutes, digits) => {
-                    setReturnDurationMinutes(minutes);
-                    setReturnDurationDigits(digits);
-                  }}
-                />
-              ) : null}
-              {returnInfo.needsReturn && !user?.id ? (
-                <p className='text-sm text-destructive'>
-                  Não foi possível identificar o veterinário logado.
+              {isReadOnly && !returnInfo.needsReturn ? (
+                <p className='text-sm text-muted-foreground'>
+                  Não foi agendado nenhum retorno.
                 </p>
-              ) : null}
+              ) : (
+                <>
+                  <div className='flex min-h-11 items-center gap-3'>
+                    <Checkbox
+                      id='needsReturn'
+                      checked={returnInfo.needsReturn}
+                      disabled={isReadOnly}
+                      onCheckedChange={(checked) =>
+                        setReturnInfo((prev) => ({
+                          needsReturn: checked === true,
+                          returnDate:
+                            checked === true && !prev.returnDate
+                              ? formatDateTimeValue(new Date())
+                              : prev.returnDate,
+                        }))
+                      }
+                    />
+                    <Label htmlFor='needsReturn' className='cursor-pointer'>
+                      Necessita retorno
+                    </Label>
+                  </div>
+                  {returnInfo.needsReturn && user?.id ? (
+                    <ReturnSchedulePicker
+                      value={returnInfo.returnDate}
+                      durationMinutes={returnDurationMinutes}
+                      durationDigits={returnDurationDigits}
+                      disabled={isReadOnly}
+                      veterinarianId={user.id}
+                      excludeAppointmentId={pendingReturnAppointment?.id}
+                      onChange={(returnDate) =>
+                        setReturnInfo((prev) => ({ ...prev, returnDate }))
+                      }
+                      onDurationChange={(minutes, digits) => {
+                        setReturnDurationMinutes(minutes);
+                        setReturnDurationDigits(digits);
+                      }}
+                    />
+                  ) : null}
+                  {returnInfo.needsReturn && !user?.id ? (
+                    <p className='text-sm text-destructive'>
+                      Não foi possível identificar o veterinário logado.
+                    </p>
+                  ) : null}
+                </>
+              )}
             </CardContent>
           </Card>
         )}

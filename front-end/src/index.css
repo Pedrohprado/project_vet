@@ -541,27 +541,20 @@
 
 .boxvet-loading-bird {
   opacity: 0;
-  animation: boxvet-loading-bird-cycle 3.6s ease-in-out infinite;
+  animation: boxvet-loading-bird-enter 1.8s ease-out forwards;
   transform: translate3d(0, 5px, 0) scale(0.94);
   transform-origin: center bottom;
 }
 
-@keyframes boxvet-loading-bird-cycle {
+@keyframes boxvet-loading-bird-enter {
   0%,
-  18% {
+  35% {
     opacity: 0;
     transform: translate3d(0, 5px, 0) scale(0.94);
   }
 
-  35%,
-  68% {
+  100% {
     opacity: 1;
     transform: translate3d(0, 0, 0) scale(1);
-  }
-
-  85%,
-  100% {
-    opacity: 0;
-    transform: translate3d(0, 5px, 0) scale(0.94);
   }
 }

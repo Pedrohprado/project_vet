@@ -24,6 +24,7 @@ type ConsultationAttachmentsCardProps = {
   petId: string;
   attachments: ConsultationAttachment[];
   canManage: boolean;
+  showDescription?: boolean;
   className?: string;
 };
 
@@ -42,6 +43,7 @@ export function ConsultationAttachmentsCard({
   petId,
   attachments,
   canManage,
+  showDescription = true,
   className,
 }: ConsultationAttachmentsCardProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -99,10 +101,12 @@ export function ConsultationAttachmentsCard({
     <Card className={cn('mt-4 sm:mt-6', className)}>
       <CardHeader>
         <CardTitle>3. Exames anexados</CardTitle>
-        <CardDescription>
-          Vincule laudos e exames em PDF a esta consulta para manter o histórico
-          clínico.
-        </CardDescription>
+        {showDescription ? (
+          <CardDescription>
+            Vincule laudos e exames em PDF a esta consulta para manter o histórico
+            clínico.
+          </CardDescription>
+        ) : null}
       </CardHeader>
       <CardContent className="space-y-4">
         {canManage ? (

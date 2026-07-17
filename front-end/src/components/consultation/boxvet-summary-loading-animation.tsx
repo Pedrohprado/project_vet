@@ -27,7 +27,7 @@ export function BoxvetSummaryLoadingAnimation({
           src={BIRD_SRC}
           alt=''
           aria-hidden
-          className='boxvet-loading-bird pointer-events-none absolute right-[25%] top-[14%] z-20 w-[22%]'
+          className='boxvet-loading-bird pointer-events-none absolute right-[49%] top-[24%] z-20 w-[22%]'
         />
       </div>
 
