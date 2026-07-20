@@ -8,7 +8,7 @@ import {
   ChevronLeft,
   ChevronRight,
   FileDown,
-  MessageCircle,
+  MessagesSquare,
   PawPrint,
   Pill,
   Plus,
@@ -21,6 +21,7 @@ import { ConsultationWeightTimeline } from '@/components/consultation/consultati
 import { ReturnSchedulePicker } from '@/components/consultation/return-schedule-picker';
 import { ParentConsultationReferenceDialog } from '@/components/consultation/parent-consultation-reference-dialog';
 import { ConsultationWhatsAppReviewDialog } from '@/components/consultation/consultation-whatsapp-review-dialog';
+import { ShareCommunityCaseDialog } from '@/components/community/share-community-case-dialog';
 import { PetWeightDialog } from '@/components/pet/pet-weight-dialog';
 import { ConsultationAttachmentsCard } from '@/components/consultation/consultation-attachments-card';
 import { Badge } from '@/components/ui/badge';
@@ -284,6 +285,7 @@ export function ConsultationPage() {
   const [parentReferenceOpen, setParentReferenceOpen] = useState(false);
   const [weightDialogOpen, setWeightDialogOpen] = useState(false);
   const [whatsappReviewOpen, setWhatsappReviewOpen] = useState(false);
+  const [shareCommunityOpen, setShareCommunityOpen] = useState(false);
   const [whatsappMessage, setWhatsappMessage] = useState('');
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
   const [whatsappReviewMode, setWhatsappReviewMode] = useState<
@@ -1029,12 +1031,24 @@ export function ConsultationPage() {
             <Button
               type='button'
               variant='outline'
-              className='w-full sm:w-auto'
+              className='w-full border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 hover:text-emerald-900 sm:w-auto dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300 dark:hover:bg-emerald-500/15'
               disabled={isGeneratingSummary || whatsappReviewOpen}
               onClick={() => void handleResendPostSummary()}
             >
-              <MessageCircle className='size-4' />
+              <Check className='size-4' />
               Pós-consulta enviado
+            </Button>
+            <Button
+              type='button'
+              variant='outline'
+              className='w-full sm:w-auto'
+              disabled={consultation.sharedInCommunity}
+              onClick={() => setShareCommunityOpen(true)}
+            >
+              <MessagesSquare className='size-4' />
+              {consultation.sharedInCommunity
+                ? 'Já compartilhada'
+                : 'Compartilhar na comunidade'}
             </Button>
             <Button
               type='button'
@@ -1051,17 +1065,31 @@ export function ConsultationPage() {
           </div>
         ) : null}
         {isReadOnly && !isReturnScheduledParent && (
-          <div className='flex flex-col gap-2 sm:flex-row sm:self-start'>
+          <div className='flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:self-start'>
+            {consultation.status === 'FINISHED' ? (
+              <Button
+                type='button'
+                variant='outline'
+                className='w-full border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 hover:text-emerald-900 sm:w-auto dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300 dark:hover:bg-emerald-500/15'
+                disabled={isGeneratingSummary || whatsappReviewOpen}
+                onClick={() => void handleResendPostSummary()}
+              >
+                <Check className='size-4' />
+                Pós-consulta enviado
+              </Button>
+            ) : null}
             {consultation.status === 'FINISHED' ? (
               <Button
                 type='button'
                 variant='outline'
                 className='w-full sm:w-auto'
-                disabled={isGeneratingSummary || whatsappReviewOpen}
-                onClick={() => void handleResendPostSummary()}
+                disabled={consultation.sharedInCommunity}
+                onClick={() => setShareCommunityOpen(true)}
               >
-                <MessageCircle className='size-4' />
-                Pós-consulta enviado
+                <MessagesSquare className='size-4' />
+                {consultation.sharedInCommunity
+                  ? 'Já compartilhada'
+                  : 'Compartilhar na comunidade'}
               </Button>
             ) : null}
             <Button
@@ -1889,6 +1917,15 @@ export function ConsultationPage() {
           finishConsultation.isPending || updateConsultation.isPending
         }
         isGenerating={isGeneratingSummary}
+      />
+
+      <ShareCommunityCaseDialog
+        open={shareCommunityOpen}
+        onOpenChange={setShareCommunityOpen}
+        consultation={consultation}
+        onPublished={(created) => {
+          void navigate(`/comunidade?caso=${created.id}`);
+        }}
       />
 
       <Dialog open={cancelOpen} onOpenChange={setCancelOpen}>

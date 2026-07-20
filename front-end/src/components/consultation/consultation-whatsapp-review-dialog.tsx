@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { BoxvetSummaryLoadingAnimation } from '@/components/consultation/boxvet-summary-loading-animation';
 import {
@@ -40,11 +39,6 @@ export function ConsultationWhatsAppReviewDialog({
   confirmingLabel = 'Concluindo...',
 }: ConsultationWhatsAppReviewDialogProps) {
   const busy = isConfirming || isGenerating;
-  const [showAnimationPreview, setShowAnimationPreview] = useState(false);
-
-  if ((!open || isGenerating) && showAnimationPreview) {
-    setShowAnimationPreview(false);
-  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -52,9 +46,8 @@ export function ConsultationWhatsAppReviewDialog({
         <DialogHeader className='shrink-0'>
           <DialogTitle>Revisar resumo pós-consulta</DialogTitle>
           <DialogDescription>
-            {isGenerating
-              ? 'Gerando um resumo humanizado com IA para o WhatsApp…'
-              : 'Confira a mensagem que será enviada ao tutor via WhatsApp. Você pode editar o texto antes de concluir.'}
+            Confira a mensagem que será enviada ao tutor via WhatsApp. Você pode
+            editar o texto antes de concluir.
           </DialogDescription>
         </DialogHeader>
 
@@ -78,21 +71,8 @@ export function ConsultationWhatsAppReviewDialog({
           </div>
 
           <div className='flex min-h-0 flex-1 flex-col gap-2'>
-            <div className='flex items-center justify-between gap-3'>
-              <Label htmlFor='whatsapp-review-message'>Mensagem</Label>
-              {!isGenerating ? (
-                <Button
-                  type='button'
-                  variant='outline'
-                  size='sm'
-                  onClick={() => setShowAnimationPreview((current) => !current)}
-                  disabled={isConfirming}
-                >
-                  {showAnimationPreview ? 'Voltar ao texto' : 'Ver animação'}
-                </Button>
-              ) : null}
-            </div>
-            {isGenerating || showAnimationPreview ? (
+            <Label htmlFor='whatsapp-review-message'>Mensagem</Label>
+            {isGenerating ? (
               <BoxvetSummaryLoadingAnimation className='min-h-0 flex-1' />
             ) : (
               <Textarea

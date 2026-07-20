@@ -1,4 +1,4 @@
-import { Calendar, Home, Stethoscope, Users } from 'lucide-react';
+import { Calendar, Home, MessagesSquare, Stethoscope, Users } from 'lucide-react';
 import { useLocation } from 'react-router';
 import { ClinicHeader } from '@/components/clinic-header';
 import { NavMain } from '@/components/nav-main';
@@ -17,6 +17,7 @@ const navItems = [
   { title: 'Agenda', url: '/agenda', icon: Calendar },
   { title: 'Atendimento', url: '/atendimento', icon: Stethoscope },
   { title: 'Tutores', url: '/tutors', icon: Users },
+  { title: 'Comunidade', url: '/comunidade', icon: MessagesSquare },
 ];
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {

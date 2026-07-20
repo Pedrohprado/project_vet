@@ -63,7 +63,15 @@ const consultationListSelect = {
   tutor: { select: { id: true, name: true } },
   pet: { select: { id: true, name: true, species: true } },
   veterinarian: { select: { id: true, name: true } },
+  communityCase: { select: { id: true } },
 } as const;
+
+function withSharedInCommunity<T extends { communityCase: { id: string } | null }>(
+  item: T,
+): Omit<T, 'communityCase'> & { sharedInCommunity: boolean } {
+  const { communityCase, ...rest } = item;
+  return { ...rest, sharedInCommunity: Boolean(communityCase) };
+}
 
 export class ConsultationPrismaRepository {
   async findMany(
@@ -90,7 +98,12 @@ export class ConsultationPrismaRepository {
         orderBy,
       });
 
-      return { items, total: items.length, page: 1, limit: items.length };
+      return {
+        items: items.map(withSharedInCommunity),
+        total: items.length,
+        page: 1,
+        limit: items.length,
+      };
     }
 
     const [items, total] = await Promise.all([
@@ -104,7 +117,12 @@ export class ConsultationPrismaRepository {
       prisma.consultation.count({ where }),
     ]);
 
-    return { items, total, page, limit };
+    return {
+      items: items.map(withSharedInCommunity),
+      total,
+      page,
+      limit,
+    };
   }
 
   async findOpenByPet(clinicId: string, petId: string) {
@@ -172,7 +190,7 @@ export class ConsultationPrismaRepository {
   }
 
   async findById(clinicId: string, id: string) {
-    return prisma.consultation.findFirst({
+    const consultation = await prisma.consultation.findFirst({
       where: { id, clinicId },
       select: {
         ...consultationSelect,
@@ -181,8 +199,11 @@ export class ConsultationPrismaRepository {
         tutor: { select: { id: true, name: true, phone: true, whatsapp: true } },
         pet: { select: { id: true, name: true, species: true, breed: true, photoUrl: true, birthDate: true, weightKg: true } },
         veterinarian: { select: { id: true, name: true } },
+        communityCase: { select: { id: true } },
       },
     });
+
+    return consultation ? withSharedInCommunity(consultation) : null;
   }
 
   async create(clinicId: string, data: {

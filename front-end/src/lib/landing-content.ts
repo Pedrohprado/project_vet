@@ -5,6 +5,7 @@ import {
   Heart,
   HeartOff,
   MessageCircle,
+  MessagesSquare,
   PawPrint,
   Bell,
   Pill,
@@ -160,6 +161,12 @@ export const features = [
     title: 'Lembretes de retorno',
     description: 'Retornos e vacinas sem esquecimentos.',
   },
+  {
+    icon: MessagesSquare,
+    title: 'Comunidade clínica',
+    description:
+      'Compartilhe casos anonimizados e troque experiências com outros veterinários da plataforma.',
+  },
 ] as const;
 
 export const testimonials = [
@@ -225,6 +232,7 @@ export const pricingPlans = [
       'Agenda',
       'Consultas',
       'Vacinas',
+      'Comunidade de casos',
       'Até 50 Pets',
     ],
     highlighted: false,
@@ -238,6 +246,7 @@ export const pricingPlans = [
       'Notificações',
       'Pós-consulta',
       'Lembretes',
+      'Comunidade de casos',
       'Mais armazenamento',
     ],
     highlighted: true,
@@ -275,6 +284,11 @@ export const faqItems = [
     question: 'O tutor recebe mensagens?',
     answer:
       'Sim. A BoxVet envia lembretes e mensagens pós-consulta automaticamente.',
+  },
+  {
+    question: 'O que é a Comunidade de casos?',
+    answer:
+      'É um espaço exclusivo para membros autenticados da BoxVet. Veterinários compartilham casos clínicos anonimizados (sem dados de tutor ou pet), curtem e comentam para trocar experiências com a comunidade.',
   },
   {
     question: 'Posso cancelar quando quiser?',

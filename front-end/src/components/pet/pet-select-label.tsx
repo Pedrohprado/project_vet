@@ -1,39 +1,8 @@
-import {
-  Bird,
-  Cat,
-  CircleHelp,
-  Dog,
-  Fish,
-  Mars,
-  PawPrint,
-  Rabbit,
-  Rat,
-  Squirrel,
-  Turtle,
-  Venus,
-  type LucideIcon,
-} from 'lucide-react';
+import { PawPrint } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { PET_SEX_ICONS, PET_SPECIES_ICONS } from '@/lib/pet-icons';
 import { PET_SEX_LABELS, PET_SPECIES_LABELS } from '@/types/pet';
 import type { PetSex, PetSpecies } from '@/types/tutor';
-
-const PET_SPECIES_ICONS: Record<PetSpecies, LucideIcon> = {
-  DOG: Dog,
-  CAT: Cat,
-  BIRD: Bird,
-  RABBIT: Rabbit,
-  RODENT: Rat,
-  FERRET: Squirrel,
-  REPTILE: Turtle,
-  FISH: Fish,
-  OTHER: PawPrint,
-};
-
-const PET_SEX_ICONS: Record<PetSex, LucideIcon> = {
-  MALE: Mars,
-  FEMALE: Venus,
-  UNKNOWN: CircleHelp,
-};
 
 type PetSelectLabelProps = {
   type: 'species' | 'sex';

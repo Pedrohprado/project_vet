@@ -115,7 +115,7 @@ export function RegisterForm({
     <div className={cn('flex flex-col', className)} {...props}>
       <form
         onSubmit={(e) => void handleSubmit(e)}
-        className="max-h-[min(28rem,calc(100svh-16rem))] overflow-y-auto pr-1"
+        className="max-h-[min(28rem,calc(100svh-16rem))] overflow-y-auto px-1.5 py-0.5"
       >
         <FieldGroup className="gap-4">
           <Field data-invalid={Boolean(fieldErrors.clinicName)}>

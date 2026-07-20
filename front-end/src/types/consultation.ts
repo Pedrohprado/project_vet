@@ -90,6 +90,7 @@ export type Consultation = {
   returnDate: string | null;
   parentConsultationId: string | null;
   prescriptionDocumentType: PrescriptionDocumentType;
+  sharedInCommunity?: boolean;
   createdAt: string;
   updatedAt: string;
   prescriptions: Prescription[];
@@ -121,6 +122,7 @@ export type ConsultationListItem = {
   startedAt: string;
   finishedAt: string | null;
   parentConsultationId?: string | null;
+  sharedInCommunity: boolean;
   tutor: { id: string; name: string };
   pet: { id: string; name: string; species: PetSpecies };
   veterinarian: { id: string; name: string };
