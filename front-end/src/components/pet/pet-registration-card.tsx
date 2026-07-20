@@ -27,7 +27,7 @@ function InfoField({
   const spanFull = fullWidth ?? value.length > LONG_VALUE_THRESHOLD;
 
   return (
-    <div className={cn('space-y-1', spanFull && 'col-span-2')}>
+    <div className={cn('space-y-1', spanFull && 'col-span-full')}>
       <p className="text-xs font-medium text-muted-foreground">{label}</p>
       <p className="text-sm wrap-break-word">{value}</p>
     </div>
@@ -48,7 +48,7 @@ export function PetRegistrationCard({ pet }: { pet: Pet }) {
         <CardTitle>Informações do cadastro</CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
           <InfoField label="Espécie" value={PET_SPECIES_LABELS[pet.species]} />
           <InfoField label="Sexo" value={PET_SEX_LABELS[pet.sex]} />
           <InfoField label="Raça" value={pet.breed ?? '—'} />
@@ -65,7 +65,7 @@ export function PetRegistrationCard({ pet }: { pet: Pet }) {
             <Separator />
             <div className="space-y-4">
               <p className="text-sm font-medium">Informações clínicas</p>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
                 {pet.allergies?.trim() ? (
                   <InfoField label="Alergias" value={pet.allergies} fullWidth />
                 ) : null}

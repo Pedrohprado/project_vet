@@ -1,5 +1,11 @@
 @import 'tailwindcss';
 
+@property --bird-p {
+  syntax: '<number>';
+  inherits: false;
+  initial-value: 0;
+}
+
 :root {
   --radius: 0.625rem;
   --background: oklch(0.985 0 0);
@@ -81,6 +87,12 @@
     padding-left: env(safe-area-inset-left);
     padding-right: env(safe-area-inset-right);
   }
+
+  [data-slot='input'],
+  [data-slot='textarea'],
+  [data-slot='select-trigger'] {
+    @apply text-sm;
+  }
 }
 
 @layer utilities {
@@ -91,6 +103,29 @@
 
   .scrollbar-none::-webkit-scrollbar {
     display: none;
+  }
+
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: oklch(0.75 0 0 / 0.5) transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 5px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+    margin-block: 4px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: oklch(0.75 0 0 / 0.45);
+    border-radius: 9999px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background-color: oklch(0.65 0 0 / 0.55);
   }
 
   .auth-form-enter {
@@ -117,20 +152,40 @@
     animation-delay: var(--float-delay, 0s);
   }
 
-  .hero-bird-fly {
+  .hero-bird-fly-track {
     position: absolute;
     top: 0;
-    left: 0;
-    height: 3.5rem;
-    width: auto;
+    left: var(--bird-start-left, 0px);
+    opacity: 0;
+    --bird-p: 0;
+    will-change: transform, opacity;
+    transform: translate3d(
+      calc(
+        var(--bird-travel, 200px) * var(--bird-p) + var(--bird-travel, 200px) *
+          0.07 * clamp(0, calc((var(--bird-p) - 0.4) / 0.12), 1) *
+          sin(calc(var(--bird-p) * 1.2turn + var(--bird-phase, 0deg)))
+      ),
+      0,
+      0
+    );
     animation:
-      hero-bird-fly-x var(--bird-duration, 10s) linear infinite,
-      hero-bird-fly-y calc(var(--bird-duration, 10s) * 0.4) linear infinite;
+      hero-bird-fly-progress var(--bird-duration, 8s) linear 1 forwards,
+      hero-bird-fly-fade var(--bird-duration, 8s) linear 1 forwards;
   }
 
-  @media (min-width: 640px) {
+  .hero-bird-fly {
+    display: block;
+    height: 2.75rem;
+    width: auto;
+    transform: translateY(-58%);
+    will-change: transform;
+    animation: hero-bird-fly-y var(--bird-duration, 8s)
+      cubic-bezier(0.33, 0.1, 0.25, 1) 1 forwards;
+  }
+
+  @media (min-width: 1024px) {
     .hero-bird-fly {
-      height: 4rem;
+      height: 3rem;
     }
   }
 
@@ -151,6 +206,50 @@
     opacity: 0;
     visibility: hidden;
     pointer-events: none;
+  }
+
+  .scroll-reveal {
+    opacity: 0;
+    transform: translateY(1.5rem);
+    transition:
+      opacity 0.6s ease-out,
+      transform 0.6s ease-out;
+    transition-delay: var(--reveal-delay, 0ms);
+  }
+
+  .scroll-reveal-visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .testimonials-marquee-fade {
+    mask-image: linear-gradient(
+      to right,
+      transparent,
+      black 8%,
+      black 92%,
+      transparent
+    );
+    -webkit-mask-image: linear-gradient(
+      to right,
+      transparent,
+      black 8%,
+      black 92%,
+      transparent
+    );
+  }
+
+  .testimonials-marquee-track {
+    animation: testimonials-marquee-left 40s linear infinite;
+  }
+
+  .testimonials-marquee-track-reverse {
+    animation: testimonials-marquee-right 40s linear infinite;
+  }
+
+  .testimonials-marquee:hover .testimonials-marquee-track,
+  .testimonials-marquee:hover .testimonials-marquee-track-reverse {
+    animation-play-state: paused;
   }
 
   @media (min-width: 1024px) {
@@ -185,11 +284,17 @@
       animation: none !important;
     }
 
+    .hero-bird-fly-track {
+      animation: none !important;
+      left: var(--bird-start-left, 0px);
+      opacity: 1;
+      transform: none;
+    }
+
     .hero-bird-fly {
       animation: none !important;
-      left: 50%;
       opacity: 1;
-      transform: translateX(-50%);
+      transform: translateY(-58%);
     }
 
     .migration-badge-emerge {
@@ -205,6 +310,39 @@
       opacity: 1;
       visibility: visible;
       pointer-events: auto;
+    }
+
+    .scroll-reveal {
+      opacity: 1;
+      transform: none;
+      transition: none;
+    }
+
+    .testimonials-marquee-track,
+    .testimonials-marquee-track-reverse {
+      animation: none !important;
+      flex-wrap: wrap;
+      width: 100%;
+      max-width: 72rem;
+      margin-inline: auto;
+      justify-content: center;
+      padding-inline: 1rem;
+      transform: none;
+    }
+
+    .testimonials-marquee-fade {
+      mask-image: none;
+      -webkit-mask-image: none;
+      overflow: visible;
+    }
+
+    .boxvet-loading-bird {
+      animation: none !important;
+    }
+
+    .boxvet-loading-bird {
+      opacity: 1;
+      transform: translate3d(0, 0, 0);
     }
   }
 }
@@ -224,42 +362,39 @@
   }
 }
 
-@keyframes hero-bird-fly-x {
-  0% {
-    left: 0;
-    opacity: 0;
+/* Avanço contínuo no X + leve onda para intercalarem sem frear */
+@keyframes hero-bird-fly-progress {
+  from {
+    --bird-p: 0;
   }
 
-  8% {
-    opacity: 1;
+  to {
+    --bird-p: 1;
   }
+}
 
+@keyframes hero-bird-fly-fade {
+  0%,
   88% {
     opacity: 1;
   }
 
   100% {
-    left: calc(100% - 3.5rem);
     opacity: 0;
   }
 }
 
 @keyframes hero-bird-fly-y {
-  0%,
+  0% {
+    transform: translate3d(0, -58%, 0);
+  }
+
+  40% {
+    transform: translate3d(0, calc(-58% + var(--bird-lane-y, 0px)), 0);
+  }
+
   100% {
-    transform: translateY(0);
-  }
-
-  25% {
-    transform: translateY(-8px);
-  }
-
-  50% {
-    transform: translateY(0);
-  }
-
-  75% {
-    transform: translateY(-8px);
+    transform: translate3d(0, calc(-58% + var(--bird-lane-y, 0px)), 0);
   }
 }
 
@@ -338,6 +473,34 @@
   }
 }
 
+.ellipsis-dots span {
+  opacity: 0;
+  animation: ellipsis-dot 1.6s infinite;
+}
+
+.ellipsis-dots span:nth-child(2) {
+  animation-delay: 0.25s;
+}
+
+.ellipsis-dots span:nth-child(3) {
+  animation-delay: 0.5s;
+}
+
+@keyframes ellipsis-dot {
+  0% {
+    opacity: 0;
+  }
+
+  30%,
+  70% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+  }
+}
+
 @keyframes how-it-works-reveal-y {
   0% {
     opacity: 0;
@@ -349,5 +512,49 @@
     opacity: 1;
     transform: translate3d(0, 0, 0) scale(1);
     visibility: visible;
+  }
+}
+
+@keyframes testimonials-marquee-left {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes testimonials-marquee-right {
+  from {
+    transform: translateX(-50%);
+  }
+
+  to {
+    transform: translateX(0);
+  }
+}
+
+.boxvet-loading-scene {
+  aspect-ratio: 3 / 2;
+}
+
+.boxvet-loading-bird {
+  opacity: 0;
+  animation: boxvet-loading-bird-enter 1.8s ease-out forwards;
+  transform: translate3d(0, 5px, 0) scale(0.94);
+  transform-origin: center bottom;
+}
+
+@keyframes boxvet-loading-bird-enter {
+  0%,
+  35% {
+    opacity: 0;
+    transform: translate3d(0, 5px, 0) scale(0.94);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
   }
 }

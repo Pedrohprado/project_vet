@@ -23,6 +23,7 @@ const statusBadgeVariant: Record<
   'default' | 'secondary' | 'outline'
 > = {
   OPEN: 'default',
+  RETURN_SCHEDULED: 'secondary',
   FINISHED: 'secondary',
   CANCELLED: 'outline',
 };
@@ -55,17 +56,20 @@ function ServiceRow({ item }: { item: AtendimentoListItem }) {
       className="flex w-full items-center gap-3 rounded-xl border border-border/60 bg-background/70 px-3 py-3 text-left transition-colors hover:bg-muted/60"
     >
       <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-center gap-2">
-          <p className="truncate text-sm font-medium">
+        <div className="flex items-start justify-between gap-2 sm:items-center sm:justify-start">
+          <p className="min-w-0 truncate text-sm font-medium">
             {item.kind === 'VACCINATION' && item.vaccineName
               ? item.vaccineName
               : ATENDIMENTO_KIND_LABELS[item.kind]}
           </p>
-          <Badge variant={statusBadgeVariant[item.status]} className="text-xs">
+          <Badge
+            variant={statusBadgeVariant[item.status]}
+            className="shrink-0 self-center px-1.5 py-0 text-[10px] leading-4"
+          >
             {ATENDIMENTO_STATUS_LABELS[item.status]}
           </Badge>
         </div>
-        <p className="truncate text-xs text-muted-foreground">
+        <p className="mt-1.5 truncate text-xs text-muted-foreground">
           {item.pet.name} ({speciesLabel}) · {item.tutor.name}
         </p>
         <p className="mt-0.5 text-xs text-muted-foreground">
@@ -92,14 +96,14 @@ export function HomeRecentServices({
 
   return (
     <Card className="rounded-2xl border border-border/50 bg-white/90 shadow-xl shadow-black/4 backdrop-blur-sm">
-      <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
-        <div>
+      <CardHeader className="flex flex-col gap-3 space-y-0 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+        <div className="space-y-1">
           <CardTitle>Últimos serviços</CardTitle>
           <CardDescription>
             Consultas e vacinações recentes da clínica.
           </CardDescription>
         </div>
-        <Button variant="outline" size="sm" asChild>
+        <Button variant="outline" size="sm" className="w-fit shrink-0" asChild>
           <Link to="/atendimento">Ver atendimentos</Link>
         </Button>
       </CardHeader>
@@ -115,16 +119,28 @@ export function HomeRecentServices({
             <Skeleton className="h-16 w-full rounded-xl" />
           </>
         ) : visibleItems.length === 0 ? (
-          <div className="py-8 text-center">
-            <p className="text-sm text-muted-foreground">
-              Nenhum atendimento registrado ainda.
+          <div className="flex flex-col items-center py-8 text-center">
+            <img
+              src="/sniff_dog.png"
+              alt="Cachorro farejando"
+              className="size-40 object-contain"
+            />
+            <p className="ellipsis-dots -mt-8 text-xs text-muted-foreground">
+              Nenhum atendimento encontrado ainda
+              <span>.</span>
+              <span>.</span>
+              <span>.</span>
             </p>
             <Button size="sm" className="mt-3" asChild>
               <Link to="/atendimento">Iniciar atendimento</Link>
             </Button>
           </div>
         ) : (
-          visibleItems.map((item) => <ServiceRow key={`${item.kind}-${item.id}`} item={item} />)
+          <div className="max-h-72 space-y-2 overflow-y-auto pr-1">
+            {visibleItems.map((item) => (
+              <ServiceRow key={`${item.kind}-${item.id}`} item={item} />
+            ))}
+          </div>
         )}
       </CardContent>
     </Card>

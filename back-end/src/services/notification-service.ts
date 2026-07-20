@@ -35,7 +35,10 @@ export class NotificationService {
     }
 
     if (data.returnDate) {
-      const dateStr = data.returnDate.toLocaleDateString('pt-BR');
+      const dateStr = data.returnDate.toLocaleString('pt-BR', {
+        dateStyle: 'short',
+        timeStyle: 'short',
+      });
       parts.push(`Retorno agendado para: ${dateStr}`);
     }
 

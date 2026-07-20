@@ -1,22 +1,17 @@
 import type { LucideIcon } from 'lucide-react';
 import {
-  Building2,
   Calendar,
   CalendarX,
-  GraduationCap,
   Heart,
   HeartOff,
-  Home,
   MessageCircle,
+  MessagesSquare,
   PawPrint,
   Bell,
   Pill,
-  Smartphone,
   Sparkles,
-  Star,
   Stethoscope,
   Syringe,
-  TrendingUp,
 } from 'lucide-react';
 
 export const heroContent = {
@@ -24,7 +19,6 @@ export const heroContent = {
   subtitle:
     'A BoxVet organiza consultas, vacinação e pós-consulta para que sua clínica mantenha contato com o tutor antes, durante e depois do atendimento.',
   primaryCta: 'Conhecer os planos',
-  secondaryCta: 'Ver demonstração',
   plansHref: '#planos',
 };
 
@@ -167,32 +161,12 @@ export const features = [
     title: 'Lembretes de retorno',
     description: 'Retornos e vacinas sem esquecimentos.',
   },
-] as const;
-
-export const differentialContent = {
-  title: 'Seu atendimento continua mesmo depois da consulta.',
-  items: [
-    { icon: Smartphone, title: 'Mensagem pós-consulta' },
-    { icon: Syringe, title: 'Lembrete de vacinação' },
-    { icon: Calendar, title: 'Lembrete de retorno' },
-    { icon: Heart, title: 'Mais proximidade com o tutor' },
-    { icon: Star, title: 'Mais fidelização' },
-    { icon: TrendingUp, title: 'Mais retornos para sua clínica' },
-  ] as const,
-};
-
-export const demoSlides = [
-  { id: 'dashboard', label: 'Dashboard', variant: 'dashboard' as const },
-  { id: 'tutor', label: 'Cadastro Tutor', variant: 'tutor' as const },
-  { id: 'consultation', label: 'Consulta', variant: 'consultation' as const },
-  { id: 'message', label: 'Mensagem enviada', variant: 'message' as const },
-];
-
-export const audienceItems = [
-  { icon: GraduationCap, title: 'Veterinários recém-formados' },
-  { icon: Building2, title: 'Clínicas' },
-  { icon: Home, title: 'Atendimento domiciliar' },
-  { icon: Syringe, title: 'Clínicas de vacinação' },
+  {
+    icon: MessagesSquare,
+    title: 'Comunidade clínica',
+    description:
+      'Compartilhe casos anonimizados e troque experiências com outros veterinários da plataforma.',
+  },
 ] as const;
 
 export const testimonials = [
@@ -211,33 +185,42 @@ export const testimonials = [
     name: 'Carolina',
     role: 'Clínica Pet',
   },
+  {
+    quote: 'A agenda ficou organizada e a equipe alinhada.',
+    name: 'Marcos',
+    role: 'Dono de Clínica',
+  },
+  {
+    quote: 'Os tutores adoram acompanhar o histórico pelo celular.',
+    name: 'Juliana',
+    role: 'Recepção',
+  },
+  {
+    quote: 'Prontuário digital sem papelada nem planilha.',
+    name: 'Ricardo',
+    role: 'Médico Veterinário',
+  },
+  {
+    quote: 'Em uma tarde já estávamos usando no dia a dia.',
+    name: 'Patrícia',
+    role: 'Gestora de Clínica',
+  },
+  {
+    quote: 'O peso e as vacinas ficam registrados sem esforço.',
+    name: 'André',
+    role: 'Veterinário',
+  },
+  {
+    quote: 'Menos ligações cobrando retorno. Mais tempo no consultório.',
+    name: 'Camila',
+    role: 'Médica Veterinária',
+  },
+  {
+    quote: 'Simples de ensinar para a equipe toda.',
+    name: 'Thiago',
+    role: 'Sócio da Clínica',
+  },
 ] as const;
-
-export type ComparisonCell =
-  | { type: 'yes' }
-  | { type: 'no' }
-  | { type: 'partial' }
-  | { type: 'text'; value: string };
-
-export const comparisonRows: {
-  feature: string;
-  boxvet: ComparisonCell;
-  erp: ComparisonCell;
-}[] = [
-  { feature: 'Fácil de usar', boxvet: { type: 'yes' }, erp: { type: 'no' } },
-  { feature: 'Pós-consulta', boxvet: { type: 'yes' }, erp: { type: 'no' } },
-  {
-    feature: 'Lembretes automáticos',
-    boxvet: { type: 'yes' },
-    erp: { type: 'partial' },
-  },
-  { feature: 'CRM para tutores', boxvet: { type: 'yes' }, erp: { type: 'no' } },
-  {
-    feature: 'Curva de aprendizado',
-    boxvet: { type: 'text', value: 'Baixa' },
-    erp: { type: 'text', value: 'Alta' },
-  },
-];
 
 export const pricingPlans = [
   {
@@ -249,6 +232,7 @@ export const pricingPlans = [
       'Agenda',
       'Consultas',
       'Vacinas',
+      'Comunidade de casos',
       'Até 50 Pets',
     ],
     highlighted: false,
@@ -262,6 +246,7 @@ export const pricingPlans = [
       'Notificações',
       'Pós-consulta',
       'Lembretes',
+      'Comunidade de casos',
       'Mais armazenamento',
     ],
     highlighted: true,
@@ -299,6 +284,11 @@ export const faqItems = [
     question: 'O tutor recebe mensagens?',
     answer:
       'Sim. A BoxVet envia lembretes e mensagens pós-consulta automaticamente.',
+  },
+  {
+    question: 'O que é a Comunidade de casos?',
+    answer:
+      'É um espaço exclusivo para membros autenticados da BoxVet. Veterinários compartilham casos clínicos anonimizados (sem dados de tutor ou pet), curtem e comentam para trocar experiências com a comunidade.',
   },
   {
     question: 'Posso cancelar quando quiser?',

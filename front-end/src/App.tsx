@@ -1,11 +1,13 @@
 import { Navigate, Route, Routes } from 'react-router';
 import { Toaster } from 'sonner';
 import { AppLayout } from '@/components/layout/AppLayout';
-import { AuthProvider } from '@/contexts/AuthContext';
+import { AuthProvider } from '@/contexts/AuthProvider';
 import { useAuth } from '@/hooks/useAuth';
 import { AtendimentoPage } from '@/pages/AtendimentoPage';
 import { AgendaPage } from '@/pages/AgendaPage';
 import { AppointmentFormPage } from '@/pages/AppointmentFormPage';
+import { CommunityCasePage } from '@/pages/CommunityCasePage';
+import { CommunityPage } from '@/pages/CommunityPage';
 import { ConsultationPage } from '@/pages/ConsultationPage';
 import { VaccinationPage } from '@/pages/VaccinationPage';
 import { AuthPage } from '@/pages/AuthPage';
@@ -57,6 +59,8 @@ function App() {
             <Route path="/estatisticas" element={<EstatisticasPage />} />
             <Route path="/agenda" element={<AgendaPage />} />
             <Route path="/atendimento" element={<AtendimentoPage />} />
+            <Route path="/comunidade" element={<CommunityPage />} />
+            <Route path="/comunidade/:caseId" element={<CommunityCasePage />} />
             <Route path="/tutors" element={<TutorListPage />} />
             <Route path="/tutors/new" element={<TutorFormPage />} />
             <Route path="/tutors/:id" element={<TutorDetailPage />} />

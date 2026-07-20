@@ -17,4 +17,7 @@ export type CalendarEvent = {
   appointmentType?: AppointmentType;
   consultationId?: string;
   vaccinationId?: string;
+  sourceConsultationId?: string;
+  sourceVaccinationId?: string;
+  parentConsultationId?: string;
 };

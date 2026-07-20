@@ -64,16 +64,30 @@ export class AppointmentService {
     });
   }
 
-  async createReturn(
+  async upsertReturn(
     tenantId: string,
     userId: string,
     data: {
+      sourceConsultationId: string;
       tutorId: string;
       petId: string;
       scheduledAt: Date;
+      durationMinutes?: number;
       description?: string;
     },
   ) {
+    const existing = await appointmentRepository.findPendingReturnByConsultation(
+      tenantId,
+      data.sourceConsultationId,
+    );
+
+    if (existing) {
+      return appointmentRepository.updateSchedule(tenantId, existing.id, {
+        scheduledAt: data.scheduledAt,
+        ...pickDefined({ durationMinutes: data.durationMinutes }),
+      });
+    }
+
     return appointmentRepository.create(tenantId, {
       tutorId: data.tutorId,
       petId: data.petId,
@@ -82,7 +96,51 @@ export class AppointmentService {
       status: AppointmentStatus.SCHEDULED,
       scheduledAt: data.scheduledAt,
       title: 'Retorno',
-      ...pickDefined({ description: data.description }),
+      sourceConsultationId: data.sourceConsultationId,
+      ...pickDefined({
+        description: data.description,
+        durationMinutes: data.durationMinutes,
+      }),
+    });
+  }
+
+  async upsertNextDose(
+    tenantId: string,
+    userId: string,
+    data: {
+      sourceVaccinationId: string;
+      tutorId: string;
+      petId: string;
+      scheduledAt: Date;
+      vaccineName: string;
+    },
+  ) {
+    const existing = await appointmentRepository.findPendingNextDoseByVaccination(
+      tenantId,
+      data.sourceVaccinationId,
+    );
+
+    const title = `Próxima dose - ${data.vaccineName}`;
+    const description = `Próxima dose de ${data.vaccineName}`;
+
+    if (existing) {
+      return appointmentRepository.updateScheduledAt(
+        tenantId,
+        existing.id,
+        data.scheduledAt,
+      );
+    }
+
+    return appointmentRepository.create(tenantId, {
+      tutorId: data.tutorId,
+      petId: data.petId,
+      veterinarianId: userId,
+      type: AppointmentType.VACCINATION,
+      status: AppointmentStatus.SCHEDULED,
+      scheduledAt: data.scheduledAt,
+      title,
+      description,
+      sourceVaccinationId: data.sourceVaccinationId,
     });
   }
 
@@ -94,5 +152,35 @@ export class AppointmentService {
   async complete(tenantId: string, id: string) {
     await this.getById(tenantId, id);
     return appointmentRepository.updateStatus(tenantId, id, AppointmentStatus.COMPLETED);
+  }
+
+  async completePendingReturnsForConsultation(
+    tenantId: string,
+    sourceConsultationId: string,
+  ) {
+    return appointmentRepository.completePendingReturnsForConsultation(
+      tenantId,
+      sourceConsultationId,
+    );
+  }
+
+  async cancelPendingReturnsForConsultation(
+    tenantId: string,
+    sourceConsultationId: string,
+  ) {
+    return appointmentRepository.cancelPendingReturnsForConsultation(
+      tenantId,
+      sourceConsultationId,
+    );
+  }
+
+  async findPendingReturnByConsultation(
+    tenantId: string,
+    sourceConsultationId: string,
+  ) {
+    return appointmentRepository.findPendingReturnByConsultation(
+      tenantId,
+      sourceConsultationId,
+    );
   }
 }

@@ -143,6 +143,7 @@ export async function finishVaccination(
 
   const vaccination = await vaccinationService.finish(
     request.tenantId,
+    request.authUser.id,
     id,
     parsed.data,
   );

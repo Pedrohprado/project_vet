@@ -1,8 +1,4 @@
-import { LandingAudience } from '@/components/landing/landing-audience';
-import { LandingComparison } from '@/components/landing/landing-comparison';
 import { LandingCta } from '@/components/landing/landing-cta';
-import { LandingDemo } from '@/components/landing/landing-demo';
-import { LandingDifferential } from '@/components/landing/landing-differential';
 import { LandingFaq } from '@/components/landing/landing-faq';
 import { LandingFeatures } from '@/components/landing/landing-features';
 import { LandingHero } from '@/components/landing/landing-hero';
@@ -20,11 +16,7 @@ export function LandingPage() {
       <LandingFeatures />
       <LandingHowItWorks />
       <LandingMetrics />
-      <LandingDifferential />
-      <LandingDemo />
-      <LandingAudience />
       <LandingTestimonials />
-      <LandingComparison />
       <LandingMigration />
       <LandingPricing />
       <LandingFaq />

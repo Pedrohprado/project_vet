@@ -1,6 +1,6 @@
 import { Link } from 'react-router';
 import { Syringe } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { Badge, type BadgeVariant } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -27,7 +27,7 @@ type PetVaccinationsCardProps = {
 
 function statusBadgeVariant(
   status: ReturnType<typeof getVaccinationStatus>,
-): 'default' | 'secondary' | 'outline' | 'destructive' {
+): BadgeVariant {
   switch (status) {
     case 'VALID':
       return 'secondary';

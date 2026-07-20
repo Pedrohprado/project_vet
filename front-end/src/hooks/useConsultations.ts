@@ -6,14 +6,22 @@ import { PET_TIMELINE_QUERY_KEY } from '@/hooks/usePetTimeline';
 import {
   addPrescription,
   createConsultation,
+  createReturnConsultation,
+  cancelScheduledReturn,
   deleteConsultation,
   finishConsultation,
+  generateConsultationPostSummary,
   getConsultation,
   getOpenConsultationByPet,
+  getOpenReturnConsultationByParent,
+  getReturnScheduledConsultationByPet,
   listConsultations,
   removePrescription,
   updateConsultation,
+  uploadConsultationAttachment,
+  deleteConsultationAttachment,
 } from '@/api/consultations';
+import { clearConsultationDraft } from '@/lib/consultation-draft';
 
 export function useConsultations(page = 1, limit = 20) {
   return useQuery({
@@ -27,6 +35,92 @@ export function useOpenConsultation(petId: string | undefined) {
     queryKey: ['consultation', 'open', petId],
     queryFn: () => getOpenConsultationByPet(petId!),
     enabled: Boolean(petId),
+  });
+}
+
+export function useReturnScheduledConsultation(petId: string | undefined) {
+  return useQuery({
+    queryKey: ['consultation', 'return-scheduled', petId],
+    queryFn: () => getReturnScheduledConsultationByPet(petId!),
+    enabled: Boolean(petId),
+  });
+}
+
+export function useCreateReturnConsultation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      parentId,
+      appointmentId,
+    }: {
+      parentId: string;
+      appointmentId?: string;
+      petId?: string;
+    }) => createReturnConsultation(parentId, { appointmentId }),
+    onSuccess: (consultation, { parentId, petId }) => {
+      void queryClient.invalidateQueries({ queryKey: ['consultations'] });
+      void queryClient.invalidateQueries({ queryKey: [ATENDIMENTOS_QUERY_KEY] });
+      void queryClient.invalidateQueries({ queryKey: [CALENDAR_EVENTS_QUERY_KEY] });
+      void queryClient.invalidateQueries({ queryKey: ['consultation', consultation.id] });
+      void queryClient.invalidateQueries({ queryKey: ['consultation', parentId] });
+      void queryClient.invalidateQueries({
+        queryKey: ['consultation', parentId, 'open-return'],
+      });
+
+      if (petId) {
+        void queryClient.invalidateQueries({
+          queryKey: ['consultation', 'open', petId],
+        });
+        void queryClient.invalidateQueries({
+          queryKey: ['consultation', 'return-scheduled', petId],
+        });
+      }
+    },
+  });
+}
+
+export function useOpenReturnConsultationByParent(parentId: string | undefined) {
+  return useQuery({
+    queryKey: ['consultation', parentId, 'open-return'],
+    queryFn: () => getOpenReturnConsultationByParent(parentId!),
+    enabled: Boolean(parentId),
+  });
+}
+
+export function useCancelScheduledReturn() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      parentId,
+    }: {
+      parentId: string;
+      petId?: string;
+    }) => cancelScheduledReturn(parentId),
+    onSuccess: (consultation, { parentId, petId }) => {
+      void queryClient.invalidateQueries({ queryKey: ['consultations'] });
+      void queryClient.invalidateQueries({ queryKey: [ATENDIMENTOS_QUERY_KEY] });
+      void queryClient.invalidateQueries({ queryKey: [CALENDAR_EVENTS_QUERY_KEY] });
+      void queryClient.invalidateQueries({ queryKey: ['consultation', parentId] });
+      void queryClient.invalidateQueries({
+        queryKey: ['consultation', parentId, 'open-return'],
+      });
+
+      if (petId) {
+        void queryClient.invalidateQueries({
+          queryKey: ['consultation', 'return-scheduled', petId],
+        });
+        void queryClient.invalidateQueries({
+          queryKey: ['consultation', 'open', petId],
+        });
+        void queryClient.invalidateQueries({
+          queryKey: [PET_TIMELINE_QUERY_KEY, petId],
+        });
+      }
+
+      return consultation;
+    },
   });
 }
 
@@ -131,25 +225,58 @@ export function useFinishConsultation() {
         queryKey: ['consultation', 'open', consultation.petId],
       });
       void queryClient.invalidateQueries({
+        queryKey: ['consultation', 'return-scheduled', consultation.petId],
+      });
+      void queryClient.invalidateQueries({
         queryKey: [PET_TIMELINE_QUERY_KEY, consultation.petId],
       });
       sessionStorage.removeItem(`consultation-step-${id}`);
+      clearConsultationDraft(id);
+
+      return consultation;
     },
   });
 }
 
+export function useGenerateConsultationPostSummary() {
+  return useMutation({
+    mutationFn: ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: Parameters<typeof generateConsultationPostSummary>[1];
+    }) => generateConsultationPostSummary(id, data),
+  });
+}
+
+type DeleteConsultationVariables = {
+  id: string;
+  petId?: string;
+  parentId?: string;
+};
+
 export function useDeleteConsultation() {
   const queryClient = useQueryClient();
 
-  return useMutation({
-    mutationFn: ({ id }: { id: string; petId?: string }) => deleteConsultation(id),
-    onSuccess: (_, { id, petId }) => {
+  return useMutation<void, Error, DeleteConsultationVariables>({
+    mutationFn: ({ id }) => deleteConsultation(id),
+    onSuccess: (_, { id, petId, parentId }) => {
       queryClient.removeQueries({ queryKey: ['consultation', id] });
       void queryClient.invalidateQueries({ queryKey: ['consultations'] });
       void queryClient.invalidateQueries({ queryKey: [ATENDIMENTOS_QUERY_KEY] });
       void queryClient.invalidateQueries({ queryKey: [CALENDAR_EVENTS_QUERY_KEY] });
       void queryClient.invalidateQueries({ queryKey: STATS_QUERY_KEY });
       void queryClient.invalidateQueries({ queryKey: [PET_TIMELINE_QUERY_KEY] });
+
+      if (parentId) {
+        void queryClient.invalidateQueries({
+          queryKey: ['consultation', parentId],
+        });
+        void queryClient.invalidateQueries({
+          queryKey: ['consultation', parentId, 'open-return'],
+        });
+      }
 
       if (petId) {
         void queryClient.invalidateQueries({ queryKey: ['pet', petId] });
@@ -160,11 +287,67 @@ export function useDeleteConsultation() {
           queryKey: ['consultation', 'open', petId],
         });
         void queryClient.invalidateQueries({
+          queryKey: ['consultation', 'return-scheduled', petId],
+        });
+        void queryClient.invalidateQueries({
           queryKey: [PET_TIMELINE_QUERY_KEY, petId],
         });
       }
 
       sessionStorage.removeItem(`consultation-step-${id}`);
+      clearConsultationDraft(id);
+    },
+  });
+}
+
+function invalidateConsultationQueries(
+  queryClient: ReturnType<typeof useQueryClient>,
+  consultationId: string,
+  petId?: string,
+) {
+  void queryClient.invalidateQueries({ queryKey: ['consultation', consultationId] });
+
+  if (petId) {
+    void queryClient.invalidateQueries({
+      queryKey: [PET_TIMELINE_QUERY_KEY, petId],
+    });
+  }
+}
+
+export function useUploadConsultationAttachment() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      consultationId,
+      file,
+      label,
+    }: {
+      consultationId: string;
+      petId: string;
+      file: File;
+      label?: string;
+    }) => uploadConsultationAttachment(consultationId, file, label),
+    onSuccess: (_, { consultationId, petId }) => {
+      invalidateConsultationQueries(queryClient, consultationId, petId);
+    },
+  });
+}
+
+export function useDeleteConsultationAttachment() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      consultationId,
+      attachmentId,
+    }: {
+      consultationId: string;
+      petId: string;
+      attachmentId: string;
+    }) => deleteConsultationAttachment(consultationId, attachmentId),
+    onSuccess: (_, { consultationId, petId }) => {
+      invalidateConsultationQueries(queryClient, consultationId, petId);
     },
   });
 }

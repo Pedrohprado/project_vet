@@ -37,9 +37,21 @@ const consultationSelect = {
   observations: true,
   needsReturn: true,
   returnDate: true,
+  parentConsultationId: true,
   prescriptionDocumentType: true,
   createdAt: true,
   updatedAt: true,
+} as const;
+
+const attachmentSelect = {
+  id: true,
+  fileName: true,
+  fileUrl: true,
+  mimeType: true,
+  label: true,
+  uploadedById: true,
+  createdAt: true,
+  uploadedBy: { select: { id: true, name: true } },
 } as const;
 
 const consultationListSelect = {
@@ -47,10 +59,19 @@ const consultationListSelect = {
   status: true,
   startedAt: true,
   finishedAt: true,
+  parentConsultationId: true,
   tutor: { select: { id: true, name: true } },
   pet: { select: { id: true, name: true, species: true } },
   veterinarian: { select: { id: true, name: true } },
+  communityCase: { select: { id: true } },
 } as const;
+
+function withSharedInCommunity<T extends { communityCase: { id: string } | null }>(
+  item: T,
+): Omit<T, 'communityCase'> & { sharedInCommunity: boolean } {
+  const { communityCase, ...rest } = item;
+  return { ...rest, sharedInCommunity: Boolean(communityCase) };
+}
 
 export class ConsultationPrismaRepository {
   async findMany(
@@ -77,7 +98,12 @@ export class ConsultationPrismaRepository {
         orderBy,
       });
 
-      return { items, total: items.length, page: 1, limit: items.length };
+      return {
+        items: items.map(withSharedInCommunity),
+        total: items.length,
+        page: 1,
+        limit: items.length,
+      };
     }
 
     const [items, total] = await Promise.all([
@@ -91,7 +117,12 @@ export class ConsultationPrismaRepository {
       prisma.consultation.count({ where }),
     ]);
 
-    return { items, total, page, limit };
+    return {
+      items: items.map(withSharedInCommunity),
+      total,
+      page,
+      limit,
+    };
   }
 
   async findOpenByPet(clinicId: string, petId: string) {
@@ -104,6 +135,7 @@ export class ConsultationPrismaRepository {
       select: {
         ...consultationSelect,
         prescriptions: { select: prescriptionSelect, orderBy: { createdAt: 'asc' } },
+        attachments: { select: attachmentSelect, orderBy: { createdAt: 'asc' } },
         tutor: { select: { id: true, name: true, phone: true, whatsapp: true } },
         pet: { select: { id: true, name: true, species: true, breed: true, photoUrl: true, birthDate: true, weightKg: true } },
         veterinarian: { select: { id: true, name: true } },
@@ -112,17 +144,66 @@ export class ConsultationPrismaRepository {
     });
   }
 
-  async findById(clinicId: string, id: string) {
+  async findReturnScheduledByPet(clinicId: string, petId: string) {
     return prisma.consultation.findFirst({
-      where: { id, clinicId },
+      where: {
+        clinicId,
+        petId,
+        status: ConsultationStatus.RETURN_SCHEDULED,
+        parentConsultationId: null,
+      },
       select: {
         ...consultationSelect,
         prescriptions: { select: prescriptionSelect, orderBy: { createdAt: 'asc' } },
+        attachments: { select: attachmentSelect, orderBy: { createdAt: 'asc' } },
         tutor: { select: { id: true, name: true, phone: true, whatsapp: true } },
         pet: { select: { id: true, name: true, species: true, breed: true, photoUrl: true, birthDate: true, weightKg: true } },
         veterinarian: { select: { id: true, name: true } },
       },
+      orderBy: { startedAt: 'desc' },
     });
+  }
+
+  async findBlockingConsultationForNewInitial(clinicId: string, petId: string) {
+    return prisma.consultation.findFirst({
+      where: {
+        clinicId,
+        petId,
+        OR: [
+          { status: ConsultationStatus.OPEN },
+          { status: ConsultationStatus.RETURN_SCHEDULED, parentConsultationId: null },
+        ],
+      },
+      select: { id: true, status: true, parentConsultationId: true },
+    });
+  }
+
+  async findOpenReturnByParentId(clinicId: string, parentConsultationId: string) {
+    return prisma.consultation.findFirst({
+      where: {
+        clinicId,
+        parentConsultationId,
+        status: ConsultationStatus.OPEN,
+      },
+      select: consultationSelect,
+    });
+  }
+
+  async findById(clinicId: string, id: string) {
+    const consultation = await prisma.consultation.findFirst({
+      where: { id, clinicId },
+      select: {
+        ...consultationSelect,
+        prescriptions: { select: prescriptionSelect, orderBy: { createdAt: 'asc' } },
+        attachments: { select: attachmentSelect, orderBy: { createdAt: 'asc' } },
+        tutor: { select: { id: true, name: true, phone: true, whatsapp: true } },
+        pet: { select: { id: true, name: true, species: true, breed: true, photoUrl: true, birthDate: true, weightKg: true } },
+        veterinarian: { select: { id: true, name: true } },
+        communityCase: { select: { id: true } },
+      },
+    });
+
+    return consultation ? withSharedInCommunity(consultation) : null;
   }
 
   async create(clinicId: string, data: {
@@ -130,12 +211,14 @@ export class ConsultationPrismaRepository {
     petId: string;
     veterinarianId: string;
     appointmentId?: string;
+    parentConsultationId?: string;
   }) {
     return prisma.consultation.create({
       data: { ...data, clinicId },
       select: {
         ...consultationSelect,
         prescriptions: { select: prescriptionSelect },
+        attachments: { select: attachmentSelect, orderBy: { createdAt: 'asc' } },
       },
     });
   }
@@ -150,7 +233,7 @@ export class ConsultationPrismaRepository {
     conduct?: string;
     observations?: string;
     needsReturn?: boolean;
-    returnDate?: Date;
+    returnDate?: Date | null;
     status?: ConsultationStatus;
     finishedAt?: Date;
     prescriptionDocumentType?: 'SIMPLE' | 'SPECIAL_CONTROL';
@@ -161,6 +244,7 @@ export class ConsultationPrismaRepository {
       select: {
         ...consultationSelect,
         prescriptions: { select: prescriptionSelect, orderBy: { createdAt: 'asc' } },
+        attachments: { select: attachmentSelect, orderBy: { createdAt: 'asc' } },
       },
     });
   }

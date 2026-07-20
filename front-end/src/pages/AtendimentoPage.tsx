@@ -48,6 +48,7 @@ const statusBadgeVariant: Record<
   'default' | 'secondary' | 'outline'
 > = {
   OPEN: 'default',
+  RETURN_SCHEDULED: 'secondary',
   FINISHED: 'secondary',
   CANCELLED: 'outline',
 };

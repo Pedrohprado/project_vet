@@ -66,7 +66,7 @@ function MigrationBadge({
   return (
     <span
       className={cn(
-        'migration-badge inline-flex whitespace-nowrap rounded-full border border-border/60 bg-white/90 px-2.5 py-1 text-xs font-medium text-foreground shadow-sm backdrop-blur-sm sm:px-3.5 sm:py-1.5 sm:text-sm',
+        'migration-badge inline-flex whitespace-nowrap rounded-full border border-border/60 bg-white px-2.5 py-1 text-xs font-medium text-foreground shadow-sm sm:px-3.5 sm:py-1.5 sm:text-sm',
         reducedMotion && isVisible && 'migration-badge-static',
         !reducedMotion && isVisible && 'migration-badge-emerge',
         className,
@@ -108,7 +108,7 @@ export function MigrationBoxScene({ badges }: MigrationBoxSceneProps) {
       ref={containerRef}
       className='relative mx-auto mt-6 w-full max-w-3xl px-2 sm:px-0'
     >
-      <div className='relative flex items-end justify-center pt-36 sm:pt-24 lg:pt-28'>
+      <div className='relative flex items-end justify-center pt-36 -translate-x-6 sm:-translate-x-20 sm:pt-24 lg:-translate-x-32 lg:pt-28 xl:-translate-x-40'>
         <div
           className='pointer-events-none absolute inset-x-0 top-0 bottom-4 z-10 hidden sm:block'
           aria-hidden
@@ -147,6 +147,8 @@ export function MigrationBoxScene({ badges }: MigrationBoxSceneProps) {
           src={VETERINARY_WOMEN_SRC}
           alt=''
           aria-hidden
+          loading="lazy"
+          decoding="async"
           className='relative z-0 -mr-8 h-48 w-auto object-contain sm:-mr-11 sm:h-56 lg:-mr-14 lg:h-64'
         />
         <div className='relative shrink-0'>
@@ -175,6 +177,8 @@ export function MigrationBoxScene({ badges }: MigrationBoxSceneProps) {
             src={OPEN_BOX_SRC}
             alt=''
             aria-hidden
+            loading="lazy"
+            decoding="async"
             className='relative z-0 h-28 w-auto object-contain sm:h-32 lg:h-36'
           />
         </div>

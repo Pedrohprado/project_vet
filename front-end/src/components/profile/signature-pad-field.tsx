@@ -1,22 +1,61 @@
-import { useEffect, useRef, useState } from 'react';
+import {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from 'react';
 import SignaturePad from 'signature_pad';
 import { toast } from 'sonner';
 import { ApiError } from '@/api/http';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
+import { getSafeMediaUrl } from '@/lib/safe-url';
 
 type SignaturePadFieldProps = {
   savedSignatureUrl: string | null;
+  onSignatureChange?: (hasContent: boolean) => void;
 };
 
-export function SignaturePadField({ savedSignatureUrl }: SignaturePadFieldProps) {
+export type SignaturePadFieldHandle = {
+  isEmpty: () => boolean;
+  getDataUrl: () => string | null;
+  clear: () => void;
+};
+
+export const SignaturePadField = forwardRef<
+  SignaturePadFieldHandle,
+  SignaturePadFieldProps
+>(function SignaturePadField(
+  { savedSignatureUrl, onSignatureChange },
+  ref,
+) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const padRef = useRef<SignaturePad | null>(null);
-  const { saveSignature, deleteSignature } = useAuth();
-  const [isSaving, setIsSaving] = useState(false);
+  const { deleteSignature } = useAuth();
   const [isRemoving, setIsRemoving] = useState(false);
 
+  const notifyChange = useCallback(() => {
+    onSignatureChange?.(!(padRef.current?.isEmpty() ?? true));
+  }, [onSignatureChange]);
+
+  useImperativeHandle(ref, () => ({
+    isEmpty: () => padRef.current?.isEmpty() ?? true,
+    getDataUrl: () => {
+      const pad = padRef.current;
+      if (!pad || pad.isEmpty()) return null;
+      return pad.toDataURL('image/png');
+    },
+    clear: () => {
+      padRef.current?.clear();
+      notifyChange();
+    },
+  }), [notifyChange]);
+
   useEffect(() => {
+    if (savedSignatureUrl) return;
+
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -34,46 +73,32 @@ export function SignaturePadField({ savedSignatureUrl }: SignaturePadFieldProps)
       }
 
       padRef.current?.clear();
+      notifyChange();
     };
 
-    padRef.current = new SignaturePad(canvas, {
+    const pad = new SignaturePad(canvas, {
       backgroundColor: 'rgb(255, 255, 255)',
       penColor: 'rgb(17, 24, 39)',
     });
+
+    pad.addEventListener('endStroke', notifyChange);
+    padRef.current = pad;
 
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
 
     return () => {
       window.removeEventListener('resize', resizeCanvas);
-      padRef.current?.off();
+      pad.removeEventListener('endStroke', notifyChange);
+      pad.off();
       padRef.current = null;
+      notifyChange();
     };
-  }, []);
+  }, [savedSignatureUrl, notifyChange]);
 
   function handleClear() {
     padRef.current?.clear();
-  }
-
-  async function handleSave() {
-    const pad = padRef.current;
-
-    if (!pad || pad.isEmpty()) {
-      toast.error('Desenhe sua assinatura antes de salvar.');
-      return;
-    }
-
-    setIsSaving(true);
-
-    try {
-      await saveSignature(pad.toDataURL('image/png'));
-      pad.clear();
-      toast.success('Assinatura salva!');
-    } catch (err) {
-      toast.error(err instanceof ApiError ? err.message : 'Erro ao salvar assinatura');
-    } finally {
-      setIsSaving(false);
-    }
+    notifyChange();
   }
 
   async function handleRemove() {
@@ -82,6 +107,7 @@ export function SignaturePadField({ savedSignatureUrl }: SignaturePadFieldProps)
     try {
       await deleteSignature();
       padRef.current?.clear();
+      onSignatureChange?.(false);
       toast.success('Assinatura removida.');
     } catch (err) {
       toast.error(err instanceof ApiError ? err.message : 'Erro ao remover assinatura');
@@ -90,25 +116,47 @@ export function SignaturePadField({ savedSignatureUrl }: SignaturePadFieldProps)
     }
   }
 
-  return (
-    <div className="space-y-4">
-      {savedSignatureUrl ? (
+  if (savedSignatureUrl) {
+    const safeSignatureUrl = getSafeMediaUrl(savedSignatureUrl);
+
+    return (
+      <div className="space-y-4">
         <div className="space-y-2">
           <p className="text-sm font-medium">Assinatura salva</p>
           <div className="rounded-lg border bg-white p-3">
-            <img
-              src={savedSignatureUrl}
-              alt="Assinatura salva"
-              className="mx-auto h-16 max-w-full object-contain"
-            />
+            {safeSignatureUrl ? (
+              <img
+                src={safeSignatureUrl}
+                alt="Assinatura salva"
+                className="mx-auto h-16 max-w-full object-contain"
+              />
+            ) : (
+              <p className="text-center text-sm text-muted-foreground">
+                Assinatura indisponível
+              </p>
+            )}
           </div>
+          <p className="text-xs text-muted-foreground">
+            Remova a assinatura atual para cadastrar uma nova.
+          </p>
         </div>
-      ) : null}
+        <Button
+          type="button"
+          variant="destructive"
+          className="w-full sm:w-auto"
+          onClick={() => void handleRemove()}
+          disabled={isRemoving}
+        >
+          {isRemoving ? 'Removendo...' : 'Remover assinatura'}
+        </Button>
+      </div>
+    );
+  }
 
+  return (
+    <div className="space-y-4">
       <div className="space-y-2">
-        <p className="text-sm font-medium">
-          {savedSignatureUrl ? 'Desenhar nova assinatura' : 'Desenhe sua assinatura'}
-        </p>
+        <p className="text-sm font-medium">Desenhe sua assinatura</p>
         <div className="overflow-hidden rounded-lg border border-dashed bg-white">
           <canvas ref={canvasRef} className="h-40 w-full touch-none" />
         </div>
@@ -117,24 +165,14 @@ export function SignaturePadField({ savedSignatureUrl }: SignaturePadFieldProps)
         </p>
       </div>
 
-      <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-        <Button type="button" variant="outline" onClick={handleClear}>
-          Limpar
-        </Button>
-        <Button type="button" onClick={() => void handleSave()} disabled={isSaving}>
-          {isSaving ? 'Salvando...' : 'Salvar assinatura'}
-        </Button>
-        {savedSignatureUrl ? (
-          <Button
-            type="button"
-            variant="destructive"
-            onClick={() => void handleRemove()}
-            disabled={isRemoving}
-          >
-            {isRemoving ? 'Removendo...' : 'Remover assinatura'}
-          </Button>
-        ) : null}
-      </div>
+      <Button
+        type="button"
+        variant="outline"
+        className="w-full sm:w-auto"
+        onClick={handleClear}
+      >
+        Limpar
+      </Button>
     </div>
   );
-}
+});

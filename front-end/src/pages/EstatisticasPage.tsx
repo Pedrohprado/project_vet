@@ -10,10 +10,7 @@ import { HomeHero } from '@/components/home/home-hero';
 import { HomeRecentServices } from '@/components/home/home-recent-services';
 import { HomeStatsGrid } from '@/components/home/home-stats-grid';
 import { HomeWeekReminders } from '@/components/home/home-week-reminders';
-import {
-  getOnboardingStepState,
-  OnboardingStepCard,
-} from '@/components/onboarding/onboarding-step-card';
+import { OnboardingStepCard } from '@/components/onboarding/onboarding-step-card';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -26,6 +23,7 @@ import { useAtendimentos } from '@/hooks/useAtendimentos';
 import { useAuth } from '@/hooks/useAuth';
 import { useClinicStats } from '@/hooks/useStats';
 import { useWeekReminders } from '@/hooks/useWeekReminders';
+import { getOnboardingStepState } from '@/lib/onboarding';
 
 const firstSteps = [
   {
@@ -64,7 +62,7 @@ export function EstatisticasPage() {
     data: atendimentosData,
     isLoading: isLoadingAtendimentos,
     error: atendimentosError,
-  } = useAtendimentos(1, 5);
+  } = useAtendimentos(1, 10);
   const [isDismissing, setIsDismissing] = useState(false);
 
   const onboarding = stats?.onboarding ?? {
@@ -152,12 +150,6 @@ export function EstatisticasPage() {
           </Card>
         ) : null}
 
-        <HomeStatsGrid
-          stats={stats}
-          isLoading={isLoadingStats}
-          error={Boolean(statsError)}
-        />
-
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           <HomeWeekReminders
             items={weekReminders}
@@ -170,6 +162,12 @@ export function EstatisticasPage() {
             error={Boolean(atendimentosError)}
           />
         </div>
+
+        <HomeStatsGrid
+          stats={stats}
+          isLoading={isLoadingStats}
+          error={Boolean(statsError)}
+        />
       </div>
     </div>
   );

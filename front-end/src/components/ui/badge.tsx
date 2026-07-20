@@ -12,6 +12,8 @@ const badgeVariants = cva(
         secondary:
           'border-transparent bg-secondary text-secondary-foreground',
         outline: 'text-foreground',
+        destructive:
+          'border-transparent bg-destructive/10 text-destructive',
       },
     },
     defaultVariants: {
@@ -20,11 +22,18 @@ const badgeVariants = cva(
   },
 );
 
+type BadgeVariant = NonNullable<VariantProps<typeof badgeVariants>['variant']>;
+
+type BadgeProps = Omit<React.ComponentProps<'span'>, 'className'> & {
+  className?: string;
+  variant?: BadgeVariant | null;
+};
+
 function Badge({
   className,
   variant = 'default',
   ...props
-}: React.ComponentProps<'span'> & VariantProps<typeof badgeVariants>) {
+}: BadgeProps) {
   return (
     <span
       data-slot="badge"
@@ -35,3 +44,4 @@ function Badge({
 }
 
 export { Badge, badgeVariants };
+export type { BadgeProps, BadgeVariant };

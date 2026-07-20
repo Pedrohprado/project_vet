@@ -55,6 +55,7 @@ enum AppointmentStatus {
 
 enum ConsultationStatus {
   OPEN
+  RETURN_SCHEDULED
   FINISHED
   CANCELLED
 }
@@ -122,8 +123,10 @@ model Clinic {
   consultations      Consultation[]
   vaccinations       Vaccination[]
   vaccineCatalog     VaccineCatalogItem[]
-  notifications      Notification[]
-  petWeightRecords   PetWeightRecord[]
+  notifications           Notification[]
+  petWeightRecords        PetWeightRecord[]
+  consultationAttachments ConsultationAttachment[]
+  communityCases          CommunityCase[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -142,9 +145,13 @@ model User {
   lastLoginAt   DateTime?
   appointments  Appointment[]
   consultations    Consultation[]
-  vaccinations     Vaccination[]
-  petWeightRecords PetWeightRecord[]
-  clinicId         String?
+  vaccinations              Vaccination[]
+  petWeightRecords          PetWeightRecord[]
+  consultationAttachments   ConsultationAttachment[]
+  communityCases            CommunityCase[]
+  communityCaseLikes        CommunityCaseLike[]
+  communityCaseComments     CommunityCaseComment[]
+  clinicId                  String?
   clinic           Clinic?           @relation(fields: [clinicId], references: [id])
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
@@ -269,6 +276,12 @@ model Appointment {
   scheduledAt     DateTime
   durationMinutes Int      @default(30)
 
+  sourceConsultationId String?
+  sourceConsultation   Consultation? @relation("ReturnSourceConsultation", fields: [sourceConsultationId], references: [id])
+
+  sourceVaccinationId String?
+  sourceVaccination   Vaccination? @relation("NextDoseSource", fields: [sourceVaccinationId], references: [id])
+
   consultation Consultation?
   vaccination  Vaccination?
 
@@ -280,6 +293,8 @@ model Appointment {
   @@index([clinicId, scheduledAt])
   @@index([petId])
   @@index([tutorId])
+  @@index([sourceConsultationId])
+  @@index([sourceVaccinationId])
 }
 
 model Consultation {
@@ -317,17 +332,43 @@ model Consultation {
   needsReturn Boolean   @default(false)
   returnDate  DateTime?
 
+  parentConsultationId String?
+  parentConsultation   Consultation?  @relation("ConsultationReturns", fields: [parentConsultationId], references: [id])
+  returnConsultations  Consultation[] @relation("ConsultationReturns")
+
   prescriptionDocumentType PrescriptionDocumentType @default(SIMPLE)
 
   prescriptions Prescription[]
   notifications Notification[]
   weightRecords PetWeightRecord[]
+  returnAppointments Appointment[] @relation("ReturnSourceConsultation")
+  attachments        ConsultationAttachment[]
+  communityCase      CommunityCase?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([clinicId])
   @@index([petId])
+  @@index([parentConsultationId])
+}
+
+model ConsultationAttachment {
+  id             String       @id @default(uuid())
+  clinicId       String
+  clinic         Clinic       @relation(fields: [clinicId], references: [id])
+  consultationId String
+  consultation   Consultation @relation(fields: [consultationId], references: [id], onDelete: Cascade)
+  fileName       String
+  fileUrl        String
+  mimeType       String
+  label          String?
+  uploadedById   String
+  uploadedBy     User         @relation(fields: [uploadedById], references: [id])
+  createdAt      DateTime     @default(now())
+
+  @@index([clinicId])
+  @@index([consultationId, createdAt])
 }
 
 model Prescription {
@@ -396,6 +437,7 @@ model Vaccination {
   notes String?
 
   notifications Notification[]
+  nextDoseAppointments Appointment[] @relation("NextDoseSource")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -445,4 +487,72 @@ model Notification {
 
   @@index([clinicId, scheduledAt])
   @@index([status, scheduledAt])
+}
+
+model CommunityCase {
+  id       String @id @default(uuid())
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id])
+  clinicId String
+  clinic   Clinic @relation(fields: [clinicId], references: [id])
+
+  sourceConsultationId String?       @unique
+  sourceConsultation   Consultation? @relation(fields: [sourceConsultationId], references: [id], onDelete: SetNull)
+
+  title String
+
+  species         PetSpecies
+  sex             PetSex     @default(UNKNOWN)
+  approximateAge  String?
+  weightKg        Decimal?   @db.Decimal(6, 2)
+  temperature     Decimal?   @db.Decimal(4, 1)
+
+  mainComplaint String?
+  history       String?
+  physicalExam  String?
+  diagnosis     String?
+  conduct       String?
+  observations  String?
+  authorNote    String?
+
+  likesCount    Int @default(0)
+  commentsCount Int @default(0)
+
+  likes    CommunityCaseLike[]
+  comments CommunityCaseComment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([createdAt])
+  @@index([authorId])
+  @@index([clinicId])
+}
+
+model CommunityCaseLike {
+  id     String        @id @default(uuid())
+  caseId String
+  case   CommunityCase @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  userId String
+  user   User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([caseId, userId])
+  @@index([userId])
+}
+
+model CommunityCaseComment {
+  id       String        @id @default(uuid())
+  caseId   String
+  case     CommunityCase @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  authorId String
+  author   User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  content  String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([caseId, createdAt])
+  @@index([authorId])
 }

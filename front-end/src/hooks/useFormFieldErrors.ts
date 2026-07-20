@@ -3,6 +3,7 @@ import type { ZodError } from 'zod';
 import {
   buildFormFieldId,
   getFirstInvalidField,
+  scrollToFirstFieldError,
   scrollToFormField,
   zodFieldErrors,
 } from '@/lib/form-validation';
@@ -14,12 +15,17 @@ export function useFormFieldErrors<TField extends string>(idPrefix?: string) {
   const [formError, setFormError] = useState<string>();
 
   const applyZodError = useCallback(
-    (error: ZodError) => {
+    (error: ZodError, fieldOrder?: readonly TField[]) => {
       const errors = zodFieldErrors(error) as Partial<Record<TField, string>>;
-      const firstField = getFirstInvalidField(error) as TField | undefined;
-
       setFieldErrors(errors);
       setFormError(undefined);
+
+      if (fieldOrder?.length) {
+        scrollToFirstFieldError(errors, fieldOrder, idPrefix);
+        return;
+      }
+
+      const firstField = getFirstInvalidField(error) as TField | undefined;
 
       if (firstField) {
         scrollToFormField(buildFormFieldId(idPrefix, firstField));

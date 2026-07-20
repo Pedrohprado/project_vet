@@ -10,7 +10,12 @@ import {
 import { howItWorksContent, howItWorksPairs } from '@/lib/landing-content';
 import { cn } from '@/lib/utils';
 
-const problemOffsets = ['ml-0', 'ml-6 lg:ml-8', 'ml-2 lg:ml-3', 'ml-8 lg:ml-10'];
+const problemOffsets = [
+  'ml-0',
+  'ml-6 lg:ml-8',
+  'ml-2 lg:ml-3',
+  'ml-8 lg:ml-10',
+];
 
 export function LandingHowItWorks() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -19,24 +24,27 @@ export function LandingHowItWorks() {
 
   return (
     <LandingSection
-      id="como-funciona"
-      title="Como funciona"
+      id='como-funciona'
+      title='Como funciona'
       subtitle={howItWorksContent.subtitle}
     >
       <div
         ref={containerRef}
-        className="grid grid-cols-1 items-center gap-10 lg:grid-cols-[1fr_auto_1fr] lg:gap-6 xl:gap-10"
+        className='grid grid-cols-1 items-center gap-10 lg:grid-cols-[1fr_auto_1fr] lg:gap-6 xl:gap-10'
       >
-        <div className="flex flex-col items-center gap-3 lg:items-end lg:gap-4">
+        <div className='flex flex-col items-center gap-3 lg:items-end lg:gap-4'>
           {howItWorksPairs.map((pair, index) => (
             <div
               key={`problem-${cycleKey}-${pair.problem.title}`}
-              className={cn('w-full max-w-[340px] lg:w-max lg:max-w-none', problemOffsets[index])}
+              className={cn(
+                'w-full max-w-85 lg:w-max lg:max-w-none',
+                problemOffsets[index],
+              )}
               style={{ marginTop: pair.offsetY }}
             >
               <HowItWorksBalloon
                 title={pair.problem.title}
-                variant="problem"
+                variant='problem'
                 className={getProblemBalloonClassName(phase, reducedMotion)}
                 style={
                   {
@@ -51,16 +59,16 @@ export function LandingHowItWorks() {
 
         <HowItWorksPlatform />
 
-        <div className="flex flex-col items-start gap-3 pr-2 pt-2 lg:gap-4">
+        <div className='flex flex-col items-start gap-3 pr-2 pt-2 lg:gap-4'>
           {howItWorksPairs.map((pair, index) => (
             <div
               key={`solution-${cycleKey}-${pair.solution.title}`}
-              className="w-full max-w-[340px] lg:w-max lg:max-w-none"
+              className='w-full max-w-85 lg:w-max lg:max-w-none'
             >
               <HowItWorksBalloon
                 icon={pair.solution.icon}
                 title={pair.solution.title}
-                variant="solution"
+                variant='solution'
                 className={getSolutionBalloonClassName(
                   phase,
                   index,

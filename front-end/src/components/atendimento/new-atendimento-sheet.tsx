@@ -1,6 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
-import { Stethoscope, Syringe, ArrowLeft, PawPrint, Search, UserPlus } from 'lucide-react';
+import {
+  Stethoscope,
+  Syringe,
+  ArrowLeft,
+  PawPrint,
+  Search,
+  UserPlus,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { ApiError } from '@/api/http';
 import { getOpenConsultationByPet } from '@/api/consultations';
@@ -73,31 +80,31 @@ function TutorResultsTable({
   onSelect: (id: string) => void;
 }) {
   return (
-    <div className="overflow-x-auto rounded-lg border">
-      <table className="w-full min-w-[520px] text-left text-sm">
+    <div className='overflow-x-auto rounded-lg border'>
+      <table className='w-full min-w-130 text-left text-sm'>
         <thead>
-          <tr className="border-b bg-muted/40 text-muted-foreground">
-            <th className="px-3 py-2.5 font-medium">Nome</th>
-            <th className="px-3 py-2.5 font-medium">Celular</th>
-            <th className="px-3 py-2.5 font-medium">E-mail</th>
-            <th className="px-3 py-2.5 font-medium">Pets</th>
+          <tr className='border-b bg-muted/40 text-muted-foreground'>
+            <th className='px-3 py-2.5 font-medium'>Nome</th>
+            <th className='px-3 py-2.5 font-medium'>Celular</th>
+            <th className='px-3 py-2.5 font-medium'>E-mail</th>
+            <th className='px-3 py-2.5 font-medium'>Pets</th>
           </tr>
         </thead>
         <tbody>
           {tutors.map((tutor) => (
             <tr
               key={tutor.id}
-              className="cursor-pointer border-b last:border-0 transition-colors hover:bg-muted/50"
+              className='cursor-pointer border-b last:border-0 transition-colors hover:bg-muted/50'
               onClick={() => onSelect(tutor.id)}
             >
-              <td className="px-3 py-2.5 font-medium">{tutor.name}</td>
-              <td className="px-3 py-2.5 text-muted-foreground whitespace-nowrap">
+              <td className='px-3 py-2.5 font-medium'>{tutor.name}</td>
+              <td className='px-3 py-2.5 text-muted-foreground whitespace-nowrap'>
                 {tutor.phone ?? tutor.whatsapp ?? '—'}
               </td>
-              <td className="px-3 py-2.5 text-muted-foreground">
+              <td className='px-3 py-2.5 text-muted-foreground'>
                 {tutor.email ?? '—'}
               </td>
-              <td className="px-3 py-2.5">
+              <td className='px-3 py-2.5'>
                 <TutorPetAvatarStack pets={tutor.pets} />
               </td>
             </tr>
@@ -116,31 +123,33 @@ function PetResultsTable({
   onSelect: (id: string) => void;
 }) {
   return (
-    <div className="overflow-x-auto rounded-lg border">
-      <table className="w-full min-w-[400px] text-left text-sm">
+    <div className='overflow-x-auto rounded-lg border'>
+      <table className='w-full min-w-100 text-left text-sm'>
         <thead>
-          <tr className="border-b bg-muted/40 text-muted-foreground">
-            <th className="w-12 px-3 py-2.5" aria-hidden="true" />
-            <th className="px-3 py-2.5 font-medium">Nome</th>
-            <th className="px-3 py-2.5 font-medium">Espécie</th>
-            <th className="px-3 py-2.5 font-medium">Raça</th>
+          <tr className='border-b bg-muted/40 text-muted-foreground'>
+            <th className='w-12 px-3 py-2.5' aria-hidden='true' />
+            <th className='px-3 py-2.5 font-medium'>Nome</th>
+            <th className='px-3 py-2.5 font-medium'>Espécie</th>
+            <th className='px-3 py-2.5 font-medium'>Raça</th>
           </tr>
         </thead>
         <tbody>
           {pets.map((pet) => (
             <tr
               key={pet.id}
-              className="cursor-pointer border-b last:border-0 transition-colors hover:bg-muted/50"
+              className='cursor-pointer border-b last:border-0 transition-colors hover:bg-muted/50'
               onClick={() => onSelect(pet.id)}
             >
-              <td className="px-3 py-2.5">
+              <td className='px-3 py-2.5'>
                 <PetAvatar pet={pet} />
               </td>
-              <td className="px-3 py-2.5 font-medium">{pet.name}</td>
-              <td className="px-3 py-2.5 text-muted-foreground">
+              <td className='px-3 py-2.5 font-medium'>{pet.name}</td>
+              <td className='px-3 py-2.5 text-muted-foreground'>
                 {PET_SPECIES_LABELS[pet.species]}
               </td>
-              <td className="px-3 py-2.5 text-muted-foreground">{pet.breed ?? '—'}</td>
+              <td className='px-3 py-2.5 text-muted-foreground'>
+                {pet.breed ?? '—'}
+              </td>
             </tr>
           ))}
         </tbody>
@@ -170,42 +179,44 @@ function TutorStep({
   const hasResults = (data?.items.length ?? 0) > 0;
 
   return (
-    <div className="space-y-4">
-      <div className="relative">
-        <Search className="absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
+    <div className='space-y-4'>
+      <div className='relative'>
+        <Search className='absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground' />
         <Input
-          placeholder="Buscar tutor por nome..."
+          placeholder='Buscar tutor por nome...'
           value={tutorSearch}
           onChange={(e) => onTutorSearchChange(e.target.value)}
-          className="pl-8"
+          className='pl-8'
           autoFocus
         />
       </div>
 
-      <div className="space-y-2">
+      <div className='space-y-2'>
         {!hasSearch && (
-          <p className="text-sm font-medium text-muted-foreground">Tutores cadastrados</p>
+          <p className='text-sm font-medium text-muted-foreground'>
+            Tutores cadastrados
+          </p>
         )}
 
         {isLoading && (
-          <div className="space-y-2">
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
+          <div className='space-y-2'>
+            <Skeleton className='h-10 w-full' />
+            <Skeleton className='h-10 w-full' />
+            <Skeleton className='h-10 w-full' />
           </div>
         )}
 
         {!isLoading && !hasResults && (
           <Card>
-            <CardContent className="space-y-3 py-6 text-center">
-              <p className="text-sm text-muted-foreground">
+            <CardContent className='space-y-3 py-6 text-center'>
+              <p className='text-sm text-muted-foreground'>
                 {hasSearch
                   ? `Nenhum tutor encontrado para "${debouncedTutorSearch}".`
                   : 'Nenhum tutor cadastrado ainda.'}
               </p>
-              <Button asChild className="w-full sm:w-auto" onClick={onClose}>
-                <Link to="/tutors/new">
-                  <UserPlus className="size-4" />
+              <Button asChild className='w-full sm:w-auto' onClick={onClose}>
+                <Link to='/tutors/new'>
+                  <UserPlus className='size-4' />
                   Cadastrar Tutor
                 </Link>
               </Button>
@@ -214,17 +225,22 @@ function TutorStep({
         )}
 
         {!isLoading && hasResults && data && (
-          <div className="max-h-[45vh] overflow-y-auto">
+          <div className='max-h-[45vh] overflow-y-auto'>
             <TutorResultsTable tutors={data.items} onSelect={onSelectTutor} />
           </div>
         )}
       </div>
 
-      <div className="border-t pt-4">
-        <Button asChild variant="ghost" className="w-full" onClick={onClose}>
-          <Link to="/tutors/new">
-            <UserPlus className="size-4" />
-            Cadastrar novo tutor
+      <div className='border-t pt-4'>
+        <Button
+          asChild
+          variant='ghost'
+          className='w-full min-w-0'
+          onClick={onClose}
+        >
+          <Link to='/tutors/new'>
+            <UserPlus className='size-4 shrink-0' />
+            <span className='truncate'>Cadastrar novo tutor</span>
           </Link>
         </Button>
       </div>
@@ -254,35 +270,41 @@ function PetStep({
     const query = petSearch.trim().toLowerCase();
     if (!query) return tutor.pets;
     return tutor.pets.filter((pet) => pet.name.toLowerCase().includes(query));
-  }, [tutor?.pets, petSearch]);
+  }, [tutor, petSearch]);
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-2">
-        <Button type="button" variant="ghost" size="icon" onClick={onBack} aria-label="Voltar">
-          <ArrowLeft className="size-4" />
+    <div className='space-y-4'>
+      <div className='flex items-center gap-2'>
+        <Button
+          type='button'
+          variant='ghost'
+          size='icon'
+          onClick={onBack}
+          aria-label='Voltar'
+        >
+          <ArrowLeft className='size-4' />
         </Button>
-        <div className="min-w-0">
-          <p className="text-sm text-muted-foreground">Tutor selecionado</p>
-          <p className="truncate font-medium">{tutor?.name ?? '...'}</p>
+        <div className='min-w-0'>
+          <p className='text-sm text-muted-foreground'>Tutor selecionado</p>
+          <p className='truncate font-medium'>{tutor?.name ?? '...'}</p>
         </div>
       </div>
 
       {isLoading && (
-        <div className="space-y-2">
-          <Skeleton className="h-10 w-full" />
-          <Skeleton className="h-20 w-full" />
+        <div className='space-y-2'>
+          <Skeleton className='h-10 w-full' />
+          <Skeleton className='h-20 w-full' />
         </div>
       )}
 
       {!isLoading && tutor && tutor.pets.length === 0 && (
         <Card>
-          <CardContent className="space-y-3 py-6 text-center">
-            <PawPrint className="mx-auto size-8 text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">
+          <CardContent className='space-y-3 py-6 text-center'>
+            <PawPrint className='mx-auto size-8 text-muted-foreground' />
+            <p className='text-sm text-muted-foreground'>
               Este tutor ainda não tem pets cadastrados.
             </p>
-            <Button asChild className="w-full sm:w-auto" onClick={onClose}>
+            <Button asChild className='w-full sm:w-auto' onClick={onClose}>
               <Link to={`/tutors/${tutor.id}/pets/new`}>Cadastrar Pet</Link>
             </Button>
           </CardContent>
@@ -291,37 +313,44 @@ function PetStep({
 
       {!isLoading && tutor && tutor.pets.length > 0 && (
         <>
-          <div className="relative">
-            <Search className="absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
+          <div className='relative'>
+            <Search className='absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground' />
             <Input
-              placeholder="Buscar pet por nome..."
+              placeholder='Buscar pet por nome...'
               value={petSearch}
               onChange={(e) => onPetSearchChange(e.target.value)}
-              className="pl-8"
+              className='pl-8'
             />
           </div>
 
-          <div className="space-y-2">
+          <div className='space-y-2'>
             {!petSearch.trim() && (
-              <p className="text-sm font-medium text-muted-foreground">Pets do tutor</p>
+              <p className='text-sm font-medium text-muted-foreground'>
+                Pets do tutor
+              </p>
             )}
 
             {filteredPets.length === 0 ? (
-              <p className="py-4 text-center text-sm text-muted-foreground">
+              <p className='py-4 text-center text-sm text-muted-foreground'>
                 Nenhum pet encontrado para &quot;{petSearch}&quot;.
               </p>
             ) : (
-              <div className="max-h-[45vh] overflow-y-auto">
+              <div className='max-h-[45vh] overflow-y-auto'>
                 <PetResultsTable pets={filteredPets} onSelect={onSelectPet} />
               </div>
             )}
           </div>
 
-          <div className="border-t pt-4">
-            <Button asChild variant="ghost" className="w-full" onClick={onClose}>
+          <div className='border-t pt-4'>
+            <Button
+              asChild
+              variant='ghost'
+              className='w-full min-w-0'
+              onClick={onClose}
+            >
               <Link to={`/tutors/${tutor.id}/pets/new`}>
-                <PawPrint className="size-4" />
-                Cadastrar novo pet
+                <PawPrint className='size-4 shrink-0' />
+                <span className='truncate'>Cadastrar novo pet</span>
               </Link>
             </Button>
           </div>
@@ -363,7 +392,10 @@ function ActionsStep({
     });
 
     if (defaultScheduledDay) {
-      params.set('scheduledAt', new Date(dayToDefaultDateTime(defaultScheduledDay)).toISOString());
+      params.set(
+        'scheduledAt',
+        new Date(dayToDefaultDateTime(defaultScheduledDay)).toISOString(),
+      );
     }
 
     onClose();
@@ -372,7 +404,10 @@ function ActionsStep({
 
   async function handleStartConsultation() {
     try {
-      const consultation = await createConsultation.mutateAsync({ tutorId, petId });
+      const consultation = await createConsultation.mutateAsync({
+        tutorId,
+        petId,
+      });
       toast.success('Consulta iniciada!');
       onClose();
       void navigate(`/consultations/${consultation.id}`);
@@ -395,7 +430,10 @@ function ActionsStep({
 
   async function handleStartVaccination() {
     try {
-      const vaccination = await createVaccination.mutateAsync({ tutorId, petId });
+      const vaccination = await createVaccination.mutateAsync({
+        tutorId,
+        petId,
+      });
       toast.success('Vacinação iniciada!');
       onClose();
       void navigate(`/vaccinations/${vaccination.id}`);
@@ -417,22 +455,28 @@ function ActionsStep({
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-2">
-        <Button type="button" variant="ghost" size="icon" onClick={onBack} aria-label="Voltar">
-          <ArrowLeft className="size-4" />
+    <div className='space-y-4'>
+      <div className='flex items-center gap-2'>
+        <Button
+          type='button'
+          variant='ghost'
+          size='icon'
+          onClick={onBack}
+          aria-label='Voltar'
+        >
+          <ArrowLeft className='size-4' />
         </Button>
-        <div className="min-w-0">
-          <p className="text-sm text-muted-foreground">Pet selecionado</p>
-          <p className="truncate font-medium">
+        <div className='min-w-0'>
+          <p className='text-sm text-muted-foreground'>Pet selecionado</p>
+          <p className='truncate font-medium'>
             {selectedPet?.name ?? '...'} · {tutor?.name ?? '...'}
           </p>
         </div>
       </div>
 
       <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">
+        <CardHeader className='pb-3'>
+          <CardTitle className='text-base'>
             {isScheduling ? 'Como deseja agendar?' : 'Como deseja prosseguir?'}
           </CardTitle>
           <CardDescription>
@@ -441,9 +485,9 @@ function ActionsStep({
               : 'Escolha se deseja iniciar uma consulta ou uma vacinação.'}
           </CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-2 sm:grid-cols-2">
+        <CardContent className='grid gap-2 sm:grid-cols-2'>
           <Button
-            className="h-auto min-h-11 flex-col gap-1.5 py-3"
+            className='h-auto min-h-11 flex-col gap-1.5 py-3'
             variant={isScheduling ? 'outline' : 'default'}
             onClick={() =>
               isScheduling
@@ -452,7 +496,7 @@ function ActionsStep({
             }
             disabled={!isScheduling && isPending}
           >
-            <Stethoscope className="size-5" />
+            <Stethoscope className='size-5' />
             {isScheduling
               ? 'Agendar Consulta'
               : createConsultation.isPending
@@ -460,7 +504,7 @@ function ActionsStep({
                 : 'Iniciar Consulta'}
           </Button>
           <Button
-            className="h-auto min-h-11 flex-col gap-1.5 py-3"
+            className='h-auto min-h-11 flex-col gap-1.5 py-3'
             variant={isScheduling ? 'outline' : 'default'}
             onClick={() =>
               isScheduling
@@ -469,7 +513,7 @@ function ActionsStep({
             }
             disabled={!isScheduling && isPending}
           >
-            <Syringe className="size-5" />
+            <Syringe className='size-5' />
             {isScheduling
               ? 'Agendar Vacinação'
               : createVaccination.isPending
@@ -546,7 +590,7 @@ export function NewAtendimentoSheet({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+      <DialogContent className='max-h-[90vh] overflow-x-hidden overflow-y-auto sm:max-w-2xl'>
         <DialogHeader>
           <DialogTitle>
             {mode === 'agendamento' ? 'Novo Agendamento' : 'Novo Atendimento'}
@@ -554,7 +598,7 @@ export function NewAtendimentoSheet({
           <DialogDescription>{stepDescription[step]}</DialogDescription>
         </DialogHeader>
 
-        <div>
+        <div className='min-w-0'>
           {step === 'tutor' && (
             <TutorStep
               tutorSearch={tutorSearch}

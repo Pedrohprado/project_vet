@@ -162,7 +162,7 @@ export function AuthPageLayout({
         <div className='rounded-2xl border border-border/50 bg-white p-6 shadow-xl shadow-black/4 sm:p-8'>
           <header className='mb-6 text-center sm:mb-8'>
             <p className='text-sm text-muted-foreground'>
-              {isRegister ? 'Crie sua conta na' : 'Boas vindas a'}
+              {isRegister ? 'Crie sua conta na' : 'Bem vindo'}
             </p>
             <h1 className='mt-1 text-3xl font-bold tracking-tight text-primary sm:text-4xl'>
               boxvet.

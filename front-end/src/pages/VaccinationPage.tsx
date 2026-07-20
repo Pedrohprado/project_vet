@@ -36,13 +36,14 @@ import {
   AvatarFallback,
   AvatarImage,
 } from '@/components/ui/avatar';
-import { cn } from '@/lib/utils';
+import { formatPetAge, formatPetWeight } from '@/lib/pet-format';
 import {
   pageShellClassName,
   pageTitleClassName,
   stickyActionBarClassName,
 } from '@/lib/mobile-ui';
-import { formatPetAge, formatPetWeight } from '@/lib/pet-format';
+import { getSafeMediaUrl } from '@/lib/safe-url';
+import { cn } from '@/lib/utils';
 import { suggestNextDoseDate } from '@/lib/vaccination-format';
 import { useVaccineCatalog } from '@/hooks/useVaccineCatalog';
 import {
@@ -94,12 +95,18 @@ export function VaccinationPage() {
     nextDoseAt: '',
   });
 
-  useEffect(() => {
-    if (!vaccination) return;
+  const vaccinationAppliedAt = vaccination?.appliedAt;
+  const [hydratedVaccinationId, setHydratedVaccinationId] = useState<
+    string | null
+  >(null);
+  const [initializedStepForVaccinationId, setInitializedStepForVaccinationId] =
+    useState<string | null>(null);
+
+  if (vaccination && vaccination.id !== hydratedVaccinationId) {
+    setHydratedVaccinationId(vaccination.id);
 
     const catalogId = vaccination.vaccineCatalogItemId ?? '';
-    const isOther =
-      !catalogId && Boolean(vaccination.vaccineName?.trim());
+    const isOther = !catalogId && Boolean(vaccination.vaccineName?.trim());
 
     setForm({
       catalogSelection: catalogId || (isOther ? OTHER_VACCINE_VALUE : ''),
@@ -112,21 +119,31 @@ export function VaccinationPage() {
         ? vaccination.nextDoseAt.slice(0, 10)
         : '',
     });
-  }, [vaccination]);
+  }
 
-  useEffect(() => {
-    if (!vaccination || vaccination.appliedAt) return;
-
+  if (
+    vaccination &&
+    !vaccination.appliedAt &&
+    vaccination.id !== initializedStepForVaccinationId
+  ) {
     const stored = sessionStorage.getItem(stepStorageKey(vaccination.id));
     if (stored !== null) {
       setCurrentStep(Number(stored));
     }
-  }, [vaccination?.id, vaccination?.appliedAt]);
+    setInitializedStepForVaccinationId(vaccination.id);
+  }
+
+  if (
+    vaccination?.appliedAt &&
+    vaccination.id !== initializedStepForVaccinationId
+  ) {
+    setInitializedStepForVaccinationId(vaccination.id);
+  }
 
   useEffect(() => {
-    if (!id || vaccination?.appliedAt) return;
+    if (!id || vaccinationAppliedAt) return;
     sessionStorage.setItem(stepStorageKey(id), String(currentStep));
-  }, [id, vaccination?.appliedAt, currentStep]);
+  }, [id, vaccinationAppliedAt, currentStep]);
 
   useEffect(() => {
     stepRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -252,6 +269,7 @@ export function VaccinationPage() {
   const isLastStep = currentStep === STEPS.length - 1;
   const pet = vaccination.pet;
   const tutor = pet.tutor;
+  const petPhotoUrl = getSafeMediaUrl(pet.photoUrl);
 
   return (
     <div className={pageShellClassName}>
@@ -266,8 +284,8 @@ export function VaccinationPage() {
           <div className="space-y-2">
             <div className="flex items-start gap-2.5">
               <Avatar className="size-9 shrink-0 sm:size-10">
-                {pet.photoUrl ? (
-                  <AvatarImage src={pet.photoUrl} alt={pet.name} />
+                {petPhotoUrl ? (
+                  <AvatarImage src={petPhotoUrl} alt={pet.name} />
                 ) : null}
                 <AvatarFallback className="bg-primary/10 text-primary">
                   <PawPrint className="size-4" />

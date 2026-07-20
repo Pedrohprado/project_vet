@@ -3,14 +3,15 @@ import { Link } from 'react-router';
 import { Button } from '@/components/ui/button';
 import { pricingPlans } from '@/lib/landing-content';
 import { cn } from '@/lib/utils';
-import { LandingSection, landingPrimaryButtonClassName } from './landing-section';
+import { LandingSection } from './landing-section';
+import { landingPrimaryButtonClassName } from '@/lib/landing-styles';
 
 export function LandingPricing() {
   return (
     <LandingSection
       id="planos"
       title="Planos"
-      subtitle="Starter para quem está começando. Pro para clínicas em crescimento."
+      subtitle="Preços simples e transparentes. Escolha o plano ideal para sua clínica."
     >
       <div className="mx-auto grid max-w-4xl gap-6 md:grid-cols-2">
         {pricingPlans.map((plan) => (

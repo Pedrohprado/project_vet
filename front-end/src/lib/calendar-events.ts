@@ -1,10 +1,12 @@
 import {
   addDays,
   endOfMonth,
+  format,
   isSameDay,
   startOfMonth,
   subDays,
 } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import type { Appointment } from '@/types/appointment';
 import {
   APPOINTMENT_STATUS_LABELS,
@@ -27,6 +29,37 @@ export function getEventsForDay(events: CalendarEvent[], date: Date) {
       (a, b) =>
         new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime(),
     );
+}
+
+/** Key: local calendar day `yyyy-MM-dd`. Values are sorted by startsAt. */
+export function indexEventsByDay(events: CalendarEvent[]) {
+  const index = new Map<string, CalendarEvent[]>();
+
+  for (const event of events) {
+    const key = format(new Date(event.startsAt), 'yyyy-MM-dd');
+    const bucket = index.get(key);
+    if (bucket) {
+      bucket.push(event);
+    } else {
+      index.set(key, [event]);
+    }
+  }
+
+  for (const bucket of index.values()) {
+    bucket.sort(
+      (a, b) =>
+        new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime(),
+    );
+  }
+
+  return index;
+}
+
+export function getIndexedEventsForDay(
+  eventsByDay: Map<string, CalendarEvent[]>,
+  date: Date,
+) {
+  return eventsByDay.get(format(date, 'yyyy-MM-dd')) ?? [];
 }
 
 function getAppointmentTitle(appointment: Appointment) {
@@ -64,22 +97,27 @@ export function mapAppointmentToCalendarEvent(
     veterinarian: appointment.veterinarian,
     appointmentId: appointment.id,
     appointmentType: appointment.type,
+    sourceConsultationId: appointment.sourceConsultationId ?? undefined,
+    sourceVaccinationId: appointment.sourceVaccinationId ?? undefined,
   };
 }
 
 export function mapConsultationToCalendarEvent(
   consultation: ConsultationListItem,
 ): CalendarEvent {
+  const isReturnVisit = Boolean(consultation.parentConsultationId);
+
   return {
     id: consultation.id,
     kind: 'CONSULTATION',
     startsAt: consultation.startedAt,
-    title: 'Atendimento',
+    title: isReturnVisit ? 'Retorno' : 'Atendimento',
     status: consultation.status,
     tutor: consultation.tutor,
     pet: consultation.pet,
     veterinarian: consultation.veterinarian,
     consultationId: consultation.id,
+    parentConsultationId: consultation.parentConsultationId ?? undefined,
   };
 }
 
@@ -106,6 +144,10 @@ export function formatEventTime(iso: string) {
   });
 }
 
+export function formatDayTitle(date: Date) {
+  return format(date, "EEEE, d 'de' MMMM 'de' yyyy", { locale: ptBR });
+}
+
 export function canStartConsultationFromEvent(event: CalendarEvent) {
   return (
     event.kind === 'APPOINTMENT' &&
@@ -121,5 +163,14 @@ export function canStartVaccinationFromEvent(event: CalendarEvent) {
     event.appointmentType === 'VACCINATION' &&
     (event.status === 'SCHEDULED' || event.status === 'CONFIRMED') &&
     Boolean(event.appointmentId)
+  );
+}
+
+export function canContinueReturnFromEvent(event: CalendarEvent) {
+  return (
+    event.kind === 'APPOINTMENT' &&
+    event.appointmentType === 'RETURN' &&
+    Boolean(event.sourceConsultationId) &&
+    (event.status === 'SCHEDULED' || event.status === 'CONFIRMED')
   );
 }

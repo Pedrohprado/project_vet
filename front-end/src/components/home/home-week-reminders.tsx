@@ -10,7 +10,6 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { OPEN_BOX_SRC } from '@/lib/brand';
 import { cn } from '@/lib/utils';
 import {
   WEEK_REMINDER_KIND_LABELS,
@@ -50,16 +49,19 @@ function ReminderRow({ item }: { item: WeekReminderItem }) {
         <Icon className="size-4 text-muted-foreground" />
       </div>
       <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-center gap-2">
-          <p className="truncate text-sm font-medium">{item.title}</p>
+        <div className="flex items-start justify-between gap-2 sm:items-center sm:justify-start">
+          <p className="min-w-0 truncate text-sm font-medium">{item.title}</p>
           <Badge
             variant="secondary"
-            className={cn('shrink-0 text-xs', kindBadgeClass[item.kind])}
+            className={cn(
+              'shrink-0 self-center px-1.5 py-0 text-[10px] leading-4',
+              kindBadgeClass[item.kind],
+            )}
           >
             {WEEK_REMINDER_KIND_LABELS[item.kind]}
           </Badge>
         </div>
-        <p className="truncate text-xs text-muted-foreground">{item.subtitle}</p>
+        <p className="mt-1.5 truncate text-xs text-muted-foreground">{item.subtitle}</p>
         <p className="mt-0.5 text-xs text-muted-foreground">
           {formatReminderDate(item.at)}
         </p>
@@ -82,15 +84,15 @@ export function HomeWeekReminders({
 }: HomeWeekRemindersProps) {
   return (
     <Card className="rounded-2xl border border-border/50 bg-white/90 shadow-xl shadow-black/4 backdrop-blur-sm">
-      <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
-        <div>
+      <CardHeader className="flex flex-col gap-3 space-y-0 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+        <div className="space-y-1">
           <CardTitle>Lembretes da semana</CardTitle>
           <CardDescription>
             Agendamentos e próximas doses de vacina nos próximos 7 dias.
           </CardDescription>
         </div>
-        <Button variant="outline" size="sm" asChild>
-          <Link to="/agenda">Ver agenda</Link>
+        <Button size="sm" className="w-fit shrink-0" asChild>
+          <Link to="/agenda">Ir para agenda</Link>
         </Button>
       </CardHeader>
       <CardContent className="space-y-2">
@@ -105,19 +107,18 @@ export function HomeWeekReminders({
             <Skeleton className="h-16 w-full rounded-xl" />
           </>
         ) : items.length === 0 ? (
-          <div className="flex flex-col items-center gap-3 py-8 text-center">
+          <div className="flex flex-col items-center py-8 text-center">
             <img
-              src={OPEN_BOX_SRC}
-              alt=""
-              aria-hidden
-              className="h-16 w-auto object-contain opacity-80"
+              src="/sniff_dog.png"
+              alt="Cachorro farejando"
+              className="size-40 object-contain"
             />
-            <p className="text-sm text-muted-foreground">
-              Nada agendado para esta semana. Que tal marcar um atendimento?
+            <p className="ellipsis-dots -mt-8 text-xs text-muted-foreground">
+              Não conseguimos encontrar nenhum lembrete
+              <span>.</span>
+              <span>.</span>
+              <span>.</span>
             </p>
-            <Button size="sm" asChild>
-              <Link to="/agenda">Ir para agenda</Link>
-            </Button>
           </div>
         ) : (
           items.map((item) => <ReminderRow key={item.id} item={item} />)

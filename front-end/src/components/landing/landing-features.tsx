@@ -1,5 +1,6 @@
 import { features } from '@/lib/landing-content';
-import { LandingSection, landingCardClassName } from './landing-section';
+import { LandingSection } from './landing-section';
+import { landingCardClassName } from '@/lib/landing-styles';
 
 export function LandingFeatures() {
   return (

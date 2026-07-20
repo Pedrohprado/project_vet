@@ -4,6 +4,10 @@ import { PetPrismaRepository } from '../repositories/prisma/pet-prisma-repositor
 import { TutorPrismaRepository } from '../repositories/prisma/tutor-prisma-repository.js';
 import { PetWeightService } from './pet-weight-service.js';
 import { pickDefined } from '../lib/pick-defined.js';
+import {
+  deletePetPhotoFile,
+  savePetPhoto,
+} from '../lib/save-pet-photo.js';
 import { HttpError } from './erros/http-error.js';
 import type { CreatePetInput, UpdatePetInput } from '../https/schemas/pet-schema.js';
 import type { PetTimelineEvent } from '../types/pet-timeline.js';
@@ -130,9 +134,21 @@ export class PetService {
     ];
 
     for (const consultation of consultations) {
-      const description = [consultation.mainComplaint, consultation.diagnosis]
+      const baseDescription = [consultation.mainComplaint, consultation.diagnosis]
         .filter(Boolean)
         .join(' · ') || null;
+
+      const attachmentCount = consultation._count.attachments;
+      const attachmentSuffix =
+        attachmentCount > 0
+          ? `${baseDescription ? ' · ' : ''}${attachmentCount} exame(s) anexado(s)`
+          : '';
+
+      const description = baseDescription
+        ? `${baseDescription}${attachmentSuffix}`
+        : attachmentCount > 0
+          ? `${attachmentCount} exame(s) anexado(s)`
+          : null;
 
       events.push({
         id: `consultation-${consultation.id}`,
@@ -221,5 +237,40 @@ export class PetService {
     }
 
     return pet;
+  }
+
+  async uploadPhoto(
+    tenantId: string,
+    petId: string,
+    input: { buffer: Buffer; mimeType?: string },
+  ) {
+    const pet = await this.getById(tenantId, petId);
+    const previousPhotoUrl = pet.photoUrl;
+    const { photoUrl } = await savePetPhoto(petId, input.buffer, input.mimeType);
+
+    try {
+      const updated = await petRepository.update(tenantId, petId, { photoUrl });
+      await deletePetPhotoFile(previousPhotoUrl);
+      return updated;
+    } catch (error) {
+      await deletePetPhotoFile(photoUrl);
+      throw error;
+    }
+  }
+
+  async deletePhoto(tenantId: string, petId: string) {
+    const pet = await this.getById(tenantId, petId);
+
+    if (!pet.photoUrl) {
+      return pet;
+    }
+
+    const updated = await petRepository.update(tenantId, petId, {
+      photoUrl: null,
+    });
+
+    await deletePetPhotoFile(pet.photoUrl);
+
+    return updated;
   }
 }

@@ -115,7 +115,7 @@ export function RegisterForm({
     <div className={cn('flex flex-col', className)} {...props}>
       <form
         onSubmit={(e) => void handleSubmit(e)}
-        className="max-h-[min(28rem,calc(100svh-16rem))] overflow-y-auto pr-1"
+        className="max-h-[min(28rem,calc(100svh-16rem))] overflow-y-auto px-1.5 py-0.5"
       >
         <FieldGroup className="gap-4">
           <Field data-invalid={Boolean(fieldErrors.clinicName)}>
@@ -226,13 +226,21 @@ export function RegisterForm({
             <p className="text-sm text-destructive">{formError}</p>
           ) : null}
           <Field>
-            <Button
-              type="submit"
-              className="h-11 w-full rounded-xl bg-foreground text-sm text-background hover:bg-foreground/90"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? 'Criando conta...' : 'Criar conta'}
-            </Button>
+            <div className="group relative mt-2">
+              <img
+                src="/head_cat.png"
+                alt=""
+                aria-hidden
+                className="pointer-events-none absolute right-1 bottom-full z-10 h-24 w-auto translate-y-[30%] opacity-0 transition-opacity duration-500 ease-out group-hover:opacity-100"
+              />
+              <Button
+                type="submit"
+                className="h-11 w-full rounded-xl bg-foreground text-sm text-background hover:bg-foreground/90"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? 'Criando conta...' : 'Criar conta'}
+              </Button>
+            </div>
             <FieldDescription className="text-center text-xs">
               Já tem uma conta?{' '}
               <button

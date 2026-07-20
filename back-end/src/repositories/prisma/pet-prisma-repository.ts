@@ -51,6 +51,7 @@ export class PetPrismaRepository {
     birthDate?: Date;
     color?: string;
     weightKg?: number;
+    photoUrl?: string | null;
     isCastrated?: boolean;
     microchip?: string;
     allergies?: string;
@@ -76,6 +77,7 @@ export class PetPrismaRepository {
           mainComplaint: true,
           diagnosis: true,
           veterinarian: { select: { name: true } },
+          _count: { select: { attachments: true } },
         },
         orderBy: { startedAt: 'desc' },
       }),
@@ -121,6 +123,7 @@ export class PetPrismaRepository {
     birthDate?: Date;
     color?: string;
     weightKg?: number;
+    photoUrl?: string | null;
     isCastrated?: boolean;
     microchip?: string;
     allergies?: string;

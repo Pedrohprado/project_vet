@@ -10,7 +10,8 @@ import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import {
   formatEventTime,
-  getEventsForDay,
+  getIndexedEventsForDay,
+  indexEventsByDay,
 } from '@/lib/calendar-events';
 import type { CalendarEvent } from '@/types/calendar-event';
 
@@ -28,6 +29,9 @@ function getEventChipClass(event: CalendarEvent) {
   if (event.kind === 'CONSULTATION') {
     if (event.status === 'OPEN') {
       return 'bg-primary/20 text-foreground';
+    }
+    if (event.status === 'RETURN_SCHEDULED') {
+      return 'bg-amber-500/20 text-amber-950 dark:text-amber-100';
     }
     if (event.status === 'FINISHED') {
       return 'bg-secondary text-secondary-foreground';
@@ -47,7 +51,7 @@ function getEventChipClass(event: CalendarEvent) {
 }
 
 function createDayButton(
-  events: CalendarEvent[],
+  eventsByDay: Map<string, CalendarEvent[]>,
   onSelectDay: (day: Date) => void,
 ) {
   return function AgendaDayButton({
@@ -58,7 +62,7 @@ function createDayButton(
     ...props
   }: React.ComponentProps<typeof DayButton>) {
     const ref = React.useRef<HTMLButtonElement>(null);
-    const dayEvents = getEventsForDay(events, day.date);
+    const dayEvents = getIndexedEventsForDay(eventsByDay, day.date);
 
     React.useEffect(() => {
       if (modifiers.focused) {
@@ -124,9 +128,11 @@ export function MonthCalendar({
   onSelectDay,
   events,
 }: MonthCalendarProps) {
+  const eventsByDay = React.useMemo(() => indexEventsByDay(events), [events]);
+
   const DayButtonComponent = React.useMemo(
-    () => createDayButton(events, onSelectDay),
-    [events, onSelectDay],
+    () => createDayButton(eventsByDay, onSelectDay),
+    [eventsByDay, onSelectDay],
   );
 
   return (
@@ -184,7 +190,7 @@ export function MonthCalendar({
           formatWeekdayName: (date) => WEEKDAY_LABELS[date.getDay()],
         }}
         modifiers={{
-          hasEvents: (date) => getEventsForDay(events, date).length > 0,
+          hasEvents: (date) => getIndexedEventsForDay(eventsByDay, date).length > 0,
         }}
         modifiersClassNames={{
           hasEvents: 'font-medium',

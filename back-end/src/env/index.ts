@@ -7,6 +7,7 @@ const envSchema = z.object({
   PORT: z.string().default('3333'),
   JWT_SECRET: z.string(),
   NODE_ENV: z.enum(['development', 'production']).default('development'),
+  GROQ_API_KEY: z.string().min(1),
 });
 
 const _env = envSchema.safeParse(process.env);
