@@ -17,7 +17,6 @@ import {
 } from '@/components/ui/select';
 import { getCalendarFetchRange } from '@/lib/calendar-events';
 import {
-  formatDateTimeValue,
   formatDateValue,
   getDatePartFromDateTime,
   getTimePartFromDateTime,
@@ -269,10 +268,4 @@ export function ReturnSchedulePicker({
       </div>
     </div>
   );
-}
-
-export function getDefaultReturnScheduleValue() {
-  const now = new Date();
-  now.setMinutes(Math.ceil(now.getMinutes() / 15) * 15, 0, 0);
-  return formatDateTimeValue(now);
 }

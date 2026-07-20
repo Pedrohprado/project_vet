@@ -202,6 +202,26 @@ export function clearConsultationDraft(consultationId: string) {
   try {
     sessionStorage.removeItem(draftStorageKey(consultationId));
   } catch {
-    // ignore
+    // Private mode — ignore silently.
+  }
+}
+
+const DRAFT_KEY_PREFIX = 'consultation-draft-';
+
+/** Removes all consultation draft keys (call on logout for shared machines). */
+export function clearAllConsultationDrafts() {
+  try {
+    const keysToRemove: string[] = [];
+    for (let index = 0; index < sessionStorage.length; index++) {
+      const key = sessionStorage.key(index);
+      if (key?.startsWith(DRAFT_KEY_PREFIX)) {
+        keysToRemove.push(key);
+      }
+    }
+    for (const key of keysToRemove) {
+      sessionStorage.removeItem(key);
+    }
+  } catch {
+    // Private mode — ignore silently.
   }
 }

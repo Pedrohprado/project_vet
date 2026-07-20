@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { Link } from 'react-router';
 import { toast } from 'sonner';
 import { ApiError } from '@/api/http';
@@ -27,13 +27,16 @@ export function ProfilePage() {
   const [crmv, setCrmv] = useState(user?.crmv ?? '');
   const [hasSignatureDraft, setHasSignatureDraft] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [prevUser, setPrevUser] = useState(user);
 
-  useEffect(() => {
-    if (!user) return;
-    setPhone(user.phone ?? '');
-    setCrmv(user.crmv ?? '');
-    setHasSignatureDraft(false);
-  }, [user]);
+  if (user !== prevUser) {
+    setPrevUser(user);
+    if (user) {
+      setPhone(user.phone ?? '');
+      setCrmv(user.crmv ?? '');
+      setHasSignatureDraft(false);
+    }
+  }
 
   if (!user) {
     return <p className="text-muted-foreground">Carregando perfil...</p>;

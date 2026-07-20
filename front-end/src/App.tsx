@@ -1,7 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router';
 import { Toaster } from 'sonner';
 import { AppLayout } from '@/components/layout/AppLayout';
-import { AuthProvider } from '@/contexts/AuthContext';
+import { AuthProvider } from '@/contexts/AuthProvider';
 import { useAuth } from '@/hooks/useAuth';
 import { AtendimentoPage } from '@/pages/AtendimentoPage';
 import { AgendaPage } from '@/pages/AgendaPage';

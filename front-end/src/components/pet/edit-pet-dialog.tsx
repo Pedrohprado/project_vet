@@ -1,11 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { toast } from 'sonner';
 import { ApiError } from '@/api/http';
 import { PetFormFields } from '@/components/pet/pet-form-fields';
-import {
-  emptyPetPhotoSelection,
-  type PetPhotoSelection,
-} from '@/components/pet/pet-photo-field';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -28,6 +24,10 @@ import {
   petToFormData,
   type PetFormData,
 } from '@/lib/pet-form';
+import {
+  emptyPetPhotoSelection,
+  type PetPhotoSelection,
+} from '@/lib/pet-photo';
 import type { Pet } from '@/types/pet';
 
 type EditPetDialogProps = {
@@ -44,17 +44,21 @@ export function EditPetDialog({ open, onOpenChange, pet }: EditPetDialogProps) {
   const [photo, setPhoto] = useState<PetPhotoSelection>(emptyPetPhotoSelection);
   const { fieldErrors, formError, applyZodError, clearFieldError, clearErrors, setFormError } =
     useFormFieldErrors<keyof PetFormData>('edit-pet');
+  const [prevOpen, setPrevOpen] = useState(open);
+  const [prevPet, setPrevPet] = useState(pet);
 
-  const isSaving =
-    updatePet.isPending || uploadPhoto.isPending || deletePhoto.isPending;
-
-  useEffect(() => {
+  if (open !== prevOpen || pet !== prevPet) {
+    setPrevOpen(open);
+    setPrevPet(pet);
     if (open && pet) {
       setForm(petToFormData(pet));
       setPhoto(emptyPetPhotoSelection());
       clearErrors();
     }
-  }, [open, pet, clearErrors]);
+  }
+
+  const isSaving =
+    updatePet.isPending || uploadPhoto.isPending || deletePhoto.isPending;
 
   function updateField<K extends keyof PetFormData>(field: K, value: PetFormData[K]) {
     setForm((prev) => ({ ...prev, [field]: value }));

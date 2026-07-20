@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { BoxvetSummaryLoadingAnimation } from '@/components/consultation/boxvet-summary-loading-animation';
 import {
@@ -42,11 +42,9 @@ export function ConsultationWhatsAppReviewDialog({
   const busy = isConfirming || isGenerating;
   const [showAnimationPreview, setShowAnimationPreview] = useState(false);
 
-  useEffect(() => {
-    if (!open || isGenerating) {
-      setShowAnimationPreview(false);
-    }
-  }, [isGenerating, open]);
+  if ((!open || isGenerating) && showAnimationPreview) {
+    setShowAnimationPreview(false);
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

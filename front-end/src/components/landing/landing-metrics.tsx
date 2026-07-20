@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { metrics } from '@/lib/landing-content';
-import { landingCardClassName } from './landing-section';
+import { landingCardClassName } from '@/lib/landing-styles';
 import { ScrollReveal } from './scroll-reveal';
 
 type MetricCounterProps = {
@@ -15,6 +15,20 @@ function formatCount(value: number, localeFormat?: boolean) {
   return localeFormat ? value.toLocaleString('pt-BR') : String(value);
 }
 
+function subscribeReducedMotion(onChange: () => void) {
+  const media = window.matchMedia('(prefers-reduced-motion: reduce)');
+  media.addEventListener('change', onChange);
+  return () => media.removeEventListener('change', onChange);
+}
+
+function getReducedMotionSnapshot() {
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
+function getReducedMotionServerSnapshot() {
+  return false;
+}
+
 function MetricCounter({
   end,
   prefix = '',
@@ -22,22 +36,22 @@ function MetricCounter({
   localeFormat,
   duration = 2000,
 }: MetricCounterProps) {
+  const prefersReducedMotion = useSyncExternalStore(
+    subscribeReducedMotion,
+    getReducedMotionSnapshot,
+    getReducedMotionServerSnapshot,
+  );
   const [count, setCount] = useState(0);
   const ref = useRef<HTMLParagraphElement>(null);
   const hasAnimated = useRef(false);
 
   useEffect(() => {
+    if (prefersReducedMotion) return;
+
     const element = ref.current;
     if (!element) return;
 
-    const prefersReducedMotion = window.matchMedia(
-      '(prefers-reduced-motion: reduce)',
-    ).matches;
-
-    if (prefersReducedMotion) {
-      setCount(end);
-      return;
-    }
+    let frameId = 0;
 
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -52,20 +66,25 @@ function MetricCounter({
           setCount(Math.round(eased * end));
 
           if (progress < 1) {
-            requestAnimationFrame(animate);
+            frameId = requestAnimationFrame(animate);
           } else {
             setCount(end);
           }
         }
 
-        requestAnimationFrame(animate);
+        frameId = requestAnimationFrame(animate);
       },
       { threshold: 0.35 },
     );
 
     observer.observe(element);
-    return () => observer.disconnect();
-  }, [duration, end]);
+    return () => {
+      observer.disconnect();
+      cancelAnimationFrame(frameId);
+    };
+  }, [duration, end, prefersReducedMotion]);
+
+  const displayCount = prefersReducedMotion ? end : count;
 
   return (
     <p
@@ -73,7 +92,7 @@ function MetricCounter({
       className="text-3xl font-bold text-primary tabular-nums sm:text-4xl"
     >
       {prefix}
-      {formatCount(count, localeFormat)}
+      {formatCount(displayCount, localeFormat)}
       {suffix}
     </p>
   );

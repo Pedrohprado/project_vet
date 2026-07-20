@@ -3,7 +3,8 @@ import { Link } from 'react-router';
 import { Button } from '@/components/ui/button';
 import { pricingPlans } from '@/lib/landing-content';
 import { cn } from '@/lib/utils';
-import { LandingSection, landingPrimaryButtonClassName } from './landing-section';
+import { LandingSection } from './landing-section';
+import { landingPrimaryButtonClassName } from '@/lib/landing-styles';
 
 export function LandingPricing() {
   return (

@@ -1,10 +1,12 @@
 import {
   addDays,
   endOfMonth,
+  format,
   isSameDay,
   startOfMonth,
   subDays,
 } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import type { Appointment } from '@/types/appointment';
 import {
   APPOINTMENT_STATUS_LABELS,
@@ -27,6 +29,37 @@ export function getEventsForDay(events: CalendarEvent[], date: Date) {
       (a, b) =>
         new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime(),
     );
+}
+
+/** Key: local calendar day `yyyy-MM-dd`. Values are sorted by startsAt. */
+export function indexEventsByDay(events: CalendarEvent[]) {
+  const index = new Map<string, CalendarEvent[]>();
+
+  for (const event of events) {
+    const key = format(new Date(event.startsAt), 'yyyy-MM-dd');
+    const bucket = index.get(key);
+    if (bucket) {
+      bucket.push(event);
+    } else {
+      index.set(key, [event]);
+    }
+  }
+
+  for (const bucket of index.values()) {
+    bucket.sort(
+      (a, b) =>
+        new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime(),
+    );
+  }
+
+  return index;
+}
+
+export function getIndexedEventsForDay(
+  eventsByDay: Map<string, CalendarEvent[]>,
+  date: Date,
+) {
+  return eventsByDay.get(format(date, 'yyyy-MM-dd')) ?? [];
 }
 
 function getAppointmentTitle(appointment: Appointment) {
@@ -109,6 +142,10 @@ export function formatEventTime(iso: string) {
     hour: '2-digit',
     minute: '2-digit',
   });
+}
+
+export function formatDayTitle(date: Date) {
+  return format(date, "EEEE, d 'de' MMMM 'de' yyyy", { locale: ptBR });
 }
 
 export function canStartConsultationFromEvent(event: CalendarEvent) {

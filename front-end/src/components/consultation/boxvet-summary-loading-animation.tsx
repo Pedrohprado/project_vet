@@ -16,17 +16,21 @@ export function BoxvetSummaryLoadingAnimation({
         .filter(Boolean)
         .join(' ')}
     >
-      <div className='boxvet-loading-scene relative mx-auto w-full max-w-[240px] shrink overflow-hidden'>
+      <div className='boxvet-loading-scene relative mx-auto w-full max-w-60 shrink overflow-hidden'>
         <img
           src={DOG_CAT_BOX_SRC}
           alt=''
           aria-hidden
+          loading="lazy"
+          decoding="async"
           className='pointer-events-none absolute inset-0 z-10 size-full object-contain'
         />
         <img
           src={BIRD_SRC}
           alt=''
           aria-hidden
+          loading="lazy"
+          decoding="async"
           className='boxvet-loading-bird pointer-events-none absolute right-[49%] top-[24%] z-20 w-[22%]'
         />
       </div>

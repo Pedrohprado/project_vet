@@ -15,6 +15,8 @@ export function HomeHero({ userName, clinicName, reminderCount }: HomeHeroProps)
         src={OPEN_BOX_SRC}
         alt=""
         aria-hidden
+        loading="lazy"
+        decoding="async"
         className="pointer-events-none absolute right-2 bottom-0 hidden h-20 w-auto object-contain object-bottom opacity-90 sm:block sm:h-24 lg:right-4 lg:h-28"
       />
 

@@ -365,7 +365,3 @@ export function DayTimeline({
     </ol>
   );
 }
-
-export function formatDayTitle(date: Date) {
-  return format(date, "EEEE, d 'de' MMMM 'de' yyyy", { locale: ptBR });
-}

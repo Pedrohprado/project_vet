@@ -81,6 +81,7 @@ import {
 } from '@/lib/prescription-form-validation';
 import { useFormFieldErrors } from '@/hooks/useFormFieldErrors';
 import { formatPetAge, formatPetWeight } from '@/lib/pet-format';
+import { getSafeMediaUrl } from '@/lib/safe-url';
 import {
   formatTemperatureFromDigits,
   handleTemperatureDigitsChange,
@@ -356,6 +357,7 @@ export function ConsultationPage() {
     setAppliedPendingReturnAppointmentId,
   ] = useState<string | null>(null);
   const restoredReturnDurationFromDraftRef = useRef(false);
+  const consultationStatus = consultation?.status;
 
   if (consultation && consultation.id !== hydratedConsultationId) {
     setHydratedConsultationId(consultation.id);
@@ -427,9 +429,9 @@ export function ConsultationPage() {
   }
 
   useEffect(() => {
-    if (!id || consultation?.status !== 'OPEN') return;
+    if (!id || consultationStatus !== 'OPEN') return;
     sessionStorage.setItem(stepStorageKey(id), String(currentStep));
-  }, [id, consultation?.status, currentStep]);
+  }, [id, consultationStatus, currentStep]);
 
   const consultationDraft = useMemo<ConsultationDraft>(
     () => ({
@@ -892,6 +894,7 @@ export function ConsultationPage() {
 
   const isReadOnly = isConsultationReadOnly(consultation);
   const isReturnVisit = Boolean(consultation.parentConsultationId);
+  const petPhotoUrl = getSafeMediaUrl(consultation.pet.photoUrl);
   const isReturnScheduledParent =
     consultation.status === 'RETURN_SCHEDULED' && !consultation.parentConsultationId;
   const isLastStep = currentStep === STEPS.length - 1;
@@ -921,9 +924,9 @@ export function ConsultationPage() {
           <div className='space-y-2'>
             <div className='flex items-start gap-2.5'>
               <Avatar className='size-9 shrink-0 sm:size-10'>
-                {consultation.pet.photoUrl ? (
+                {petPhotoUrl ? (
                   <AvatarImage
-                    src={consultation.pet.photoUrl}
+                    src={petPhotoUrl}
                     alt={consultation.pet.name}
                   />
                 ) : null}

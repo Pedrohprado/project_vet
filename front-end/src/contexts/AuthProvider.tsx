@@ -1,5 +1,4 @@
 import {
-  createContext,
   useCallback,
   useEffect,
   useMemo,
@@ -8,28 +7,16 @@ import {
 } from 'react';
 import * as authApi from '@/api/auth';
 import { ApiError } from '@/api/http';
-import type { Clinic, RegisterClinicPayload, User, AuthResponse, UpdateProfilePayload } from '@/types/auth';
-
-type AuthContextValue = {
-  user: User | null;
-  clinic: Clinic | null;
-  isLoading: boolean;
-  isAuthenticated: boolean;
-  isFirstAccess: boolean;
-  login: (email: string, password: string) => Promise<AuthResponse>;
-  register: (payload: RegisterClinicPayload) => Promise<AuthResponse>;
-  completeWelcome: () => Promise<void>;
-  updateProfile: (payload: UpdateProfilePayload) => Promise<void>;
-  saveSignature: (signature: string) => Promise<void>;
-  deleteSignature: () => Promise<void>;
-  logout: () => Promise<void>;
-};
-
-export const AuthContext = createContext<AuthContextValue | null>(null);
+import {
+  AuthContext,
+  type AuthContextValue,
+} from '@/contexts/auth-context';
+import { clearAllConsultationDrafts } from '@/lib/consultation-draft';
+import type { RegisterClinicPayload, UpdateProfilePayload } from '@/types/auth';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [clinic, setClinic] = useState<Clinic | null>(null);
+  const [user, setUser] = useState<AuthContextValue['user']>(null);
+  const [clinic, setClinic] = useState<AuthContextValue['clinic']>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -104,6 +91,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('Failed to logout', error);
     } finally {
+      clearAllConsultationDrafts();
       setUser(null);
       setClinic(null);
     }

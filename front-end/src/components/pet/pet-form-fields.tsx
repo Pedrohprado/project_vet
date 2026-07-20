@@ -10,17 +10,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { PetPhotoField } from '@/components/pet/pet-photo-field';
+import { PetSelectLabel } from '@/components/pet/pet-select-label';
+import { Separator } from '@/components/ui/separator';
+import type { PetFormData } from '@/lib/pet-form';
+import type { PetPhotoSelection } from '@/lib/pet-photo';
 import {
   PET_SEX_SELECT_ITEMS,
   PET_SPECIES_SELECT_ITEMS,
-  PetSelectLabel,
-} from '@/components/pet/pet-select-label';
-import {
-  PetPhotoField,
-  type PetPhotoSelection,
-} from '@/components/pet/pet-photo-field';
-import { Separator } from '@/components/ui/separator';
-import type { PetFormData } from '@/lib/pet-form';
+} from '@/lib/pet-select';
 import type { PetSex, PetSpecies } from '@/types/tutor';
 
 type PetFormFieldsProps = {

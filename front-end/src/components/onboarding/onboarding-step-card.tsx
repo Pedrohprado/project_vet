@@ -2,9 +2,8 @@ import { Link } from 'react-router';
 import { Check, type LucideIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import type { OnboardingStepState } from '@/lib/onboarding';
 import { cn } from '@/lib/utils';
-
-export type OnboardingStepState = 'completed' | 'active' | 'locked';
 
 type OnboardingStepCardProps = {
   step: number;
@@ -94,49 +93,4 @@ export function OnboardingStepCard({
       </CardContent>
     </Card>
   );
-}
-
-function getStepCompletion(
-  step: number,
-  onboarding: {
-    tutorCreated: boolean;
-    petRegistered: boolean;
-    careStarted: boolean;
-  },
-) {
-  if (step === 1) return onboarding.tutorCreated;
-  if (step === 2) return onboarding.petRegistered;
-  return onboarding.careStarted;
-}
-
-function isPreviousStepComplete(
-  step: number,
-  onboarding: {
-    tutorCreated: boolean;
-    petRegistered: boolean;
-    careStarted: boolean;
-  },
-) {
-  if (step === 1) return true;
-  if (step === 2) return onboarding.tutorCreated;
-  return onboarding.petRegistered;
-}
-
-export function getOnboardingStepState(
-  step: number,
-  onboarding: {
-    tutorCreated: boolean;
-    petRegistered: boolean;
-    careStarted: boolean;
-  },
-): OnboardingStepState {
-  if (getStepCompletion(step, onboarding)) {
-    return 'completed';
-  }
-
-  if (!isPreviousStepComplete(step, onboarding)) {
-    return 'locked';
-  }
-
-  return 'active';
 }

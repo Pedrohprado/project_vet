@@ -1,5 +1,6 @@
 import { PawPrint } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { getSafeMediaUrl } from '@/lib/safe-url';
 import { cn } from '@/lib/utils';
 import type { PetSummary } from '@/types/tutor';
 
@@ -24,6 +25,7 @@ const sizeClasses = {
 
 export function PetAvatar({ pet, size = 'sm', className }: PetAvatarProps) {
   const sizes = sizeClasses[size];
+  const photoUrl = getSafeMediaUrl(pet.photoUrl);
 
   return (
     <Avatar
@@ -31,7 +33,7 @@ export function PetAvatar({ pet, size = 'sm', className }: PetAvatarProps) {
       title={pet.name}
       className={cn(sizes.avatar, 'shrink-0', className)}
     >
-      {pet.photoUrl ? <AvatarImage src={pet.photoUrl} alt={pet.name} /> : null}
+      {photoUrl ? <AvatarImage src={photoUrl} alt={pet.name} /> : null}
       <AvatarFallback className="bg-primary/10 text-primary">
         <PawPrint className={sizes.icon} />
       </AvatarFallback>

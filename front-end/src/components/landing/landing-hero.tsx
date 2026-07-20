@@ -4,7 +4,7 @@ import { BIRD_SRC, FLYBIRD_SRC, CAT_SRC } from '@/lib/brand';
 import { heroContent } from '@/lib/landing-content';
 import { cn } from '@/lib/utils';
 import { DashboardMockup } from './dashboard-mockup';
-import { landingPrimaryButtonClassName } from './landing-section';
+import { landingPrimaryButtonClassName } from '@/lib/landing-styles';
 import { ScrollReveal } from './scroll-reveal';
 
 const PERCH_MS = 6000;
@@ -63,6 +63,8 @@ export function LandingHero() {
     window.clearTimeout(flyTimeoutRef.current);
   }, []);
 
+  const startFlightRef = useRef<() => void>(() => {});
+
   const startFlight = useCallback(() => {
     if (reducedMotionRef.current || isFlyingRef.current) {
       return;
@@ -81,11 +83,15 @@ export function LandingHero() {
 
       if (!reducedMotionRef.current) {
         perchTimeoutRef.current = window.setTimeout(() => {
-          startFlight();
+          startFlightRef.current();
         }, PERCH_MS);
       }
     }, FLY_DURATION_S * 1000);
   }, [clearTimers, measureTakeoffs]);
+
+  useEffect(() => {
+    startFlightRef.current = startFlight;
+  }, [startFlight]);
 
   useEffect(() => {
     const media = window.matchMedia('(prefers-reduced-motion: reduce)');

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   ExternalLink,
@@ -17,6 +17,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
+import { getSafeMediaUrl } from '@/lib/safe-url';
 import {
   PRESCRIPTION_DOCUMENT_TYPE_LABELS,
   PRESCRIPTION_PHARMACY_TYPE_LABELS,
@@ -187,6 +188,7 @@ function ReceitaTab({ consultation }: { consultation: Consultation }) {
 
 function AttachmentItem({ attachment }: { attachment: ConsultationAttachment }) {
   const displayName = attachment.label?.trim() || attachment.fileName;
+  const fileUrl = getSafeMediaUrl(attachment.fileUrl);
 
   return (
     <li className="flex flex-col gap-2 rounded-lg border bg-card p-3 sm:flex-row sm:items-center sm:justify-between">
@@ -206,22 +208,20 @@ function AttachmentItem({ attachment }: { attachment: ConsultationAttachment }) 
           </p>
         </div>
       </div>
-      <Button
-        type="button"
-        size="sm"
-        variant="secondary"
-        className="shrink-0"
-        render={
-          <a
-            href={attachment.fileUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-          />
-        }
-      >
-        <ExternalLink className="size-3.5" />
-        Visualizar
-      </Button>
+      {fileUrl ? (
+        <Button
+          type="button"
+          size="sm"
+          variant="secondary"
+          className="shrink-0"
+          render={
+            <a href={fileUrl} target="_blank" rel="noopener noreferrer" />
+          }
+        >
+          <ExternalLink className="size-3.5" />
+          Visualizar
+        </Button>
+      ) : null}
     </li>
   );
 }
@@ -268,17 +268,15 @@ export function ParentConsultationReferenceDialog({
 }: ParentConsultationReferenceDialogProps) {
   const [activeTab, setActiveTab] = useState<TabId>('anamnese');
 
+  if (!open && activeTab !== 'anamnese') {
+    setActiveTab('anamnese');
+  }
+
   const { data: consultation, isLoading, isError } = useQuery({
     queryKey: ['consultation', parentConsultationId, 'reference'],
     queryFn: () => getConsultation(parentConsultationId),
     enabled: open && Boolean(parentConsultationId),
   });
-
-  useEffect(() => {
-    if (!open) {
-      setActiveTab('anamnese');
-    }
-  }, [open, parentConsultationId]);
 
   const dateTime = consultation
     ? formatConsultationDateTime(consultation.startedAt)

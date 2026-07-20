@@ -1,5 +1,6 @@
 import {
   forwardRef,
+  useCallback,
   useEffect,
   useImperativeHandle,
   useRef,
@@ -10,6 +11,7 @@ import { toast } from 'sonner';
 import { ApiError } from '@/api/http';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
+import { getSafeMediaUrl } from '@/lib/safe-url';
 
 type SignaturePadFieldProps = {
   savedSignatureUrl: string | null;
@@ -34,9 +36,9 @@ export const SignaturePadField = forwardRef<
   const { deleteSignature } = useAuth();
   const [isRemoving, setIsRemoving] = useState(false);
 
-  function notifyChange() {
+  const notifyChange = useCallback(() => {
     onSignatureChange?.(!(padRef.current?.isEmpty() ?? true));
-  }
+  }, [onSignatureChange]);
 
   useImperativeHandle(ref, () => ({
     isEmpty: () => padRef.current?.isEmpty() ?? true,
@@ -49,7 +51,7 @@ export const SignaturePadField = forwardRef<
       padRef.current?.clear();
       notifyChange();
     },
-  }));
+  }), [notifyChange]);
 
   useEffect(() => {
     if (savedSignatureUrl) return;
@@ -90,9 +92,9 @@ export const SignaturePadField = forwardRef<
       pad.removeEventListener('endStroke', notifyChange);
       pad.off();
       padRef.current = null;
-      onSignatureChange?.(false);
+      notifyChange();
     };
-  }, [savedSignatureUrl, onSignatureChange]);
+  }, [savedSignatureUrl, notifyChange]);
 
   function handleClear() {
     padRef.current?.clear();
@@ -115,16 +117,24 @@ export const SignaturePadField = forwardRef<
   }
 
   if (savedSignatureUrl) {
+    const safeSignatureUrl = getSafeMediaUrl(savedSignatureUrl);
+
     return (
       <div className="space-y-4">
         <div className="space-y-2">
           <p className="text-sm font-medium">Assinatura salva</p>
           <div className="rounded-lg border bg-white p-3">
-            <img
-              src={savedSignatureUrl}
-              alt="Assinatura salva"
-              className="mx-auto h-16 max-w-full object-contain"
-            />
+            {safeSignatureUrl ? (
+              <img
+                src={safeSignatureUrl}
+                alt="Assinatura salva"
+                className="mx-auto h-16 max-w-full object-contain"
+              />
+            ) : (
+              <p className="text-center text-sm text-muted-foreground">
+                Assinatura indisponível
+              </p>
+            )}
           </div>
           <p className="text-xs text-muted-foreground">
             Remova a assinatura atual para cadastrar uma nova.

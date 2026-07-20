@@ -16,7 +16,7 @@ import { cn } from '@/lib/utils';
 import {
   landingOutlineButtonClassName,
   landingPrimaryButtonClassName,
-} from './landing-section';
+} from '@/lib/landing-styles';
 
 export function LandingNavbar() {
   return (

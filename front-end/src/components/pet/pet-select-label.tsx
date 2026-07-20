@@ -14,26 +14,10 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { PET_SEX_LABELS, PET_SPECIES_LABELS, PET_SPECIES_VALUES } from '@/types/pet';
+import { PET_SEX_LABELS, PET_SPECIES_LABELS } from '@/types/pet';
 import type { PetSex, PetSpecies } from '@/types/tutor';
 
-export type PetSelectItem = {
-  value: string;
-  label: string;
-};
-
-export const PET_SPECIES_SELECT_ITEMS: PetSelectItem[] = PET_SPECIES_VALUES.map(
-  (value) => ({
-    value,
-    label: PET_SPECIES_LABELS[value],
-  }),
-);
-
-export const PET_SEX_SELECT_ITEMS: PetSelectItem[] = (
-  Object.entries(PET_SEX_LABELS) as [PetSex, string][]
-).map(([value, label]) => ({ value, label }));
-
-export const PET_SPECIES_ICONS: Record<PetSpecies, LucideIcon> = {
+const PET_SPECIES_ICONS: Record<PetSpecies, LucideIcon> = {
   DOG: Dog,
   CAT: Cat,
   BIRD: Bird,
@@ -45,7 +29,7 @@ export const PET_SPECIES_ICONS: Record<PetSpecies, LucideIcon> = {
   OTHER: PawPrint,
 };
 
-export const PET_SEX_ICONS: Record<PetSex, LucideIcon> = {
+const PET_SEX_ICONS: Record<PetSex, LucideIcon> = {
   MALE: Mars,
   FEMALE: Venus,
   UNKNOWN: CircleHelp,

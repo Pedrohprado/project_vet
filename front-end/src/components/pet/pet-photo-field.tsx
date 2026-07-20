@@ -1,19 +1,15 @@
-import { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useId, useMemo, useRef } from 'react';
 import { Camera, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import type { PetPhotoSelection } from '@/lib/pet-photo';
+import { getSafeMediaUrl } from '@/lib/safe-url';
 import { cn } from '@/lib/utils';
 
 const ALLOWED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
 const MAX_BYTES = 5 * 1024 * 1024;
-
-export type PetPhotoSelection = {
-  file: File | null;
-  /** When true in edit mode, removes the existing photo if no new file is selected. */
-  removeExisting: boolean;
-};
 
 type PetPhotoFieldProps = {
   petName?: string;
@@ -24,10 +20,6 @@ type PetPhotoFieldProps = {
   disabled?: boolean;
   className?: string;
 };
-
-export function emptyPetPhotoSelection(): PetPhotoSelection {
-  return { file: null, removeExisting: false };
-}
 
 export function PetPhotoField({
   petName = 'Pet',
@@ -41,25 +33,22 @@ export function PetPhotoField({
   const generatedId = useId();
   const inputId = `${idPrefix || generatedId}-photo`;
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  const filePreviewUrl = useMemo(
+    () => (value.file ? URL.createObjectURL(value.file) : null),
+    [value.file],
+  );
 
   useEffect(() => {
-    if (!value.file) {
-      setPreviewUrl(null);
-      return;
-    }
-
-    const objectUrl = URL.createObjectURL(value.file);
-    setPreviewUrl(objectUrl);
-
+    if (!filePreviewUrl) return;
     return () => {
-      URL.revokeObjectURL(objectUrl);
+      URL.revokeObjectURL(filePreviewUrl);
     };
-  }, [value.file]);
+  }, [filePreviewUrl]);
 
   const displayUrl =
-    previewUrl ??
-    (value.removeExisting ? null : currentPhotoUrl);
+    getSafeMediaUrl(filePreviewUrl) ??
+    (value.removeExisting ? null : getSafeMediaUrl(currentPhotoUrl) ?? null);
 
   function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];

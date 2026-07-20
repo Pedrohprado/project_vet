@@ -13,6 +13,8 @@ export function HowItWorksPlatform() {
           src={DOG_SRC}
           alt=""
           aria-hidden
+          loading="lazy"
+          decoding="async"
           className="pointer-events-none absolute -bottom-6 -left-6 z-10 h-28 w-auto object-contain sm:-bottom-8 sm:-left-8 sm:h-36"
         />
       </div>

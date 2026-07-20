@@ -3,6 +3,7 @@ import { ExternalLink, FileText, Trash2, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import { ApiError } from '@/api/http';
 import { cn } from '@/lib/utils';
+import { getSafeMediaUrl } from '@/lib/safe-url';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -152,6 +153,7 @@ export function ConsultationAttachmentsCard({
             {attachments.map((attachment) => {
               const displayName =
                 attachment.label?.trim() || attachment.fileName;
+              const fileUrl = getSafeMediaUrl(attachment.fileUrl);
 
               return (
                 <li
@@ -173,21 +175,23 @@ export function ConsultationAttachmentsCard({
                     </div>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="secondary"
-                      render={
-                        <a
-                          href={attachment.fileUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        />
-                      }
-                    >
-                      <ExternalLink className="size-3.5" />
-                      Visualizar
-                    </Button>
+                    {fileUrl ? (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="secondary"
+                        render={
+                          <a
+                            href={fileUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          />
+                        }
+                      >
+                        <ExternalLink className="size-3.5" />
+                        Visualizar
+                      </Button>
+                    ) : null}
                     {canManage ? (
                       <Button
                         type="button"

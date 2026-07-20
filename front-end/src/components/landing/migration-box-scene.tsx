@@ -147,6 +147,8 @@ export function MigrationBoxScene({ badges }: MigrationBoxSceneProps) {
           src={VETERINARY_WOMEN_SRC}
           alt=''
           aria-hidden
+          loading="lazy"
+          decoding="async"
           className='relative z-0 -mr-8 h-48 w-auto object-contain sm:-mr-11 sm:h-56 lg:-mr-14 lg:h-64'
         />
         <div className='relative shrink-0'>
@@ -175,6 +177,8 @@ export function MigrationBoxScene({ badges }: MigrationBoxSceneProps) {
             src={OPEN_BOX_SRC}
             alt=''
             aria-hidden
+            loading="lazy"
+            decoding="async"
             className='relative z-0 h-28 w-auto object-contain sm:h-32 lg:h-36'
           />
         </div>

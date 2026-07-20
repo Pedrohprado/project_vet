@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import {
@@ -39,13 +39,17 @@ export function PetWeightDialog({
 }: PetWeightDialogProps) {
   const [weightKg, setWeightKg] = useState('');
   const [fieldError, setFieldError] = useState<string | null>(null);
+  const [prevOpen, setPrevOpen] = useState(open);
+  const [prevInitialWeightKg, setPrevInitialWeightKg] = useState(initialWeightKg);
 
-  useEffect(() => {
+  if (open !== prevOpen || initialWeightKg !== prevInitialWeightKg) {
+    setPrevOpen(open);
+    setPrevInitialWeightKg(initialWeightKg);
     if (open) {
       setWeightKg(initialWeightKg ?? '');
       setFieldError(null);
     }
-  }, [open, initialWeightKg]);
+  }
 
   function handleOpenChange(nextOpen: boolean) {
     if (!nextOpen) {

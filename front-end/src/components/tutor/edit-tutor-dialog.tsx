@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { toast } from 'sonner';
 import { ApiError } from '@/api/http';
 import { TutorFormFields } from '@/components/tutor/tutor-form-fields';
@@ -33,13 +33,17 @@ export function EditTutorDialog({ open, onOpenChange, tutor }: EditTutorDialogPr
   const [form, setForm] = useState<TutorFormData>(emptyTutorFormData);
   const { fieldErrors, formError, applyZodError, clearFieldError, clearErrors, setFormError } =
     useFormFieldErrors<keyof TutorFormData>('edit-tutor');
+  const [prevOpen, setPrevOpen] = useState(open);
+  const [prevTutor, setPrevTutor] = useState(tutor);
 
-  useEffect(() => {
+  if (open !== prevOpen || tutor !== prevTutor) {
+    setPrevOpen(open);
+    setPrevTutor(tutor);
     if (open && tutor) {
       setForm(tutorToFormData(tutor));
       clearErrors();
     }
-  }, [open, tutor, clearErrors]);
+  }
 
   function updateField(field: keyof TutorFormData, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }));

@@ -11,3 +11,5 @@ export const OPEN_BOX_SRC = '/open_box.png';
 export const VETERINARY_WOMEN_SRC = '/veterinary_women.png';
 export const TURTLE_SRC = '/turtle.png';
 export const TURTLE_GRASS_SRC = '/turtle_grass.png';
+
+// Large PNGs (~1.3–2.1 MB): prefer converting to WebP/AVIF when optimizing assets.

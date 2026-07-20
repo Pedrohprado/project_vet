@@ -1,4 +1,9 @@
-import { useEffect, useState, type RefObject } from 'react';
+import {
+  useEffect,
+  useState,
+  useSyncExternalStore,
+  type RefObject,
+} from 'react';
 
 export type HowItWorksPhase = 'idle' | 'absorb' | 'reveal' | 'hold';
 
@@ -19,6 +24,20 @@ const PHASE_ORDER: HowItWorksPhase[] = [
 const REVEAL_INTERVAL_MS = 550;
 export const HOW_IT_WORKS_PAIR_COUNT = 4;
 
+function subscribeReducedMotion(onChange: () => void) {
+  const media = window.matchMedia('(prefers-reduced-motion: reduce)');
+  media.addEventListener('change', onChange);
+  return () => media.removeEventListener('change', onChange);
+}
+
+function getReducedMotionSnapshot() {
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
+function getReducedMotionServerSnapshot() {
+  return false;
+}
+
 export function useHowItWorksAnimation(
   containerRef: RefObject<HTMLElement | null>,
 ) {
@@ -26,13 +45,38 @@ export function useHowItWorksAnimation(
   const [cycleKey, setCycleKey] = useState(0);
   const [visibleSolutionCount, setVisibleSolutionCount] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
-  const [reducedMotion, setReducedMotion] = useState(false);
+  const [prevRevealKey, setPrevRevealKey] = useState(`${phase}-${cycleKey}`);
+  const reducedMotion = useSyncExternalStore(
+    subscribeReducedMotion,
+    getReducedMotionSnapshot,
+    getReducedMotionServerSnapshot,
+  );
 
-  useEffect(() => {
-    setReducedMotion(
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches,
-    );
-  }, []);
+  if (reducedMotion && visibleSolutionCount !== HOW_IT_WORKS_PAIR_COUNT) {
+    setVisibleSolutionCount(HOW_IT_WORKS_PAIR_COUNT);
+  }
+
+  if (
+    !reducedMotion &&
+    !isVisible &&
+    (phase !== 'idle' || visibleSolutionCount !== 0)
+  ) {
+    setPhase('idle');
+    setVisibleSolutionCount(0);
+  }
+
+  const revealKey = `${phase}-${cycleKey}`;
+  if (
+    !reducedMotion &&
+    isVisible &&
+    phase === 'reveal' &&
+    revealKey !== prevRevealKey
+  ) {
+    setPrevRevealKey(revealKey);
+    setVisibleSolutionCount(0);
+  } else if (revealKey !== prevRevealKey) {
+    setPrevRevealKey(revealKey);
+  }
 
   useEffect(() => {
     const element = containerRef.current;
@@ -51,21 +95,19 @@ export function useHowItWorksAnimation(
     if (reducedMotion || !isVisible) return;
 
     const timer = window.setTimeout(() => {
-      setPhase((current) => {
-        const currentIndex = PHASE_ORDER.indexOf(current);
-        const nextPhase = PHASE_ORDER[(currentIndex + 1) % PHASE_ORDER.length];
+      const currentIndex = PHASE_ORDER.indexOf(phase);
+      const nextPhase = PHASE_ORDER[(currentIndex + 1) % PHASE_ORDER.length];
 
-        if (nextPhase === 'idle') {
-          setCycleKey((key) => key + 1);
-          setVisibleSolutionCount(0);
-        }
+      if (nextPhase === 'idle') {
+        setCycleKey((key) => key + 1);
+        setVisibleSolutionCount(0);
+      }
 
-        if (nextPhase === 'reveal') {
-          setVisibleSolutionCount(0);
-        }
+      if (nextPhase === 'reveal') {
+        setVisibleSolutionCount(0);
+      }
 
-        return nextPhase;
-      });
+      setPhase(nextPhase);
     }, PHASE_DURATIONS[phase]);
 
     return () => window.clearTimeout(timer);
@@ -73,8 +115,6 @@ export function useHowItWorksAnimation(
 
   useEffect(() => {
     if (reducedMotion || !isVisible || phase !== 'reveal') return;
-
-    setVisibleSolutionCount(0);
 
     const timers: number[] = [];
 
@@ -88,19 +128,6 @@ export function useHowItWorksAnimation(
 
     return () => timers.forEach((timer) => window.clearTimeout(timer));
   }, [phase, cycleKey, isVisible, reducedMotion]);
-
-  useEffect(() => {
-    if (!isVisible && !reducedMotion) {
-      setPhase('idle');
-      setVisibleSolutionCount(0);
-    }
-  }, [isVisible, reducedMotion]);
-
-  useEffect(() => {
-    if (reducedMotion) {
-      setVisibleSolutionCount(HOW_IT_WORKS_PAIR_COUNT);
-    }
-  }, [reducedMotion]);
 
   return { phase, cycleKey, visibleSolutionCount, isVisible, reducedMotion };
 }

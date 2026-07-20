@@ -10,10 +10,7 @@ import { HomeHero } from '@/components/home/home-hero';
 import { HomeRecentServices } from '@/components/home/home-recent-services';
 import { HomeStatsGrid } from '@/components/home/home-stats-grid';
 import { HomeWeekReminders } from '@/components/home/home-week-reminders';
-import {
-  getOnboardingStepState,
-  OnboardingStepCard,
-} from '@/components/onboarding/onboarding-step-card';
+import { OnboardingStepCard } from '@/components/onboarding/onboarding-step-card';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -26,6 +23,7 @@ import { useAtendimentos } from '@/hooks/useAtendimentos';
 import { useAuth } from '@/hooks/useAuth';
 import { useClinicStats } from '@/hooks/useStats';
 import { useWeekReminders } from '@/hooks/useWeekReminders';
+import { getOnboardingStepState } from '@/lib/onboarding';
 
 const firstSteps = [
   {

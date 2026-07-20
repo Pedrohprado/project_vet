@@ -13,6 +13,12 @@ export function getDefaultDateTimeValue() {
   return formatDateTimeValue(new Date());
 }
 
+export function getDefaultReturnScheduleValue() {
+  const now = new Date();
+  now.setMinutes(Math.ceil(now.getMinutes() / 15) * 15, 0, 0);
+  return formatDateTimeValue(now);
+}
+
 export function formatDateValue(date: Date) {
   return format(date, DATE_VALUE_FORMAT);
 }

@@ -5,11 +5,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import {
-  DayTimeline,
-  formatDayTitle,
-} from '@/components/agenda/day-timeline';
+import { DayTimeline } from '@/components/agenda/day-timeline';
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock';
+import { formatDayTitle } from '@/lib/calendar-events';
 import type { CalendarEvent } from '@/types/calendar-event';
 
 type DayTimelineDialogProps = {

@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { ctaContent, heroContent } from '@/lib/landing-content';
-import { landingPrimaryButtonClassName } from './landing-section';
+import { landingPrimaryButtonClassName } from '@/lib/landing-styles';
 import { ScrollReveal } from './scroll-reveal';
 
 export function LandingCta() {

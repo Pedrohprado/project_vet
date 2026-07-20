@@ -3,10 +3,6 @@ import { Link, useNavigate, useParams } from 'react-router';
 import { toast } from 'sonner';
 import { ApiError } from '@/api/http';
 import { PetFormFields } from '@/components/pet/pet-form-fields';
-import {
-  emptyPetPhotoSelection,
-  type PetPhotoSelection,
-} from '@/components/pet/pet-photo-field';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -16,6 +12,10 @@ import {
 } from '@/components/ui/card';
 import { useCreatePet, useUploadPetPhoto } from '@/hooks/usePets';
 import { useFormFieldErrors } from '@/hooks/useFormFieldErrors';
+import {
+  emptyPetPhotoSelection,
+  type PetPhotoSelection,
+} from '@/lib/pet-photo';
 import {
   emptyPetFormData,
   formDataToPetPayload,
