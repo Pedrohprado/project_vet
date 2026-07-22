@@ -1,21 +1,21 @@
 name: project_vet
 services:
-  # project_vet_back_end:
-  #   build:
-  #     context: .
-  #     dockerfile: Dockerfile
-  #   container_name: project_vet_back_end
-  #   restart: always
-  #   env_file:
-  #     - .env
-  #   expose:
-  #     - '3135'
-  #   depends_on:
-  #     - project_vet_database
-  #   volumes:
-  #     - project_vet_uploads:/usr/src/app/uploads
-  #   networks:
-  #     - project_vet_network
+  project_vet_back_end:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: project_vet_back_end
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - '5112:3030'
+    depends_on:
+      - project_vet_database
+    volumes:
+      - project_vet_uploads:/usr/src/app/uploads
+    networks:
+      - project_vet_network
 
   project_vet_database:
     image: postgres:16
@@ -27,16 +27,15 @@ services:
       POSTGRES_USER: project_vet
       POSTGRES_PASSWORD: project_vet
       POSTGRES_DB: project_vet
-    # volumes:
-    #   - project_vet_postgres_data:/var/lib/postgresql/data
-    # networks:
-    #   - project_vet_network
+    volumes:
+      - project_vet_postgres_data:/var/lib/postgresql/data
+    networks:
+      - project_vet_network
 
-# volumes:
-#   project_vet_postgres_data:
-#   project_vet_uploads:
+volumes:
+  project_vet_postgres_data:
+  project_vet_uploads:
 
-# networks:
-#   project_vet_network:
-#     external: true
-#     name: project_vet_network
+networks:
+  project_vet_network:
+    name: project_vet_network

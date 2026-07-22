@@ -36,7 +36,7 @@ import {
   AvatarFallback,
   AvatarImage,
 } from '@/components/ui/avatar';
-import { formatPetAge, formatPetWeight } from '@/lib/pet-format';
+import { formatPetAge } from '@/lib/pet-format';
 import {
   pageShellClassName,
   pageTitleClassName,

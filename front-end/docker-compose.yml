@@ -7,8 +7,8 @@ services:
       dockerfile: Dockerfile
     container_name: project_vet_front_end
     restart: always
-    expose:
-      - '80'
+    ports:
+      - '5113:80'
     networks:
       - project_vet_network
 
