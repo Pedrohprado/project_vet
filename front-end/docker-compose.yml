@@ -5,6 +5,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        VITE_API_URL: /api
     container_name: project_vet_front_end
     restart: always
     ports:
