@@ -30,12 +30,24 @@ export function getVaccinationStatusLabel(
   return VACCINATION_STATUS_LABELS[getVaccinationStatus(vaccination)];
 }
 
-export function suggestNextDoseDate(defaultIntervalDays: number | null | undefined) {
+export function suggestNextDoseDate(
+  defaultIntervalDays: number | null | undefined,
+  fromDate: Date | string = new Date(),
+) {
   if (!defaultIntervalDays) {
     return undefined;
   }
 
-  return addDays(new Date(), defaultIntervalDays).toISOString();
+  const base =
+    typeof fromDate === 'string'
+      ? new Date(`${fromDate}T12:00:00`)
+      : fromDate;
+
+  if (Number.isNaN(base.getTime())) {
+    return undefined;
+  }
+
+  return addDays(base, defaultIntervalDays).toISOString();
 }
 
 export function formatVaccinationDate(iso: string | null | undefined) {

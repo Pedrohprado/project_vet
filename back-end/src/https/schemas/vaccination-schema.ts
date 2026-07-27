@@ -16,16 +16,36 @@ export const updateVaccinationSchema = z.object({
   notes: z.string().optional(),
 });
 
-export const finishVaccinationSchema = z.object({
-  vaccineCatalogItemId: z.string().uuid().nullable().optional(),
-  vaccineName: z.string().min(1, 'Nome da vacina é obrigatório').optional(),
-  dose: z.string().optional(),
-  batch: z.string().optional(),
-  manufacturer: z.string().optional(),
-  nextDoseAt: z.coerce.date().nullable().optional(),
-  notes: z.string().optional(),
-  appliedAt: z.coerce.date().optional(),
-});
+export const finishVaccinationSchema = z
+  .object({
+    vaccineCatalogItemId: z.string().uuid().nullable().optional(),
+    vaccineName: z.string().min(1, 'Nome da vacina é obrigatório').optional(),
+    dose: z.string().optional(),
+    batch: z.string().optional(),
+    manufacturer: z.string().optional(),
+    nextDoseAt: z.coerce.date().nullable().optional(),
+    notes: z.string().optional(),
+    appliedAt: z.coerce.date().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (!data.appliedAt) return;
+
+    const appliedKey = data.appliedAt.toISOString().slice(0, 10);
+    const now = new Date();
+    const todayKey = [
+      now.getFullYear(),
+      String(now.getMonth() + 1).padStart(2, '0'),
+      String(now.getDate()).padStart(2, '0'),
+    ].join('-');
+
+    if (appliedKey > todayKey) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['appliedAt'],
+        message: 'Data de aplicação não pode ser no futuro',
+      });
+    }
+  });
 
 export const listVaccinationsQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),

@@ -42,6 +42,7 @@ import {
   pageTitleClassName,
   stickyActionBarClassName,
 } from '@/lib/mobile-ui';
+import { formatDateValue } from '@/lib/date-input';
 import { getSafeMediaUrl } from '@/lib/safe-url';
 import { cn } from '@/lib/utils';
 import { suggestNextDoseDate } from '@/lib/vaccination-format';
@@ -62,6 +63,15 @@ const OTHER_VACCINE_VALUE = '__other__';
 
 function stepStorageKey(vaccinationId: string) {
   return `vaccination-step-${vaccinationId}`;
+}
+
+function todayDateValue() {
+  return formatDateValue(new Date());
+}
+
+function isFutureDateValue(value: string) {
+  if (!value) return false;
+  return value > todayDateValue();
 }
 
 export function VaccinationPage() {
@@ -92,6 +102,7 @@ export function VaccinationPage() {
     batch: '',
     manufacturer: '',
     notes: '',
+    appliedAt: todayDateValue(),
     nextDoseAt: '',
   });
 
@@ -115,6 +126,9 @@ export function VaccinationPage() {
       batch: vaccination.batch ?? '',
       manufacturer: vaccination.manufacturer ?? '',
       notes: vaccination.notes ?? '',
+      appliedAt: vaccination.appliedAt
+        ? vaccination.appliedAt.slice(0, 10)
+        : todayDateValue(),
       nextDoseAt: vaccination.nextDoseAt
         ? vaccination.nextDoseAt.slice(0, 10)
         : '',
@@ -177,20 +191,49 @@ export function VaccinationPage() {
     if (!value) return;
 
     const catalogItem = catalog.find((item) => item.id === value);
-    const suggestedNext = catalogItem?.defaultIntervalDays
-      ? suggestNextDoseDate(catalogItem.defaultIntervalDays)?.slice(0, 10)
-      : '';
 
-    setForm((prev) => ({
-      ...prev,
-      catalogSelection: value,
-      vaccineName: value === OTHER_VACCINE_VALUE ? prev.vaccineName : catalogItem?.name ?? '',
-      manufacturer:
-        value === OTHER_VACCINE_VALUE
-          ? prev.manufacturer
-          : catalogItem?.manufacturer ?? prev.manufacturer,
-      nextDoseAt: suggestedNext || prev.nextDoseAt,
-    }));
+    setForm((prev) => {
+      const suggestedNext = catalogItem?.defaultIntervalDays
+        ? suggestNextDoseDate(
+            catalogItem.defaultIntervalDays,
+            prev.appliedAt || new Date(),
+          )?.slice(0, 10)
+        : '';
+
+      return {
+        ...prev,
+        catalogSelection: value,
+        vaccineName:
+          value === OTHER_VACCINE_VALUE
+            ? prev.vaccineName
+            : catalogItem?.name ?? '',
+        manufacturer:
+          value === OTHER_VACCINE_VALUE
+            ? prev.manufacturer
+            : catalogItem?.manufacturer ?? prev.manufacturer,
+        nextDoseAt: suggestedNext || prev.nextDoseAt,
+      };
+    });
+  }
+
+  function handleAppliedAtChange(value: string) {
+    setForm((prev) => {
+      const catalogItem = catalog.find(
+        (item) => item.id === prev.catalogSelection,
+      );
+      const suggestedNext = catalogItem?.defaultIntervalDays
+        ? suggestNextDoseDate(
+            catalogItem.defaultIntervalDays,
+            value || new Date(),
+          )?.slice(0, 10)
+        : undefined;
+
+      return {
+        ...prev,
+        appliedAt: value,
+        nextDoseAt: suggestedNext ?? prev.nextDoseAt,
+      };
+    });
   }
 
   async function handleContinue() {
@@ -208,6 +251,16 @@ export function VaccinationPage() {
           return;
         }
 
+        if (!form.appliedAt) {
+          toast.error('Informe a data de aplicação');
+          return;
+        }
+
+        if (isFutureDateValue(form.appliedAt)) {
+          toast.error('Data de aplicação não pode ser no futuro');
+          return;
+        }
+
         await handleSave();
         setCurrentStep(1);
       }
@@ -221,10 +274,23 @@ export function VaccinationPage() {
   async function handleFinish() {
     if (!id || !vaccination?.pet) return;
 
+    if (!form.appliedAt) {
+      toast.error('Informe a data de aplicação');
+      return;
+    }
+
+    if (isFutureDateValue(form.appliedAt)) {
+      toast.error('Data de aplicação não pode ser no futuro');
+      return;
+    }
+
     try {
       await finishVaccination.mutateAsync({
         id,
-        data: buildUpdatePayload(),
+        data: {
+          ...buildUpdatePayload(),
+          appliedAt: form.appliedAt,
+        },
       });
       toast.success('Vacinação finalizada! Lembrete registrado se houver próxima dose.');
       void navigate(
@@ -414,6 +480,16 @@ export function VaccinationPage() {
                   />
                 </div>
               )}
+
+              <div className="space-y-2">
+                <Label>Data da aplicação</Label>
+                <DatePicker
+                  value={form.appliedAt}
+                  onChange={handleAppliedAtChange}
+                  toDate={new Date()}
+                  placeholder="Quando a vacina foi aplicada"
+                />
+              </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
