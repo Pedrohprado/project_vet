@@ -11,7 +11,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
-import { heroContent, navLinks } from '@/lib/landing-content';
+import { navCtaContent, navLinks } from '@/lib/landing-content';
 import { cn } from '@/lib/utils';
 import {
   landingOutlineButtonClassName,
@@ -29,12 +29,12 @@ export function LandingNavbar() {
           </span>
         </Link>
 
-        <nav className="hidden items-center gap-6 md:flex">
+        <nav className="hidden items-center gap-6 md:flex" aria-label="Principal">
           {navLinks.map((link) => (
             <a
               key={link.href}
               href={link.href}
-              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+              className="text-sm font-medium text-foreground/65 transition-colors hover:text-foreground"
             >
               {link.label}
             </a>
@@ -51,9 +51,9 @@ export function LandingNavbar() {
           </Button>
           <Button
             className={landingPrimaryButtonClassName}
-            render={<a href={heroContent.plansHref} />}
+            render={<a href={navCtaContent.href} />}
           >
-            {heroContent.primaryCta}
+            {navCtaContent.label}
           </Button>
         </div>
 
@@ -77,7 +77,7 @@ export function LandingNavbar() {
               </SheetDescription>
             </SheetHeader>
 
-            <nav className="flex flex-col p-2">
+            <nav className="flex flex-col p-2" aria-label="Mobile">
               {navLinks.map((link) => (
                 <SheetClose
                   key={link.href}
@@ -112,11 +112,11 @@ export function LandingNavbar() {
                 render={
                   <Button
                     className={cn(landingPrimaryButtonClassName, 'w-full')}
-                    render={<a href={heroContent.plansHref} />}
+                    render={<a href={navCtaContent.href} />}
                   />
                 }
               >
-                {heroContent.primaryCta}
+                {navCtaContent.label}
               </SheetClose>
             </div>
           </SheetContent>

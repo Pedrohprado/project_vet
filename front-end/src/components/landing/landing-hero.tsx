@@ -4,14 +4,18 @@ import { BIRD_SRC, FLYBIRD_SRC, CAT_SRC } from '@/lib/brand';
 import { heroContent } from '@/lib/landing-content';
 import { cn } from '@/lib/utils';
 import { DashboardMockup } from './dashboard-mockup';
-import { landingPrimaryButtonClassName } from '@/lib/landing-styles';
+import {
+  landingBodyTextClassName,
+  landingOutlineButtonClassName,
+  landingPrimaryButtonClassName,
+  landingSectionPaddingClassName,
+} from '@/lib/landing-styles';
 import { ScrollReveal } from './scroll-reveal';
 
 const PERCH_MS = 6000;
 const FLY_DURATION_S = 8;
 const BIRD_COUNT = 3;
 
-/** Arcos de voo: esquerdo alto, meio médio, direito quase reto */
 const BIRD_LANES = [
   { laneY: -48 },
   { laneY: -28 },
@@ -131,32 +135,48 @@ export function LandingHero() {
   const sharedTravel = takeoffs[0]?.travel ?? 0;
 
   return (
-    <section className="relative scroll-mt-20 overflow-hidden">
-      <div className="mx-auto max-w-6xl px-4 pb-16 pt-12 sm:px-6 sm:pb-24 sm:pt-20">
-        <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-8">
+    <section className="relative scroll-mt-20 overflow-hidden auth-grid-bg">
+      <div
+        className={cn(
+          'relative mx-auto max-w-6xl px-4 sm:px-6',
+          landingSectionPaddingClassName,
+          'pb-12 pt-10 sm:pb-16 sm:pt-16',
+        )}
+      >
+        <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-8">
           <ScrollReveal className="max-w-xl">
             <p className="text-sm font-medium text-primary">
-              O cuidado continua depois da consulta
+              {heroContent.eyebrow}
             </p>
-            <h1 className="mt-3 text-4xl font-bold tracking-tight sm:text-5xl">
+            <h1 className="mt-3 text-balance text-4xl font-bold tracking-tight sm:text-5xl">
               {heroContent.title}
             </h1>
-            <p className="mt-5 text-base leading-relaxed text-muted-foreground sm:text-lg">
+            <p className={cn('mt-5', landingBodyTextClassName)}>
               {heroContent.subtitle}
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
               <Button
                 className={landingPrimaryButtonClassName}
-                render={<a href={heroContent.plansHref} />}
+                render={<a href={heroContent.howItWorksHref} />}
               >
                 {heroContent.primaryCta}
               </Button>
+              <Button
+                variant="outline"
+                className={landingOutlineButtonClassName}
+                render={<a href={heroContent.plansHref} />}
+              >
+                {heroContent.secondaryCta}
+              </Button>
             </div>
+            <p className="mt-6 text-sm text-foreground/60">
+              {heroContent.trustLine}
+            </p>
           </ScrollReveal>
 
           <ScrollReveal
             delay={120}
-            className="relative mx-auto mt-8 w-full max-w-lg sm:mt-10 lg:mt-0 lg:max-w-none"
+            className="relative mx-auto w-full max-w-lg lg:max-w-none"
           >
             <div ref={mockupRef} className="relative">
               <button
@@ -229,7 +249,11 @@ export function LandingHero() {
                 aria-hidden
                 className="pointer-events-none absolute -bottom-4 -left-4 z-20 h-25 w-auto object-contain sm:h-28 lg:-left-8"
               />
-              <DashboardMockup variant="dashboard" className="relative z-10" />
+              <DashboardMockup
+                variant="dashboard"
+                className="relative z-10"
+                ariaLabel="Demonstração do painel BoxVet com consultas, retornos e acompanhamento pós-consulta"
+              />
             </div>
           </ScrollReveal>
         </div>

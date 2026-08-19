@@ -17,6 +17,7 @@ const AUTH_PATHS_WITHOUT_REFRESH = [
   '/auth/logout',
   '/auth/complete-welcome',
   '/clinics',
+  '/waitlist',
 ];
 
 function shouldAttemptRefresh(path: string) {

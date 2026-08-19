@@ -9,6 +9,7 @@ import {
   listPlatformVeterinarians,
   updatePlatformClinicStatus,
 } from '../controllers/platform-controller.js';
+import { listWaitlistSignups } from '../controllers/waitlist-controller.js';
 
 const protectedHandlers = [authMiddleware, platformAdminMiddleware];
 
@@ -23,4 +24,5 @@ export async function platformRoutes(app: FastifyInstance) {
     { preHandler: protectedHandlers },
     getPlatformVeterinarianRelations,
   );
+  app.get('/waitlist', { preHandler: protectedHandlers }, listWaitlistSignups);
 }

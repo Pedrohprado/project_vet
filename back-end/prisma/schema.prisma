@@ -581,3 +581,14 @@ model ProductIdea {
   @@index([status, position])
   @@index([authorId])
 }
+
+model WaitlistSignup {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  clinicName   String?
+  planInterest String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([createdAt])
+}

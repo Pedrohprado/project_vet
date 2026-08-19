@@ -100,7 +100,7 @@ function MetricCounter({
 
 export function LandingMetrics() {
   return (
-    <section className="scroll-mt-20">
+    <section className="scroll-mt-20 bg-white py-10 sm:py-14">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <ScrollReveal>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -109,13 +109,19 @@ export function LandingMetrics() {
                 key={metric.label}
                 className={landingCardClassName + ' text-center'}
               >
-                <MetricCounter
-                  end={metric.end}
-                  prefix={metric.prefix}
-                  suffix={metric.suffix}
-                  localeFormat={metric.localeFormat}
-                />
-                <p className="mt-2 text-sm text-muted-foreground">
+                {metric.end !== null ? (
+                  <MetricCounter
+                    end={metric.end}
+                    prefix={metric.prefix}
+                    suffix={metric.suffix}
+                    localeFormat={metric.localeFormat}
+                  />
+                ) : (
+                  <p className="text-3xl font-bold text-foreground/30 tabular-nums sm:text-4xl">
+                    {metric.placeholder}
+                  </p>
+                )}
+                <p className="mt-2 text-sm text-foreground/65">
                   {metric.label}
                 </p>
               </div>

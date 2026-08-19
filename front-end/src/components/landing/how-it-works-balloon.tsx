@@ -25,7 +25,7 @@ export function HowItWorksBalloon({
         'flex h-11 w-max max-w-full items-center rounded-xl border px-3.5',
         isProblem
           ? 'border-border/60 bg-muted/40 text-muted-foreground shadow-sm'
-          : 'relative gap-3 border-green-500/70 bg-white text-foreground shadow-xl shadow-black/4',
+          : 'relative gap-3 border-green-500/70 bg-white text-foreground shadow-sm',
         className,
       )}
       style={style}

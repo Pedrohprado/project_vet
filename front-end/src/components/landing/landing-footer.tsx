@@ -17,13 +17,18 @@ const socialLinks = [
 export function LandingFooter() {
   return (
     <footer className="border-t border-border/50 bg-white">
-      <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
+      <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-12">
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
           <div className="sm:col-span-2 lg:col-span-1">
-            <BrandLogo size="sm" showName />
-            <p className="mt-3 text-sm text-muted-foreground">
-              Relacionamento com tutores, pós-consulta automático e fidelização
-              sem complicação.
+            <div className="flex items-center gap-2">
+              <BrandLogo size="sm" />
+              <span className="text-lg font-bold tracking-tight text-primary">
+                boxvet.
+              </span>
+            </div>
+            <p className="mt-3 text-sm text-foreground/65">
+              BoxVet — relacionamento com tutores, pós-consulta e continuidade do
+              cuidado sem complicação.
             </p>
           </div>
 
@@ -34,7 +39,7 @@ export function LandingFooter() {
                 <li key={link.href}>
                   <a
                     href={link.href}
-                    className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                    className="text-sm text-foreground/65 transition-colors hover:text-foreground"
                   >
                     {link.label}
                   </a>
@@ -44,7 +49,7 @@ export function LandingFooter() {
                 <li key={link.label}>
                   <a
                     href={link.href}
-                    className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                    className="text-sm text-foreground/65 transition-colors hover:text-foreground"
                   >
                     {link.label}
                   </a>
@@ -60,7 +65,7 @@ export function LandingFooter() {
                 <li key={label}>
                   <a
                     href={href}
-                    className="inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+                    className="inline-flex items-center gap-2 text-sm text-foreground/65 transition-colors hover:text-foreground"
                   >
                     <Icon className="size-4" />
                     {label}
@@ -72,8 +77,8 @@ export function LandingFooter() {
 
           <div>
             <h3 className="text-sm font-semibold">Comece agora</h3>
-            <p className="mt-4 text-sm text-muted-foreground">
-              Conheça os planos e escolha o ideal para sua clínica.
+            <p className="mt-4 text-sm text-foreground/65">
+              Conheça os planos e entre na lista de espera.
             </p>
             <a
               href="#planos"
@@ -84,7 +89,7 @@ export function LandingFooter() {
           </div>
         </div>
 
-        <p className="mt-10 border-t border-border/50 pt-6 text-center text-xs text-muted-foreground">
+        <p className="mt-8 border-t border-border/50 pt-6 text-center text-xs text-foreground/55">
           © {new Date().getFullYear()} BoxVet. Todos os direitos reservados.
         </p>
       </div>

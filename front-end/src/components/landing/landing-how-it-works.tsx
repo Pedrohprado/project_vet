@@ -24,15 +24,16 @@ export function LandingHowItWorks() {
 
   return (
     <LandingSection
-      id='como-funciona'
-      title='Como funciona'
+      id="como-funciona"
+      title={howItWorksContent.title}
       subtitle={howItWorksContent.subtitle}
+      surface="dots"
     >
       <div
         ref={containerRef}
-        className='grid grid-cols-1 items-center gap-10 lg:grid-cols-[1fr_auto_1fr] lg:gap-6 xl:gap-10'
+        className="grid grid-cols-1 items-center gap-8 lg:grid-cols-[1fr_auto_1fr] lg:gap-6 xl:gap-10"
       >
-        <div className='flex flex-col items-center gap-3 lg:items-end lg:gap-4'>
+        <div className="flex flex-col items-center gap-3 lg:items-end lg:gap-4">
           {howItWorksPairs.map((pair, index) => (
             <div
               key={`problem-${cycleKey}-${pair.problem.title}`}
@@ -44,7 +45,7 @@ export function LandingHowItWorks() {
             >
               <HowItWorksBalloon
                 title={pair.problem.title}
-                variant='problem'
+                variant="problem"
                 className={getProblemBalloonClassName(phase, reducedMotion)}
                 style={
                   {
@@ -59,16 +60,16 @@ export function LandingHowItWorks() {
 
         <HowItWorksPlatform />
 
-        <div className='flex flex-col items-start gap-3 pr-2 pt-2 lg:gap-4'>
+        <div className="flex flex-col items-start gap-3 pr-2 pt-2 lg:gap-4">
           {howItWorksPairs.map((pair, index) => (
             <div
               key={`solution-${cycleKey}-${pair.solution.title}`}
-              className='w-full max-w-85 lg:w-max lg:max-w-none'
+              className="w-full max-w-85 lg:w-max lg:max-w-none"
             >
               <HowItWorksBalloon
                 icon={pair.solution.icon}
                 title={pair.solution.title}
-                variant='solution'
+                variant="solution"
                 className={getSolutionBalloonClassName(
                   phase,
                   index,

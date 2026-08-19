@@ -8,18 +8,22 @@ import { LandingLayout } from '@/components/landing/landing-layout';
 import { LandingMetrics } from '@/components/landing/landing-metrics';
 import { LandingMigration } from '@/components/landing/landing-migration';
 import { LandingPricing } from '@/components/landing/landing-pricing';
+import { LandingProblem } from '@/components/landing/landing-problem';
+import { LandingProductInAction } from '@/components/landing/landing-product-in-action';
 import { LandingTestimonials } from '@/components/landing/landing-testimonials';
 
 export function LandingPage() {
   return (
     <LandingLayout>
       <LandingHero />
-      <LandingFeatures />
+      <LandingProblem />
       <LandingHowItWorks />
+      <LandingProductInAction />
+      <LandingFeatures />
       <LandingMetrics />
       <LandingTestimonials />
-      <LandingCommunity />
       <LandingMigration />
+      <LandingCommunity />
       <LandingPricing />
       <LandingFaq />
       <LandingCta />

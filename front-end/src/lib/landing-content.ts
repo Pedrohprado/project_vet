@@ -16,53 +16,66 @@ import {
 } from 'lucide-react';
 
 export const heroContent = {
-  title: 'O atendimento não termina quando a consulta acaba.',
+  eyebrow: 'Cuidado contínuo para clínicas veterinárias',
+  title: 'Continue cuidando do paciente mesmo depois da consulta.',
   subtitle:
-    'A BoxVet organiza consultas, vacinação e pós-consulta para que sua clínica mantenha contato com o tutor antes, durante e depois do atendimento.',
-  primaryCta: 'Conhecer os planos',
+    'Organize consultas, automatize retornos, vacinação e acompanhamento pós-consulta para manter tutores próximos e pacientes com o cuidado em dia.',
+  primaryCta: 'Ver como funciona',
+  secondaryCta: 'Conhecer os planos',
+  howItWorksHref: '#como-funciona',
   plansHref: '#planos',
+  trustLine: 'Feito para clínicas que querem cuidar além da consulta.',
 };
 
+export const navCtaContent = {
+  label: 'Conhecer os planos',
+  href: '#planos',
+};
+
+/** TODO: inserir métricas reais antes da publicação. */
 export const metrics = [
   {
-    end: 500,
-    prefix: '+',
+    end: null as number | null,
+    prefix: '',
     suffix: '',
     localeFormat: false,
     label: 'Consultas realizadas',
+    placeholder: '—',
   },
   {
-    end: 1200,
-    prefix: '+',
+    end: null as number | null,
+    prefix: '',
     suffix: '',
     localeFormat: true,
-    label: 'Pets cadastrados',
+    label: 'Pets acompanhados',
+    placeholder: '—',
   },
   {
-    end: 98,
+    end: null as number | null,
     prefix: '',
-    suffix: '%',
+    suffix: '',
     localeFormat: false,
-    label: 'Tutores retornam',
+    label: 'Taxa de acompanhamento',
+    placeholder: '—',
   },
   {
-    end: 24,
+    end: null as number | null,
     prefix: '',
-    suffix: 'h',
+    suffix: '',
     localeFormat: false,
-    label: 'Economizadas por mês',
+    label: 'Tempo economizado',
+    placeholder: '—',
   },
 ] as const;
 
 export const problemContent = {
-  titleLine1: 'Você cuida dos animais.',
-  titleLine2: 'Nós cuidamos da experiência do tutor.',
-  closing:
-    'Tudo isso faz o tutor esquecer sua clínica e procurar outro veterinário.',
+  title: 'Depois da consulta, começa outra parte do cuidado.',
+  subtitle:
+    'Retornos para lembrar, vacinas para acompanhar, mensagens no WhatsApp e tutores esperando orientação. Quando tudo depende da equipe lembrar manualmente, pacientes acabam ficando sem acompanhamento.',
   items: [
     {
       icon: MessageCircle,
-      title: 'Consultas espalhadas no WhatsApp',
+      title: 'Mensagens perdidas no WhatsApp',
     },
     {
       icon: Syringe,
@@ -70,18 +83,19 @@ export const problemContent = {
     },
     {
       icon: CalendarX,
-      title: 'Retornos perdidos',
+      title: 'Retornos não agendados',
     },
     {
       icon: HeartOff,
-      title: 'Pouco relacionamento após a consulta',
+      title: 'Tutor sem acompanhamento',
     },
   ] as const,
 };
 
 export const howItWorksContent = {
+  title: 'Você atende. A BoxVet cuida do que vem depois.',
   subtitle:
-    'Os problemas entram desorganizados. A BoxVet organiza e devolve soluções automáticas para sua clínica.',
+    'As informações da consulta viram lembretes, acompanhamentos e próximas ações para sua equipe e para o tutor.',
 };
 
 export const howItWorksPairs = [
@@ -131,95 +145,124 @@ export const howItWorksPairs = [
   },
 ] as const;
 
-export const features = [
+export type FeatureItem = {
+  icon: LucideIcon;
+  title: string;
+  description?: string;
+};
+
+export const featureGroups = [
   {
-    icon: PawPrint,
-    title: 'Tutores e Pets organizados',
-    description: 'Responsáveis e histórico de cada pet no mesmo lugar.',
+    id: 'before',
+    title: 'Antes da consulta',
+    highlighted: false,
+    features: [
+      {
+        icon: PawPrint,
+        title: 'Tutores e pets organizados',
+        description: 'Responsáveis e histórico de cada pet no mesmo lugar.',
+      },
+      {
+        icon: Calendar,
+        title: 'Agenda de consultas e vacinas',
+        description: 'Consultas, vacinas e retornos organizados.',
+      },
+    ],
   },
   {
-    icon: Calendar,
-    title: 'Agenda de consultas e vacinas',
-    description: 'Consultas, vacinas e retornos organizados.',
+    id: 'during',
+    title: 'Durante a consulta',
+    highlighted: false,
+    features: [
+      {
+        icon: Stethoscope,
+        title: 'Anamnese digital',
+        description: 'Registre toda a consulta.',
+      },
+      {
+        icon: Pill,
+        title: 'Receitas e orientações',
+        description: 'Medicamentos e orientações organizados.',
+      },
+    ],
   },
   {
-    icon: Sparkles,
-    title: 'Pós-consulta automático',
-    description: 'Envie orientações ao tutor automaticamente.',
-  },
-  {
-    icon: Pill,
-    title: 'Receitas e orientações',
-    description: 'Medicamentos e orientações organizados.',
-  },
-  {
-    icon: Stethoscope,
-    title: 'Anamnese digital',
-    description: 'Registre toda a consulta.',
-  },
-  {
-    icon: Bell,
-    title: 'Lembretes de retorno',
-    description: 'Retornos e vacinas sem esquecimentos.',
-  },
-  {
-    icon: MessagesSquare,
-    title: 'Comunidade clínica',
-    description:
-      'Compartilhe casos anonimizados e troque experiências com outros veterinários da plataforma.',
+    id: 'after',
+    title: 'Depois da consulta',
+    highlighted: true,
+    features: [
+      {
+        icon: Sparkles,
+        title: 'Pós-consulta automático',
+        description: 'Envie orientações ao tutor automaticamente.',
+      },
+      {
+        icon: Bell,
+        title: 'Lembretes de retorno',
+        description: 'Retornos e vacinas sem esquecimentos.',
+      },
+      {
+        icon: Syringe,
+        title: 'Vacinação e acompanhamento',
+        description: 'Acompanhe doses e próximas vacinas de cada pet.',
+      },
+    ],
   },
 ] as const;
 
+export const productInActionContent = {
+  title: 'Do atendimento ao próximo retorno, tudo conectado.',
+  subtitle:
+    'Uma jornada simples que conecta consulta, orientação e retorno — sem depender de planilhas ou mensagens soltas.',
+  steps: [
+    {
+      title: 'Consulta registrada',
+      description: 'Anamnese, receitas e conduta ficam no prontuário digital.',
+    },
+    {
+      title: 'Orientação enviada',
+      description: 'A clínica revisa e envia o resumo pós-consulta ao tutor.',
+    },
+    {
+      title: 'Lembrete programado',
+      description: 'Retornos e vacinas entram na agenda com lembretes.',
+    },
+    {
+      title: 'Tutor recebe acompanhamento',
+      description: 'O tutor acompanha orientações e próximos passos.',
+    },
+    {
+      title: 'Retorno organizado',
+      description: 'A equipe sabe quando e por que o paciente deve voltar.',
+    },
+  ],
+};
+
+/** PLACEHOLDER: substituir por depoimentos reais antes da publicação. */
 export const testimonials = [
   {
     quote: 'Finalmente um sistema que não é complicado.',
     name: 'Fernanda',
     role: 'Médica Veterinária',
+    clinic: 'Clínica placeholder',
+    city: 'Cidade placeholder',
+    avatarInitials: 'F',
   },
   {
     quote: 'Os lembretes de vacinação diminuíram muito as faltas.',
     name: 'Bruno',
     role: 'Veterinário',
+    clinic: 'Clínica placeholder',
+    city: 'Cidade placeholder',
+    avatarInitials: 'B',
   },
   {
     quote: 'O pós-consulta impressiona os clientes.',
     name: 'Carolina',
     role: 'Clínica Pet',
-  },
-  {
-    quote: 'A agenda ficou organizada e a equipe alinhada.',
-    name: 'Marcos',
-    role: 'Dono de Clínica',
-  },
-  {
-    quote: 'Os tutores adoram acompanhar o histórico pelo celular.',
-    name: 'Juliana',
-    role: 'Recepção',
-  },
-  {
-    quote: 'Prontuário digital sem papelada nem planilha.',
-    name: 'Ricardo',
-    role: 'Médico Veterinário',
-  },
-  {
-    quote: 'Em uma tarde já estávamos usando no dia a dia.',
-    name: 'Patrícia',
-    role: 'Gestora de Clínica',
-  },
-  {
-    quote: 'O peso e as vacinas ficam registrados sem esforço.',
-    name: 'André',
-    role: 'Veterinário',
-  },
-  {
-    quote: 'Menos ligações cobrando retorno. Mais tempo no consultório.',
-    name: 'Camila',
-    role: 'Médica Veterinária',
-  },
-  {
-    quote: 'Simples de ensinar para a equipe toda.',
-    name: 'Thiago',
-    role: 'Sócio da Clínica',
+    clinic: 'Clínica placeholder',
+    city: 'Cidade placeholder',
+    avatarInitials: 'C',
   },
 ] as const;
 
@@ -254,27 +297,33 @@ export const pricingPlans = [
   },
 ] as const;
 
+export const pricingContent = {
+  title: 'Planos',
+  subtitle: 'Escolha a opção que combina com o momento da sua clínica.',
+  cta: 'Entrar na lista de espera',
+};
+
 export const communityRoadmapContent = {
   title: 'Feito com a comunidade, em público',
   subtitle:
-    'A BoxVet não é só um sistema da clínica. Veterinários trocam casos reais e acompanham — e sugerem — o que entra no produto.',
+    'Veterinários trocam casos reais e acompanham o que entra no produto.',
   items: [
     {
       icon: MessagesSquare,
       title: 'Comunidade de casos',
       description:
-        'Compartilhe atendimentos anonimizados, curta e comente. Um espaço só para membros autenticados, sem dados de tutor ou pet.',
+        'Compartilhe atendimentos anonimizados, curta e comente.',
       highlights: [
         'Casos clínicos anonimizados',
         'Curtidas e comentários',
-        'Troca entre veterinários da plataforma',
+        'Troca entre veterinários',
       ],
     },
     {
       icon: Lightbulb,
       title: 'Roadmap público',
       description:
-        'Construímos em público. Envie uma ideia e veja o que está na fila, em construção e já entregue.',
+        'Construímos em público. Envie uma ideia e acompanhe o andamento.',
       highlights: [
         'Sugestões da comunidade',
         'Fila, andamento e concluído',
@@ -288,33 +337,61 @@ export const migrationContent = {
   title: 'Migração sem dor de cabeça',
   subtitle:
     'Saindo de um sistema antigo? Ajudamos sua clínica na transferência de dados e em todo o processo de mudança para o BoxVet.',
-  badges: [
-    'Importação de dados',
-    'Transição assistida',
+  steps: [
+    { title: 'Envie seus dados' },
+    { title: 'Nós fazemos a importação' },
+    { title: 'Conferimos o histórico' },
+    { title: 'Sua equipe começa a usar' },
+  ],
+  benefits: [
     'Histórico preservado',
     'Suporte dedicado',
-    'Comece com tranquilidade',
+    'Transição assistida',
   ],
 } as const;
 
 export const faqItems = [
+  {
+    question: 'Preciso trocar meu sistema atual?',
+    answer:
+      'Não necessariamente. A BoxVet pode ser adotada gradualmente. Se quiser migrar, ajudamos na transferência dos seus dados.',
+  },
+  {
+    question: 'Vocês ajudam na migração dos meus dados?',
+    answer:
+      'Sim. Ajudamos na transferência de dados e em todo o processo de mudança do seu sistema antigo para o BoxVet.',
+  },
+  {
+    question: 'Preciso instalar alguma coisa?',
+    answer: 'Não. Tudo na nuvem — basta acessar pelo navegador.',
+  },
   {
     question: 'O sistema funciona pelo celular?',
     answer:
       'Sim. A BoxVet funciona no navegador do celular, tablet e computador.',
   },
   {
-    question: 'Preciso instalar algo?',
-    answer: 'Não. Tudo na nuvem — basta acessar pelo navegador.',
-  },
-  {
-    question: 'Consigo cadastrar vacinas?',
-    answer: 'Sim. Você registra vacinas e acompanha o histórico de cada pet.',
-  },
-  {
     question: 'O tutor recebe mensagens?',
+    // Resposta alinhada ao fluxo atual: revisão + WhatsApp manual
     answer:
-      'Sim. A BoxVet envia lembretes e mensagens pós-consulta automaticamente.',
+      'Sim. Ao finalizar a consulta, a BoxVet gera um resumo pós-consulta para revisão. Sua equipe envia ao tutor pelo WhatsApp. Lembretes de retorno e vacina ficam organizados na agenda.',
+  },
+  {
+    question: 'Consigo cadastrar e acompanhar vacinas?',
+    answer:
+      'Sim. Você registra vacinas e acompanha o histórico e as próximas doses de cada pet.',
+  },
+  {
+    question: 'Minha equipe pode usar ao mesmo tempo?',
+    // PENDENTE DE VALIDAÇÃO: multi-usuário por clínica ainda não documentado publicamente
+    answer:
+      'Estamos preparando opções para equipes. Entre em contato para saber como funciona no momento da sua clínica.',
+  },
+  {
+    question: 'Posso cancelar quando quiser?',
+    // PENDENTE DE VALIDAÇÃO: billing ainda não implementado
+    answer:
+      'Entre em contato conosco para entender as condições de cancelamento do seu plano.',
   },
   {
     question: 'O que é a Comunidade de casos?',
@@ -326,19 +403,12 @@ export const faqItems = [
     answer:
       'É o quadro em que mostramos o que estamos construindo. Qualquer membro autenticado pode enviar uma ideia e acompanhar o que está na fila, em andamento e já entregue.',
   },
-  {
-    question: 'Posso cancelar quando quiser?',
-    answer: 'Sempre. Você pode cancelar sua assinatura a qualquer momento.',
-  },
-  {
-    question: 'Vocês ajudam na migração do meu sistema atual?',
-    answer:
-      'Sim. Ajudamos na transferência de dados e em todo o processo de mudança do seu sistema antigo para o BoxVet.',
-  },
 ] as const;
 
 export const ctaContent = {
-  title: 'Comece a transformar cada consulta em um relacionamento duradouro.',
+  title: 'Transforme cada consulta em um relacionamento duradouro.',
+  subtitle:
+    'Organize o atendimento e continue presente na rotina do tutor mesmo depois que ele sai da clínica.',
   button: 'Conhecer os planos',
 };
 
@@ -350,9 +420,3 @@ export const navLinks = [
   { label: 'Planos', href: '#planos' },
   { label: 'FAQ', href: '#faq' },
 ] as const;
-
-export type FeatureItem = {
-  icon: LucideIcon;
-  title: string;
-  description?: string;
-};
