@@ -104,47 +104,53 @@ export function CommunityCaseCard({
   }
 
   return (
-    <Card className="rounded-2xl bg-card shadow-none ring-0">
-      <CardContent className="space-y-3">
-        <div className="flex items-start gap-3">
-          <Avatar className="size-10 shrink-0 sm:size-11">
-            <AvatarFallback className="bg-primary/10 text-xs font-medium text-primary sm:text-sm">
+    <Card className='rounded-2xl bg-card shadow-none ring-0'>
+      <CardContent className='space-y-3'>
+        <div className='flex items-start gap-3'>
+          <Avatar className='size-10 shrink-0 sm:size-11'>
+            <AvatarFallback className='bg-primary/10 text-xs font-medium text-primary sm:text-sm'>
               {getAuthorInitials(communityCase.author.name)}
             </AvatarFallback>
           </Avatar>
 
-          <div className="min-w-0 flex-1">
-            <div className="flex items-start justify-between gap-2">
-              <div className="min-w-0">
-                <p className="truncate text-sm font-semibold">
+          <div className='min-w-0 flex-1'>
+            <div className='flex items-start justify-between gap-2'>
+              <div className='min-w-0'>
+                <p className='truncate text-sm font-semibold'>
                   {communityCase.author.name}
                 </p>
                 {communityCase.author.crmv ? (
-                  <p className="truncate text-xs text-muted-foreground">
+                  <p className='truncate text-xs text-muted-foreground'>
                     CRMV {communityCase.author.crmv}
                   </p>
                 ) : null}
-                <div className="mt-1 space-y-0.5 text-xs text-muted-foreground sm:text-sm">
-                  <p className="hidden min-w-0 items-center gap-1 sm:flex">
-                    <MapPin className="size-3.5 shrink-0" aria-hidden />
-                    <span className="min-w-0 truncate">
+                <div className='mt-1 space-y-0.5 text-xs text-muted-foreground sm:text-sm'>
+                  <p className='hidden min-w-0 items-center gap-1 sm:flex'>
+                    <MapPin className='size-3.5 shrink-0' aria-hidden />
+                    <span className='min-w-0 truncate'>
                       {communityCase.clinic.name}
                     </span>
-                    <span className="shrink-0">·</span>
-                    <span className="shrink-0">
+                    <span className='shrink-0'>·</span>
+                    <span className='shrink-0'>
                       {formatPostDate(communityCase.createdAt)}
                     </span>
                   </p>
 
-                  <div className="space-y-0.5 sm:hidden">
-                    <p className="flex min-w-0 items-start gap-1">
-                      <MapPin className="mt-0.5 size-3.5 shrink-0" aria-hidden />
-                      <span className="min-w-0 break-words">
+                  <div className='space-y-0.5 sm:hidden'>
+                    <p className='flex min-w-0 items-start gap-1'>
+                      <MapPin
+                        className='mt-0.5 size-3.5 shrink-0'
+                        aria-hidden
+                      />
+                      <span className='min-w-0 wrap-break-word'>
                         {communityCase.clinic.name}
                       </span>
                     </p>
-                    <p className="flex min-w-0 items-start gap-1">
-                      <Calendar className="mt-0.5 size-3.5 shrink-0" aria-hidden />
+                    <p className='flex min-w-0 items-start gap-1'>
+                      <Calendar
+                        className='mt-0.5 size-3.5 shrink-0'
+                        aria-hidden
+                      />
                       <span>{formatPostDate(communityCase.createdAt)}</span>
                     </p>
                   </div>
@@ -156,27 +162,27 @@ export function CommunityCaseCard({
                   <DropdownMenuTrigger
                     render={
                       <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon-sm"
-                        className="-mr-1 text-muted-foreground"
-                        aria-label="Mais opções"
+                        type='button'
+                        variant='ghost'
+                        size='icon-sm'
+                        className='-mr-1 text-muted-foreground'
+                        aria-label='Mais opções'
                       />
                     }
                   >
-                    <EllipsisVertical className="size-4" />
+                    <EllipsisVertical className='size-4' />
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
+                  <DropdownMenuContent align='end'>
                     <DropdownMenuItem onClick={() => setEditOpen(true)}>
-                      <Pencil className="size-4" />
+                      <Pencil className='size-4' />
                       Editar
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      variant="destructive"
+                      variant='destructive'
                       disabled={deleteMutation.isPending}
                       onClick={() => void handleDelete()}
                     >
-                      <Trash2 className="size-4" />
+                      <Trash2 className='size-4' />
                       Excluir
                     </DropdownMenuItem>
                   </DropdownMenuContent>
@@ -188,8 +194,8 @@ export function CommunityCaseCard({
 
         <CommunityCaseMeta communityCase={communityCase} showVitals />
 
-        <div className="space-y-2">
-          <h2 className="text-base font-semibold tracking-tight">
+        <div className='space-y-2'>
+          <h2 className='text-base font-semibold tracking-tight'>
             {communityCase.title}
           </h2>
 
@@ -218,8 +224,8 @@ export function CommunityCaseCard({
 
           {canExpand || communityCase.authorNote ? (
             <button
-              type="button"
-              className="text-sm font-medium text-primary hover:underline"
+              type='button'
+              className='text-sm font-medium text-primary hover:underline'
               onClick={() => setExpanded((current) => !current)}
             >
               {expanded ? 'Ver menos' : 'Ler mais'}
@@ -227,11 +233,11 @@ export function CommunityCaseCard({
           ) : null}
         </div>
 
-        <div className="flex items-center gap-2 pt-1">
+        <div className='flex items-center gap-2 pt-1'>
           <Button
-            type="button"
-            variant="ghost"
-            size="sm"
+            type='button'
+            variant='ghost'
+            size='sm'
             className={cn(
               'h-8 gap-1.5 px-2.5 text-muted-foreground hover:text-rose-500',
               communityCase.likedByMe && 'text-rose-500',
@@ -245,19 +251,19 @@ export function CommunityCaseCard({
                 communityCase.likedByMe && 'fill-rose-500',
               )}
             />
-            <span className="tabular-nums">{communityCase.likesCount}</span>
+            <span className='tabular-nums'>{communityCase.likesCount}</span>
           </Button>
 
           <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="h-8 gap-1.5 px-2.5 text-muted-foreground hover:text-sky-700"
+            type='button'
+            variant='ghost'
+            size='sm'
+            className='h-8 gap-1.5 px-2.5 text-muted-foreground hover:text-sky-700'
             onClick={() => onOpenDetail(communityCase)}
           >
-            <MessageCircle className="size-4" />
-            <span className="tabular-nums">{communityCase.commentsCount}</span>
-            <span className="hidden sm:inline">Comentários</span>
+            <MessageCircle className='size-4' />
+            <span className='tabular-nums'>{communityCase.commentsCount}</span>
+            <span className='hidden sm:inline'>Comentários</span>
           </Button>
         </div>
       </CardContent>
