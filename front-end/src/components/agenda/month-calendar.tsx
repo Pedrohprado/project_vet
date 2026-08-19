@@ -44,7 +44,7 @@ function getEventChipClass(event: CalendarEvent) {
   }
 
   if (event.appointmentType === 'VACCINATION') {
-    return 'bg-emerald-500/20 text-emerald-900 dark:text-emerald-100';
+    return 'bg-emerald-700 text-white';
   }
 
   return 'bg-primary/15 text-foreground';
@@ -88,6 +88,7 @@ function createDayButton(
           modifiers.outside && 'text-muted-foreground/70',
           modifiers.disabled && 'pointer-events-none opacity-40',
           className,
+          '[&>span]:opacity-100 data-[selected-single=true]:bg-primary/10 data-[selected-single=true]:text-foreground',
         )}
         {...props}
       >

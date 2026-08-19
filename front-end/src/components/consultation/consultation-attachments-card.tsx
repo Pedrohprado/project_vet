@@ -99,7 +99,7 @@ export function ConsultationAttachmentsCard({
   }
 
   return (
-    <Card className={cn('mt-4 sm:mt-6', className)}>
+    <Card className={cn('mt-4 sm:mt-6 ring-0 shadow-none', className)}>
       <CardHeader>
         <CardTitle>3. Exames anexados</CardTitle>
         {showDescription ? (

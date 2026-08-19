@@ -185,6 +185,7 @@ export function ShareCommunityCaseDialog({
             </Button>
             <Button
               type="button"
+              action="share"
               onClick={() => void handleSubmit()}
               disabled={createCase.isPending}
             >

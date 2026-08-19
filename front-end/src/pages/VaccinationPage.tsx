@@ -1,13 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { toast } from 'sonner';
-import { ChevronLeft, ChevronRight, PawPrint, Syringe } from 'lucide-react';
+import { Check, ChevronLeft, ChevronRight } from 'lucide-react';
 import { ApiError } from '@/api/http';
-import { Badge } from '@/components/ui/badge';
+import { ServiceDetailHeader } from '@/components/service-detail-header';
 import { Button } from '@/components/ui/button';
 import { DatePicker } from '@/components/ui/date-picker';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
 import {
   Select,
   SelectContent,
@@ -31,21 +32,19 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from '@/components/ui/avatar';
 import { formatPetAge } from '@/lib/pet-format';
 import {
   pageShellClassName,
-  pageTitleClassName,
   stickyActionBarClassName,
 } from '@/lib/mobile-ui';
 import { formatDateValue } from '@/lib/date-input';
+import { toClinicDate, toClinicDatePayload } from '@/lib/clinic-date';
 import { getSafeMediaUrl } from '@/lib/safe-url';
 import { cn } from '@/lib/utils';
-import { suggestNextDoseDate } from '@/lib/vaccination-format';
+import {
+  formatVaccinationDate,
+  suggestNextDoseDate,
+} from '@/lib/vaccination-format';
 import { useVaccineCatalog } from '@/hooks/useVaccineCatalog';
 import {
   useDeleteVaccination,
@@ -94,6 +93,7 @@ export function VaccinationPage() {
 
   const [currentStep, setCurrentStep] = useState(0);
   const [cancelOpen, setCancelOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   const [form, setForm] = useState({
     catalogSelection: '',
@@ -127,10 +127,10 @@ export function VaccinationPage() {
       manufacturer: vaccination.manufacturer ?? '',
       notes: vaccination.notes ?? '',
       appliedAt: vaccination.appliedAt
-        ? vaccination.appliedAt.slice(0, 10)
+        ? formatDateValue(toClinicDate(vaccination.appliedAt))
         : todayDateValue(),
       nextDoseAt: vaccination.nextDoseAt
-        ? vaccination.nextDoseAt.slice(0, 10)
+        ? formatDateValue(toClinicDate(vaccination.nextDoseAt))
         : '',
     });
   }
@@ -178,7 +178,7 @@ export function VaccinationPage() {
       batch: form.batch || undefined,
       manufacturer: form.manufacturer || undefined,
       notes: form.notes || undefined,
-      nextDoseAt: form.nextDoseAt || null,
+      nextDoseAt: toClinicDatePayload(form.nextDoseAt),
     };
   }
 
@@ -303,6 +303,22 @@ export function VaccinationPage() {
     }
   }
 
+  async function handleSaveNextDose() {
+    if (!id) return;
+
+    try {
+      await updateVaccination.mutateAsync({
+        id,
+        data: { nextDoseAt: toClinicDatePayload(form.nextDoseAt) },
+      });
+      toast.success('Próxima dose atualizada.');
+    } catch (err) {
+      toast.error(
+        err instanceof ApiError ? err.message : 'Erro ao atualizar a próxima dose',
+      );
+    }
+  }
+
   async function handleConfirmCancel() {
     if (!vaccination?.pet) return;
 
@@ -323,6 +339,26 @@ export function VaccinationPage() {
     }
   }
 
+  async function handleConfirmDelete() {
+    if (!vaccination?.pet) return;
+
+    try {
+      await deleteVaccination.mutateAsync({
+        id: vaccination.id,
+        petId: vaccination.petId,
+      });
+      toast.success('Vacina excluída.');
+      setDeleteOpen(false);
+      void navigate(
+        `/tutors/${vaccination.pet.tutor.id}/pets/${vaccination.petId}`,
+      );
+    } catch (err) {
+      toast.error(
+        err instanceof ApiError ? err.message : 'Erro ao excluir vacina',
+      );
+    }
+  }
+
   if (isLoading) {
     return <p className="text-muted-foreground">Carregando vacinação...</p>;
   }
@@ -336,75 +372,85 @@ export function VaccinationPage() {
   const pet = vaccination.pet;
   const tutor = pet.tutor;
   const petPhotoUrl = getSafeMediaUrl(pet.photoUrl);
+  const savedNextDoseAt = vaccination.nextDoseAt
+    ? formatDateValue(toClinicDate(vaccination.nextDoseAt))
+    : '';
 
   return (
     <div className={pageShellClassName}>
-      <div className="flex flex-col gap-3">
-        <div className="min-w-0 space-y-3">
-          <div className="flex flex-wrap items-center gap-2">
-            <Badge variant={isFinished ? 'secondary' : 'default'}>
-              {isFinished ? 'Aplicada' : 'Em andamento'}
-            </Badge>
-          </div>
-          <h1 className={pageTitleClassName}>Vacinação</h1>
-          <div className="space-y-2">
-            <div className="flex items-start gap-2.5">
-              <Avatar className="size-9 shrink-0 sm:size-10">
-                {petPhotoUrl ? (
-                  <AvatarImage src={petPhotoUrl} alt={pet.name} />
-                ) : null}
-                <AvatarFallback className="bg-primary/10 text-primary">
-                  <PawPrint className="size-4" />
-                </AvatarFallback>
-              </Avatar>
-              <div className="min-w-0">
-                <p className="text-base font-semibold sm:text-lg">{pet.name}</p>
-                <p className="mt-0.5 text-xs text-muted-foreground sm:text-sm">
-                  {pet.birthDate
-                    ? formatPetAge(pet.birthDate)
-                    : 'Idade não informada'}
-                </p>
-              </div>
-            </div>
-            <p className="text-sm font-medium sm:text-base">{tutor.name}</p>
-            <p className="text-xs text-muted-foreground sm:text-sm">
-              Veterinário: {vaccination.veterinarian?.name ?? '—'}
-            </p>
-          </div>
-        </div>
-        {!isFinished && (
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full text-destructive hover:text-destructive sm:w-auto sm:self-start"
-            onClick={() => setCancelOpen(true)}
-          >
-            Cancelar vacinação
-          </Button>
-        )}
-      </div>
+      <ServiceDetailHeader
+        backTo={`/tutors/${tutor.id}/pets/${pet.id}`}
+        title="Vacinação"
+        statusLabel={isFinished ? 'Aplicada' : 'Em andamento'}
+        statusVariant={isFinished ? 'secondary' : 'default'}
+        petName={pet.name}
+        petPhotoUrl={petPhotoUrl}
+        petSubtitle={
+          pet.birthDate ? formatPetAge(pet.birthDate) : 'Idade não informada'
+        }
+        tutorName={tutor.name}
+        meta={[
+          {
+            label: 'Veterinário',
+            value: vaccination.veterinarian?.name ?? '—',
+          },
+          ...(isFinished
+            ? [
+                {
+                  label: 'Aplicada em',
+                  value: formatVaccinationDate(vaccination.appliedAt),
+                },
+              ]
+            : []),
+        ]}
+        actions={
+          !isFinished ? (
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={() => setCancelOpen(true)}
+            >
+              Cancelar vacinação
+            </Button>
+          ) : null
+        }
+      />
 
       {!isFinished && (
-        <nav className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 scrollbar-none sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">
-          {STEPS.map((step, index) => (
-            <button
-              key={step.id}
-              type="button"
-              onClick={() => index <= currentStep && setCurrentStep(index)}
-              disabled={index > currentStep}
-              className={cn(
-                'flex shrink-0 items-center gap-2 rounded-full border px-3 py-2 text-sm transition-colors',
-                index === currentStep
-                  ? 'border-primary bg-primary text-primary-foreground'
-                  : index < currentStep
-                    ? 'border-primary/30 bg-primary/10 text-primary'
-                    : 'border-border text-muted-foreground',
-              )}
-            >
-              <Syringe className="size-3.5" />
-              {step.label}
-            </button>
-          ))}
+        <nav className="-mx-4 flex min-w-0 gap-1.5 overflow-x-auto px-4 pb-1 scrollbar-none sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">
+          {STEPS.map((step, index) => {
+            const isCompleted = index < currentStep;
+            const isCurrent = index === currentStep;
+
+            return (
+              <button
+                key={step.id}
+                type="button"
+                onClick={() => index <= currentStep && setCurrentStep(index)}
+                disabled={index > currentStep}
+                className={cn(
+                  'flex shrink-0 items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-medium transition-colors',
+                  isCurrent &&
+                    'border-primary bg-primary text-primary-foreground',
+                  isCompleted &&
+                    'border-emerald-950 bg-emerald-50 text-emerald-950 hover:bg-emerald-100',
+                  !isCurrent &&
+                    !isCompleted &&
+                    'border-border bg-background text-muted-foreground',
+                )}
+              >
+                {isCompleted ? (
+                  <Check
+                    className="size-3 shrink-0 text-emerald-950"
+                    strokeWidth={2.5}
+                  />
+                ) : (
+                  <span className="tabular-nums">{index + 1}.</span>
+                )}
+                {step.label}
+              </button>
+            );
+          })}
         </nav>
       )}
 
@@ -412,27 +458,80 @@ export function VaccinationPage() {
         {isFinished ? (
           <Card>
             <CardHeader>
-              <CardTitle>{vaccination.vaccineName}</CardTitle>
+              <CardTitle>{vaccination.vaccineName || 'Vacina'}</CardTitle>
               <CardDescription>
-                Aplicada em{' '}
-                {new Date(vaccination.appliedAt!).toLocaleDateString('pt-BR')}
+                Registro da aplicação e data da próxima dose.
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-2 text-sm">
-              {vaccination.dose ? <p>Dose: {vaccination.dose}</p> : null}
-              {vaccination.batch ? <p>Lote: {vaccination.batch}</p> : null}
-              {vaccination.manufacturer ? (
-                <p>Fabricante: {vaccination.manufacturer}</p>
+            <CardContent className="space-y-5">
+              <dl className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-1">
+                  <dt className="text-xs text-muted-foreground">Dose</dt>
+                  <dd className="text-sm font-medium">
+                    {vaccination.dose || '—'}
+                  </dd>
+                </div>
+                <div className="space-y-1">
+                  <dt className="text-xs text-muted-foreground">Lote</dt>
+                  <dd className="text-sm font-medium">
+                    {vaccination.batch || '—'}
+                  </dd>
+                </div>
+                <div className="space-y-1 sm:col-span-2">
+                  <dt className="text-xs text-muted-foreground">Fabricante</dt>
+                  <dd className="text-sm font-medium">
+                    {vaccination.manufacturer || '—'}
+                  </dd>
+                </div>
+              </dl>
+
+              <Separator />
+
+              <div className="max-w-sm space-y-2">
+                <Label htmlFor="finished-next-dose">Próxima dose</Label>
+                <DatePicker
+                  id="finished-next-dose"
+                  value={form.nextDoseAt}
+                  onChange={(value) =>
+                    setForm((prev) => ({ ...prev, nextDoseAt: value }))
+                  }
+                  placeholder="Sem reforço agendado"
+                />
+              </div>
+
+              {vaccination.notes ? (
+                <div className="space-y-1">
+                  <p className="text-xs text-muted-foreground">Observações</p>
+                  <p className="text-sm whitespace-pre-wrap">
+                    {vaccination.notes}
+                  </p>
+                </div>
               ) : null}
-              {vaccination.nextDoseAt ? (
-                <p>
-                  Próxima dose:{' '}
-                  {new Date(vaccination.nextDoseAt).toLocaleDateString('pt-BR')}
-                </p>
-              ) : (
-                <p>Sem reforço agendado</p>
-              )}
-              {vaccination.notes ? <p>Observações: {vaccination.notes}</p> : null}
+
+              <Separator />
+
+              <div className="flex flex-wrap items-center justify-end gap-2">
+                <Button
+                  type="button"
+                  variant="destructive"
+                  onClick={() => setDeleteOpen(true)}
+                >
+                  Excluir vacina
+                </Button>
+                <Button
+                  type="button"
+                  action="save"
+                  onClick={() => void handleSaveNextDose()}
+                  disabled={
+                    updateVaccination.isPending ||
+                    form.nextDoseAt === savedNextDoseAt
+                  }
+                >
+                  {updateVaccination.isPending
+                    ? 'Salvando...'
+                    : 'Salvar alterações'}
+                </Button>
+              </div>
             </CardContent>
           </Card>
         ) : currentStep === 0 ? (
@@ -584,6 +683,7 @@ export function VaccinationPage() {
               <Button
                 type="button"
                 className="flex-1"
+                action="continue"
                 onClick={() => void handleContinue()}
                 disabled={updateVaccination.isPending}
               >
@@ -594,6 +694,7 @@ export function VaccinationPage() {
               <Button
                 type="button"
                 className="flex-1"
+                action="finish"
                 onClick={() => void handleFinish()}
                 disabled={finishVaccination.isPending}
               >
@@ -624,6 +725,30 @@ export function VaccinationPage() {
               disabled={deleteVaccination.isPending}
             >
               {deleteVaccination.isPending ? 'Cancelando...' : 'Confirmar'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Excluir vacina?</DialogTitle>
+            <DialogDescription>
+              O registro aplicado, o lembrete e o agendamento da próxima dose
+              serão removidos.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteOpen(false)}>
+              Voltar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => void handleConfirmDelete()}
+              disabled={deleteVaccination.isPending}
+            >
+              {deleteVaccination.isPending ? 'Excluindo...' : 'Excluir'}
             </Button>
           </DialogFooter>
         </DialogContent>

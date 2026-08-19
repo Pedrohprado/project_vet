@@ -1,4 +1,4 @@
-import { Building2, CreditCard, Home } from 'lucide-react';
+import { Building2, CreditCard, Home, Lightbulb, MessagesSquare } from 'lucide-react';
 import { useLocation } from 'react-router';
 import { BrandLogo } from '@/components/brand/brand-logo';
 import { NavMain } from '@/components/nav-main';
@@ -22,6 +22,11 @@ const navItems = [
   { title: 'Financeiro', url: '/admin/financeiro', icon: CreditCard },
 ];
 
+const communityNavItems = [
+  { title: 'Comunidade', url: '/admin/comunidade', icon: MessagesSquare },
+  { title: 'Roadmap', url: '/admin/roadmap', icon: Lightbulb },
+];
+
 export function AdminSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { user, logout } = useAuth();
   const location = useLocation();
@@ -33,6 +38,12 @@ export function AdminSidebar({ ...props }: React.ComponentProps<typeof Sidebar>)
       item.url === '/admin'
         ? location.pathname === '/admin'
         : location.pathname.startsWith(item.url),
+  }));
+
+  const communityItems = communityNavItems.map((item) => ({
+    ...item,
+    icon: <item.icon />,
+    isActive: location.pathname.startsWith(item.url),
   }));
 
   return (
@@ -59,6 +70,7 @@ export function AdminSidebar({ ...props }: React.ComponentProps<typeof Sidebar>)
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={items} />
+        <NavMain items={communityItems} label="Comunidade" />
       </SidebarContent>
       <SidebarFooter>
         {user ? <NavUser user={user} onLogout={logout} /> : null}

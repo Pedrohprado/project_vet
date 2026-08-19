@@ -1,3 +1,4 @@
+import { LandingCommunity } from '@/components/landing/landing-community';
 import { LandingCta } from '@/components/landing/landing-cta';
 import { LandingFaq } from '@/components/landing/landing-faq';
 import { LandingFeatures } from '@/components/landing/landing-features';
@@ -17,6 +18,7 @@ export function LandingPage() {
       <LandingHowItWorks />
       <LandingMetrics />
       <LandingTestimonials />
+      <LandingCommunity />
       <LandingMigration />
       <LandingPricing />
       <LandingFaq />

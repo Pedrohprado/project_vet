@@ -9,7 +9,6 @@ import {
   ChevronRight,
   FileDown,
   MessagesSquare,
-  PawPrint,
   Pill,
   Plus,
   Trash2,
@@ -24,7 +23,7 @@ import { ConsultationWhatsAppReviewDialog } from '@/components/consultation/cons
 import { ShareCommunityCaseDialog } from '@/components/community/share-community-case-dialog';
 import { PetWeightDialog } from '@/components/pet/pet-weight-dialog';
 import { ConsultationAttachmentsCard } from '@/components/consultation/consultation-attachments-card';
-import { Badge } from '@/components/ui/badge';
+import { ServiceDetailHeader } from '@/components/service-detail-header';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { FormField } from '@/components/ui/form-field';
@@ -52,12 +51,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import {
   pageShellClassName,
-  pageTitleClassName,
   stickyActionBarClassName,
 } from '@/lib/mobile-ui';
 import { Textarea } from '@/components/ui/textarea';
@@ -134,6 +131,18 @@ const STEPS = [
   { id: 'prescription', label: 'Receita' },
   { id: 'return', label: 'Retorno' },
 ] as const;
+
+const consultationCardClassName = 'ring-0 shadow-none';
+
+const consultationStatusBadgeClassName: Record<
+  Consultation['status'],
+  string
+> = {
+  OPEN: 'border-amber-500/30 bg-amber-500/12 text-amber-800',
+  RETURN_SCHEDULED: 'border-transparent bg-sky-700 text-white',
+  FINISHED: 'border-transparent bg-emerald-700 text-white',
+  CANCELLED: 'border-border bg-muted text-muted-foreground',
+};
 
 function stepStorageKey(consultationId: string) {
   return `consultation-step-${consultationId}`;
@@ -831,9 +840,11 @@ export function ConsultationPage() {
         parentId: consultation.parentConsultationId ?? undefined,
       });
       toast.success(
-        consultation.parentConsultationId
-          ? 'Retorno cancelado.'
-          : 'Consulta cancelada.',
+        consultation.status === 'FINISHED'
+          ? 'Consulta excluída.'
+          : consultation.parentConsultationId
+            ? 'Retorno cancelado.'
+            : 'Consulta cancelada.',
       );
       setCancelOpen(false);
       void navigate(
@@ -843,7 +854,11 @@ export function ConsultationPage() {
       );
     } catch (err) {
       toast.error(
-        err instanceof ApiError ? err.message : 'Erro ao cancelar consulta',
+        err instanceof ApiError
+          ? err.message
+          : consultation.status === 'FINISHED'
+            ? 'Erro ao excluir consulta'
+            : 'Erro ao cancelar consulta',
       );
     }
   }
@@ -913,200 +928,163 @@ export function ConsultationPage() {
 
   return (
     <div className={pageShellClassName}>
-      <div className='flex flex-col gap-3'>
-        <div className='min-w-0 space-y-3'>
-          <div className='flex flex-wrap items-center gap-2'>
-            <Badge variant={isReadOnly ? 'secondary' : 'default'}>
-              {consultationStatusLabel}
-            </Badge>
-          </div>
-          <h1 className={pageTitleClassName}>
-            {isReturnVisit ? 'Retorno' : 'Consulta'}
-          </h1>
-          <div className='space-y-2'>
-            <div className='flex items-start gap-2.5'>
-              <Avatar className='size-9 shrink-0 sm:size-10'>
-                {petPhotoUrl ? (
-                  <AvatarImage
-                    src={petPhotoUrl}
-                    alt={consultation.pet.name}
-                  />
-                ) : null}
-                <AvatarFallback className='bg-primary/10 text-primary'>
-                  <PawPrint className='size-4' />
-                </AvatarFallback>
-              </Avatar>
-              <div className='min-w-0'>
-                <p className='text-base font-semibold sm:text-lg'>
-                  {consultation.pet.name}
-                </p>
-                <p className='mt-0.5 text-xs text-muted-foreground sm:text-sm'>
-                  {consultation.pet.birthDate
-                    ? formatPetAge(consultation.pet.birthDate)
-                    : 'Idade não informada'}{' '}
-                  ·{' '}
-                  {consultation.pet.weightKg
-                    ? formatPetWeight(consultation.pet.weightKg)
-                    : 'Peso não informado'}
-                </p>
-              </div>
-            </div>
-            <p className='text-sm font-medium sm:text-base'>
-              {consultation.tutor.name}
+      <ServiceDetailHeader
+        backTo={`/tutors/${consultation.tutorId}/pets/${consultation.petId}`}
+        title={isReturnVisit ? 'Retorno' : 'Consulta'}
+        statusLabel={consultationStatusLabel}
+        statusVariant='outline'
+        statusClassName={consultationStatusBadgeClassName[consultation.status]}
+        petName={consultation.pet.name}
+        petPhotoUrl={petPhotoUrl}
+        petSubtitle={[
+          consultation.pet.birthDate
+            ? formatPetAge(consultation.pet.birthDate)
+            : 'Idade não informada',
+          consultation.pet.weightKg
+            ? formatPetWeight(consultation.pet.weightKg)
+            : 'Peso não informado',
+        ].join(' · ')}
+        tutorName={consultation.tutor.name}
+        meta={[
+          { label: 'Data', value: `${startDate} · ${startTime}` },
+          {
+            label: 'Veterinário',
+            value: consultation.veterinarian.name,
+          },
+        ]}
+        highlight={
+          isReturnScheduledParent && consultation.returnDate ? (
+            <p className='rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200'>
+              Retorno agendado para{' '}
+              {new Date(consultation.returnDate).toLocaleString('pt-BR', {
+                dateStyle: 'short',
+                timeStyle: 'short',
+              })}
             </p>
-            <p className='text-xs text-muted-foreground sm:text-sm'>
-              {startDate} · {startTime}
-            </p>
-            <p className='text-xs text-muted-foreground sm:text-sm'>
-              Veterinário: {consultation.veterinarian.name}
-            </p>
-            {isReturnScheduledParent && consultation.returnDate ? (
-              <p className='text-sm font-medium text-amber-800 dark:text-amber-200'>
-                Retorno agendado para{' '}
-                {new Date(consultation.returnDate).toLocaleString('pt-BR', {
-                  dateStyle: 'short',
-                  timeStyle: 'short',
-                })}
-              </p>
-            ) : null}
-          </div>
-        </div>
-        {!isReadOnly && !isReturnVisit && (
-          <Button
-            type='button'
-            variant='outline'
-            className='w-full text-destructive hover:text-destructive sm:w-auto sm:self-start'
-            onClick={() => setCancelOpen(true)}
-            disabled={isFetching || deleteConsultation.isPending}
-          >
-            Cancelar consulta
-          </Button>
-        )}
-        {!isReadOnly && isReturnVisit && (
-          <Button
-            type='button'
-            variant='outline'
-            className='w-full text-destructive hover:text-destructive sm:w-auto sm:self-start'
-            onClick={() => setCancelOpen(true)}
-            disabled={isFetching || deleteConsultation.isPending}
-          >
-            Cancelar retorno
-          </Button>
-        )}
-        {isReturnScheduledParent ? (
-          <div className='flex flex-wrap gap-2'>
-            {openReturnChild ? (
+          ) : null
+        }
+        actions={
+          <>
+            {!isReadOnly && !isReturnVisit && (
               <Button
                 type='button'
-                className='w-full sm:w-auto'
-                onClick={() =>
-                  void navigate(`/consultations/${openReturnChild.id}`)
-                }
+                variant='destructive'
+                onClick={() => setCancelOpen(true)}
+                disabled={isFetching || deleteConsultation.isPending}
               >
-                Continuar retorno
+                Cancelar consulta
               </Button>
-            ) : (
+            )}
+            {!isReadOnly && isReturnVisit && (
+              <Button
+                type='button'
+                variant='destructive'
+                onClick={() => setCancelOpen(true)}
+                disabled={isFetching || deleteConsultation.isPending}
+              >
+                Cancelar retorno
+              </Button>
+            )}
+            {isReturnScheduledParent ? (
               <>
+                {openReturnChild ? (
+                    <Button
+                    type='button'
+                    action='continue'
+                    onClick={() =>
+                      void navigate(`/consultations/${openReturnChild.id}`)
+                    }
+                  >
+                    Continuar retorno
+                  </Button>
+                ) : (
+                  <>
+                    <Button
+                      type='button'
+                      action='add'
+                      disabled={createReturnConsultation.isPending}
+                      onClick={() => void handleStartReturnFromDetail()}
+                    >
+                      {createReturnConsultation.isPending
+                        ? 'Iniciando...'
+                        : 'Iniciar retorno'}
+                    </Button>
+                    <Button
+                      type='button'
+                      variant='destructive'
+                      disabled={cancelScheduledReturn.isPending}
+                      onClick={() => setCancelScheduledReturnOpen(true)}
+                    >
+                      Cancelar retorno
+                    </Button>
+                  </>
+                )}
                 <Button
                   type='button'
-                  className='w-full sm:w-auto'
-                  disabled={createReturnConsultation.isPending}
-                  onClick={() => void handleStartReturnFromDetail()}
+                  variant='outline'
+                  disabled={isGeneratingSummary || whatsappReviewOpen}
+                  onClick={() => void handleResendPostSummary()}
                 >
-                  {createReturnConsultation.isPending
-                    ? 'Iniciando...'
-                    : 'Iniciar retorno'}
+                  <Check className='size-4 text-emerald-700' />
+                  Pós-consulta enviado
                 </Button>
                 <Button
                   type='button'
                   variant='outline'
-                  className='w-full text-destructive hover:text-destructive sm:w-auto'
-                  disabled={cancelScheduledReturn.isPending}
-                  onClick={() => setCancelScheduledReturnOpen(true)}
+                  action='share'
+                  disabled={consultation.sharedInCommunity}
+                  onClick={() => setShareCommunityOpen(true)}
                 >
-                  Cancelar retorno
+                  <MessagesSquare className='size-4' />
+                  {consultation.sharedInCommunity
+                    ? 'Já compartilhada'
+                    : 'Compartilhar na comunidade'}
                 </Button>
               </>
+            ) : null}
+            {isReadOnly && !isReturnScheduledParent && (
+              <>
+                {consultation.status === 'FINISHED' ? (
+                  <Button
+                    type='button'
+                    variant='outline'
+                    disabled={isGeneratingSummary || whatsappReviewOpen}
+                    onClick={() => void handleResendPostSummary()}
+                  >
+                    <Check className='size-4 text-emerald-700' />
+                    Pós-consulta enviado
+                  </Button>
+                ) : null}
+                {consultation.status === 'FINISHED' ? (
+                  <Button
+                    type='button'
+                    variant='outline'
+                    action='share'
+                    disabled={consultation.sharedInCommunity}
+                    onClick={() => setShareCommunityOpen(true)}
+                  >
+                    <MessagesSquare className='size-4' />
+                    {consultation.sharedInCommunity
+                      ? 'Já compartilhada'
+                      : 'Compartilhar na comunidade'}
+                  </Button>
+                ) : null}
+                {consultation.status === 'FINISHED' ? (
+                  <Button
+                    type='button'
+                    variant='destructive'
+                    onClick={() => setCancelOpen(true)}
+                    disabled={deleteConsultation.isPending}
+                  >
+                    <Trash2 className='size-4' />
+                    Excluir consulta
+                  </Button>
+                ) : null}
+              </>
             )}
-            <Button
-              type='button'
-              variant='outline'
-              className='w-full border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 hover:text-emerald-900 sm:w-auto dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300 dark:hover:bg-emerald-500/15'
-              disabled={isGeneratingSummary || whatsappReviewOpen}
-              onClick={() => void handleResendPostSummary()}
-            >
-              <Check className='size-4' />
-              Pós-consulta enviado
-            </Button>
-            <Button
-              type='button'
-              variant='outline'
-              className='w-full sm:w-auto'
-              disabled={consultation.sharedInCommunity}
-              onClick={() => setShareCommunityOpen(true)}
-            >
-              <MessagesSquare className='size-4' />
-              {consultation.sharedInCommunity
-                ? 'Já compartilhada'
-                : 'Compartilhar na comunidade'}
-            </Button>
-            <Button
-              type='button'
-              variant='outline'
-              className='w-full sm:w-auto'
-              render={
-                <Link
-                  to={`/tutors/${consultation.tutorId}/pets/${consultation.petId}`}
-                />
-              }
-            >
-              Ir para ficha do pet
-            </Button>
-          </div>
-        ) : null}
-        {isReadOnly && !isReturnScheduledParent && (
-          <div className='flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:self-start'>
-            {consultation.status === 'FINISHED' ? (
-              <Button
-                type='button'
-                variant='outline'
-                className='w-full border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 hover:text-emerald-900 sm:w-auto dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300 dark:hover:bg-emerald-500/15'
-                disabled={isGeneratingSummary || whatsappReviewOpen}
-                onClick={() => void handleResendPostSummary()}
-              >
-                <Check className='size-4' />
-                Pós-consulta enviado
-              </Button>
-            ) : null}
-            {consultation.status === 'FINISHED' ? (
-              <Button
-                type='button'
-                variant='outline'
-                className='w-full sm:w-auto'
-                disabled={consultation.sharedInCommunity}
-                onClick={() => setShareCommunityOpen(true)}
-              >
-                <MessagesSquare className='size-4' />
-                {consultation.sharedInCommunity
-                  ? 'Já compartilhada'
-                  : 'Compartilhar na comunidade'}
-              </Button>
-            ) : null}
-            <Button
-              type='button'
-              variant='outline'
-              className='w-full sm:w-auto'
-              render={
-                <Link
-                  to={`/tutors/${consultation.tutorId}/pets/${consultation.petId}`}
-                />
-              }
-            >
-              Ir para ficha do pet
-            </Button>
-          </div>
-        )}
-      </div>
+          </>
+        }
+      />
 
       {!isReadOnly && (
         <div className='flex items-center justify-between gap-3'>
@@ -1126,7 +1104,7 @@ export function ConsultationPage() {
                     isCurrent &&
                       'border-primary bg-primary text-primary-foreground',
                     isCompleted &&
-                      'border-emerald-950 bg-emerald-50 text-emerald-950! hover:bg-emerald-100',
+                      'border-transparent bg-emerald-700 text-white hover:bg-emerald-800',
                     !isCurrent &&
                       !isCompleted &&
                       'border-border bg-background text-muted-foreground',
@@ -1134,7 +1112,7 @@ export function ConsultationPage() {
                 >
                   {isCompleted ? (
                     <Check
-                      className='size-3 shrink-0 text-emerald-950'
+                      className='size-3 shrink-0 text-white'
                       strokeWidth={2.5}
                     />
                   ) : (
@@ -1176,7 +1154,7 @@ export function ConsultationPage() {
 
       <div ref={stepRef}>
         {(isReadOnly || currentStep === 0) && (
-          <Card>
+          <Card className={consultationCardClassName}>
             <CardHeader>
               <CardTitle>1. Anamnese</CardTitle>
               {!isReadOnly && (
@@ -1272,7 +1250,10 @@ export function ConsultationPage() {
 
         {(isReadOnly || currentStep === 1) && (
           <Card
-            className={!isReadOnly && currentStep === 1 ? '' : 'mt-4 sm:mt-6'}
+            className={cn(
+              consultationCardClassName,
+              !isReadOnly && currentStep === 1 ? '' : 'mt-4 sm:mt-6',
+            )}
           >
             <CardHeader>
               <CardTitle>2. Diagnóstico e conduta</CardTitle>
@@ -1325,7 +1306,7 @@ export function ConsultationPage() {
         ) : null}
 
         {(isReadOnly || currentStep === 3) && (
-          <Card className='mt-4 sm:mt-6'>
+          <Card className={cn(consultationCardClassName, 'mt-4 sm:mt-6')}>
             <CardHeader className='gap-3 sm:flex-row sm:items-start sm:justify-between'>
               <div className='space-y-1'>
                 <CardTitle>4. Receita</CardTitle>
@@ -1769,6 +1750,7 @@ export function ConsultationPage() {
                         </Button>
                         <Button
                           type='submit'
+                          action='add'
                           disabled={addPrescription.isPending}
                         >
                           {addPrescription.isPending
@@ -1785,7 +1767,7 @@ export function ConsultationPage() {
         )}
 
         {(isReadOnly || currentStep === 4) && (
-          <Card className='mt-4 sm:mt-6'>
+          <Card className={cn(consultationCardClassName, 'mt-4 sm:mt-6')}>
             <CardHeader>
               <CardTitle>5. Retorno</CardTitle>
               {!isReadOnly && (
@@ -1868,6 +1850,7 @@ export function ConsultationPage() {
               <Button
                 size='lg'
                 className='flex-1'
+                action='finish'
                 onClick={() => void handleFinish()}
                 disabled={
                   finishConsultation.isPending || whatsappReviewOpen
@@ -1878,6 +1861,7 @@ export function ConsultationPage() {
             ) : (
               <Button
                 className='flex-1'
+                action='continue'
                 onClick={handleContinue}
                 disabled={updateConsultation.isPending}
               >
@@ -1932,10 +1916,20 @@ export function ConsultationPage() {
         <DialogContent className='sm:max-w-md'>
           <DialogHeader>
             <DialogTitle>
-              {isReturnVisit ? 'Cancelar retorno?' : 'Cancelar consulta?'}
+              {consultation.status === 'FINISHED'
+                ? 'Excluir consulta?'
+                : isReturnVisit
+                  ? 'Cancelar retorno?'
+                  : 'Cancelar consulta?'}
             </DialogTitle>
             <DialogDescription>
-              {isReturnVisit ? (
+              {consultation.status === 'FINISHED' ? (
+                <>
+                  A consulta finalizada de{' '}
+                  <strong>{consultation.pet.name}</strong> será removida
+                  permanentemente. Esta ação não tem volta.
+                </>
+              ) : isReturnVisit ? (
                 <>
                   O retorno em andamento de{' '}
                   <strong>{consultation.pet.name}</strong> será removido e o
@@ -1966,10 +1960,14 @@ export function ConsultationPage() {
               disabled={deleteConsultation.isPending}
             >
               {deleteConsultation.isPending
-                ? 'Cancelando...'
-                : isReturnVisit
-                  ? 'Cancelar retorno'
-                  : 'Cancelar consulta'}
+                ? consultation.status === 'FINISHED'
+                  ? 'Excluindo...'
+                  : 'Cancelando...'
+                : consultation.status === 'FINISHED'
+                  ? 'Excluir consulta'
+                  : isReturnVisit
+                    ? 'Cancelar retorno'
+                    : 'Cancelar consulta'}
             </Button>
           </DialogFooter>
         </DialogContent>

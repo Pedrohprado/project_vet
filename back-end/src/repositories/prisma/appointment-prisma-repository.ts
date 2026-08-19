@@ -145,6 +145,21 @@ export class AppointmentPrismaRepository {
     });
   }
 
+  async cancelPendingNextDosesForVaccination(
+    clinicId: string,
+    sourceVaccinationId: string,
+  ) {
+    return prisma.appointment.updateMany({
+      where: {
+        clinicId,
+        sourceVaccinationId,
+        type: AppointmentType.VACCINATION,
+        status: { in: pendingStatuses },
+      },
+      data: { status: AppointmentStatus.CANCELLED },
+    });
+  }
+
   async findManyInRange(clinicId: string, start: Date, end: Date) {
     return prisma.appointment.findMany({
       where: {

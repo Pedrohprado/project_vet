@@ -3,8 +3,10 @@ import { authMiddleware } from '../../middlewares/auth-middleware.js';
 import { platformAdminMiddleware } from '../../middlewares/platform-admin-middleware.js';
 import {
   getPlatformStats,
+  getPlatformVeterinarianRelations,
   listPlatformClinics,
   listPlatformTutors,
+  listPlatformVeterinarians,
   updatePlatformClinicStatus,
 } from '../controllers/platform-controller.js';
 
@@ -15,4 +17,10 @@ export async function platformRoutes(app: FastifyInstance) {
   app.get('/clinics', { preHandler: protectedHandlers }, listPlatformClinics);
   app.patch('/clinics/:id', { preHandler: protectedHandlers }, updatePlatformClinicStatus);
   app.get('/tutors', { preHandler: protectedHandlers }, listPlatformTutors);
+  app.get('/veterinarians', { preHandler: protectedHandlers }, listPlatformVeterinarians);
+  app.get(
+    '/veterinarian-relations',
+    { preHandler: protectedHandlers },
+    getPlatformVeterinarianRelations,
+  );
 }

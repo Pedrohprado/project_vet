@@ -122,6 +122,7 @@ export async function updateVaccination(
 
   const vaccination = await vaccinationService.update(
     request.tenantId,
+    request.authUser.id,
     id,
     parsed.data,
   );

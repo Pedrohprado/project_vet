@@ -29,12 +29,20 @@ async function seedPlatformAdmin() {
     where: { email, role: UserRole.SUPER_ADMIN },
   });
 
+  const hashedPassword = await hashPassword(password);
+
   if (existing) {
-    console.log(`Super admin já existe: ${existing.email}`);
+    await prisma.user.update({
+      where: { id: existing.id },
+      data: {
+        name,
+        password: hashedPassword,
+        isActive: true,
+      },
+    });
+    console.log(`Super admin atualizado: ${existing.email}`);
     return;
   }
-
-  const hashedPassword = await hashPassword(password);
 
   const user = await prisma.user.create({
     data: {

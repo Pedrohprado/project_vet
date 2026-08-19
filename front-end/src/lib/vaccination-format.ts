@@ -1,4 +1,5 @@
 import { addDays, startOfDay } from 'date-fns';
+import { toClinicDate } from '@/lib/clinic-date';
 import type { Vaccination, VaccinationStatusKind } from '@/types/vaccination';
 import { VACCINATION_STATUS_LABELS } from '@/types/vaccination';
 
@@ -14,7 +15,7 @@ export function getVaccinationStatus(
     return 'NO_REINFORCEMENT';
   }
 
-  const nextDose = startOfDay(new Date(vaccination.nextDoseAt));
+  const nextDose = startOfDay(toClinicDate(vaccination.nextDoseAt));
   const today = startOfDay(referenceDate);
 
   if (nextDose < today) {
@@ -55,7 +56,7 @@ export function formatVaccinationDate(iso: string | null | undefined) {
     return '—';
   }
 
-  return new Date(iso).toLocaleDateString('pt-BR');
+  return toClinicDate(iso).toLocaleDateString('pt-BR');
 }
 
 export function groupLatestVaccinationsByName(vaccinations: Vaccination[]) {

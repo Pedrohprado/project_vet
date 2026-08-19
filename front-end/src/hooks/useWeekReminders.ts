@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { listAppointments } from '@/api/appointments';
 import { listDueVaccinations } from '@/api/vaccinations';
+import { toClinicDate } from '@/lib/clinic-date';
 import { getWeekRange } from '@/lib/week-range';
 import { APPOINTMENT_TYPE_LABELS } from '@/types/appointment';
 import type { WeekReminderItem } from '@/types/home';
@@ -25,7 +26,7 @@ function mapToWeekReminders(
   const vaccineItems: WeekReminderItem[] = dueVaccinations.map((item) => ({
     id: `vaccine-dose-${item.id}`,
     kind: 'VACCINE_DOSE' as const,
-    at: item.nextDoseAt,
+    at: toClinicDate(item.nextDoseAt).toISOString(),
     title: item.vaccineName || 'Próxima dose de vacina',
     subtitle: `${item.pet.name} · ${item.tutor.name}`,
     href: `/tutors/${item.tutor.id}/pets/${item.pet.id}`,

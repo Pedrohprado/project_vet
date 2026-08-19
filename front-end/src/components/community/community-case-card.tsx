@@ -2,6 +2,7 @@ import { useState } from 'react';
 import {
   EllipsisVertical,
   Heart,
+  Calendar,
   MapPin,
   MessageCircle,
   Pencil,
@@ -17,6 +18,7 @@ import { CommunityCaseMeta } from '@/components/community/community-case-meta';
 import { EditCommunityCaseDialog } from '@/components/community/edit-community-case-dialog';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -34,13 +36,26 @@ import { cn } from '@/lib/utils';
 import type { CommunityCase } from '@/types/community';
 
 function formatPostDate(value: string) {
+  const date = new Date(value);
+  const diffMs = Date.now() - date.getTime();
+  const diffMin = Math.round(diffMs / 60_000);
+
+  if (diffMin < 1) return 'Agora';
+  if (diffMin < 60) return `Há ${diffMin} min`;
+
+  const diffHours = Math.round(diffMin / 60);
+  if (diffHours < 24) return `Há ${diffHours} h`;
+
+  const diffDays = Math.round(diffHours / 24);
+  if (diffDays < 7) return `Há ${diffDays} d`;
+
   return new Intl.DateTimeFormat('pt-BR', {
     day: '2-digit',
     month: 'short',
     year: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
-  }).format(new Date(value));
+  }).format(date);
 }
 
 type CommunityCaseCardProps = {
@@ -89,67 +104,91 @@ export function CommunityCaseCard({
   }
 
   return (
-    <article className="w-full py-4 sm:py-5">
-      {/* Mobile: header estilo feed (avatar + nome + menu) */}
-      <div className="flex w-full items-start gap-3 sm:hidden">
-        <Avatar className="size-10 shrink-0">
-          <AvatarFallback className="bg-primary/10 text-xs font-medium text-primary">
-            {getAuthorInitials(communityCase.author.name)}
-          </AvatarFallback>
-        </Avatar>
+    <Card className="rounded-2xl bg-card shadow-none ring-0">
+      <CardContent className="space-y-3">
+        <div className="flex items-start gap-3">
+          <Avatar className="size-10 shrink-0 sm:size-11">
+            <AvatarFallback className="bg-primary/10 text-xs font-medium text-primary sm:text-sm">
+              {getAuthorInitials(communityCase.author.name)}
+            </AvatarFallback>
+          </Avatar>
 
-        <div className="min-w-0 flex-1">
-          <div className="flex items-start justify-between gap-2">
-            <div className="min-w-0">
-              <p className="truncate text-sm font-semibold">
-                {communityCase.author.name}
-              </p>
-              <p className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
-                <MapPin className="size-3 shrink-0" aria-hidden />
-                <span className="truncate">{communityCase.clinic.name}</span>
-              </p>
-            </div>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold">
+                  {communityCase.author.name}
+                </p>
+                {communityCase.author.crmv ? (
+                  <p className="truncate text-xs text-muted-foreground">
+                    CRMV {communityCase.author.crmv}
+                  </p>
+                ) : null}
+                <div className="mt-1 space-y-0.5 text-xs text-muted-foreground sm:text-sm">
+                  <p className="hidden min-w-0 items-center gap-1 sm:flex">
+                    <MapPin className="size-3.5 shrink-0" aria-hidden />
+                    <span className="min-w-0 truncate">
+                      {communityCase.clinic.name}
+                    </span>
+                    <span className="shrink-0">·</span>
+                    <span className="shrink-0">
+                      {formatPostDate(communityCase.createdAt)}
+                    </span>
+                  </p>
 
-            {isAuthor ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger
-                  render={
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon-sm"
-                      className="-mr-1 text-muted-foreground"
-                      aria-label="Mais opções"
-                    />
-                  }
-                >
-                  <EllipsisVertical className="size-4" />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => setEditOpen(true)}>
-                    <Pencil className="size-4" />
-                    Editar
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    variant="destructive"
-                    disabled={deleteMutation.isPending}
-                    onClick={() => void handleDelete()}
+                  <div className="space-y-0.5 sm:hidden">
+                    <p className="flex min-w-0 items-start gap-1">
+                      <MapPin className="mt-0.5 size-3.5 shrink-0" aria-hidden />
+                      <span className="min-w-0 break-words">
+                        {communityCase.clinic.name}
+                      </span>
+                    </p>
+                    <p className="flex min-w-0 items-start gap-1">
+                      <Calendar className="mt-0.5 size-3.5 shrink-0" aria-hidden />
+                      <span>{formatPostDate(communityCase.createdAt)}</span>
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {isAuthor ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger
+                    render={
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-sm"
+                        className="-mr-1 text-muted-foreground"
+                        aria-label="Mais opções"
+                      />
+                    }
                   >
-                    <Trash2 className="size-4" />
-                    Excluir
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            ) : null}
+                    <EllipsisVertical className="size-4" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => setEditOpen(true)}>
+                      <Pencil className="size-4" />
+                      Editar
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      variant="destructive"
+                      disabled={deleteMutation.isPending}
+                      onClick={() => void handleDelete()}
+                    >
+                      <Trash2 className="size-4" />
+                      Excluir
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : null}
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Mobile body full-width */}
-      <div className="mt-3 w-full space-y-3 sm:hidden">
         <CommunityCaseMeta communityCase={communityCase} showVitals />
 
-        <div className="w-full space-y-2">
+        <div className="space-y-2">
           <h2 className="text-base font-semibold tracking-tight">
             {communityCase.title}
           </h2>
@@ -183,16 +222,18 @@ export function CommunityCaseCard({
               className="text-sm font-medium text-primary hover:underline"
               onClick={() => setExpanded((current) => !current)}
             >
-              {expanded ? 'Ver menos' : 'Ler mais...'}
+              {expanded ? 'Ver menos' : 'Ler mais'}
             </button>
           ) : null}
         </div>
 
-        <div className="flex items-center gap-5 text-sm text-muted-foreground">
-          <button
+        <div className="flex items-center gap-2 pt-1">
+          <Button
             type="button"
+            variant="ghost"
+            size="sm"
             className={cn(
-              'inline-flex items-center gap-1.5 transition-colors hover:text-rose-500',
+              'h-8 gap-1.5 px-2.5 text-muted-foreground hover:text-rose-500',
               communityCase.likedByMe && 'text-rose-500',
             )}
             disabled={isLiking}
@@ -205,162 +246,27 @@ export function CommunityCaseCard({
               )}
             />
             <span className="tabular-nums">{communityCase.likesCount}</span>
-          </button>
+          </Button>
 
-          <button
+          <Button
             type="button"
-            className="inline-flex items-center gap-1.5 transition-colors hover:text-sky-600"
+            variant="ghost"
+            size="sm"
+            className="h-8 gap-1.5 px-2.5 text-muted-foreground hover:text-sky-700"
             onClick={() => onOpenDetail(communityCase)}
           >
             <MessageCircle className="size-4" />
             <span className="tabular-nums">{communityCase.commentsCount}</span>
-          </button>
+            <span className="hidden sm:inline">Comentários</span>
+          </Button>
         </div>
-
-        <p className="text-xs text-muted-foreground">
-          {formatPostDate(communityCase.createdAt)}
-        </p>
-      </div>
-
-      {/* Desktop: layout com coluna ao lado do avatar */}
-      <div className="hidden w-full gap-3 sm:flex">
-        <Avatar size="lg" className="shrink-0">
-          <AvatarFallback className="bg-primary/10 text-sm font-medium text-primary">
-            {getAuthorInitials(communityCase.author.name)}
-          </AvatarFallback>
-        </Avatar>
-
-        <div className="min-w-0 flex-1 space-y-3">
-          <div className="flex items-start justify-between gap-2">
-            <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-x-1.5">
-                <p className="truncate text-sm font-medium">
-                  {communityCase.author.name}
-                </p>
-                {communityCase.author.crmv ? (
-                  <span className="truncate text-sm text-muted-foreground">
-                    · CRMV {communityCase.author.crmv}
-                  </span>
-                ) : null}
-              </div>
-              <p className="mt-0.5 flex items-center gap-1 text-sm text-muted-foreground">
-                <MapPin className="size-3.5 shrink-0" aria-hidden />
-                <span className="truncate">{communityCase.clinic.name}</span>
-                <span className="mx-0.5">·</span>
-                <span>{formatPostDate(communityCase.createdAt)}</span>
-              </p>
-            </div>
-
-            {isAuthor ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger
-                  render={
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon-sm"
-                      className="text-muted-foreground"
-                      aria-label="Mais opções"
-                    />
-                  }
-                >
-                  <EllipsisVertical className="size-4" />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => setEditOpen(true)}>
-                    <Pencil className="size-4" />
-                    Editar
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    variant="destructive"
-                    disabled={deleteMutation.isPending}
-                    onClick={() => void handleDelete()}
-                  >
-                    <Trash2 className="size-4" />
-                    Excluir
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            ) : null}
-          </div>
-
-          <CommunityCaseMeta communityCase={communityCase} showVitals />
-
-          <div className="w-full space-y-2">
-            <h2 className="text-base font-semibold tracking-tight">
-              {communityCase.title}
-            </h2>
-
-            {communityCase.authorNote ? (
-              <p
-                className={cn(
-                  'whitespace-pre-wrap text-sm text-muted-foreground',
-                  !expanded && 'line-clamp-3',
-                )}
-              >
-                {communityCase.authorNote}
-              </p>
-            ) : null}
-
-            {expanded ? (
-              <CommunityCaseBody
-                mainComplaint={communityCase.mainComplaint}
-                history={communityCase.history}
-                physicalExam={communityCase.physicalExam}
-                diagnosis={communityCase.diagnosis}
-                conduct={communityCase.conduct}
-                observations={communityCase.observations}
-                temperature={communityCase.temperature}
-              />
-            ) : null}
-
-            {canExpand || communityCase.authorNote ? (
-              <button
-                type="button"
-                className="text-sm font-medium text-primary hover:underline"
-                onClick={() => setExpanded((current) => !current)}
-              >
-                {expanded ? 'Ver menos' : 'Ler mais...'}
-              </button>
-            ) : null}
-          </div>
-
-          <div className="flex items-center gap-5 text-sm text-muted-foreground">
-            <button
-              type="button"
-              className={cn(
-                'inline-flex items-center gap-1.5 transition-colors hover:text-rose-500',
-                communityCase.likedByMe && 'text-rose-500',
-              )}
-              disabled={isLiking}
-              onClick={() => void handleToggleLike()}
-            >
-              <Heart
-                className={cn(
-                  'size-4',
-                  communityCase.likedByMe && 'fill-rose-500',
-                )}
-              />
-              <span className="tabular-nums">{communityCase.likesCount}</span>
-            </button>
-
-            <button
-              type="button"
-              className="inline-flex items-center gap-1.5 transition-colors hover:text-sky-600"
-              onClick={() => onOpenDetail(communityCase)}
-            >
-              <MessageCircle className="size-4" />
-              <span className="tabular-nums">{communityCase.commentsCount}</span>
-            </button>
-          </div>
-        </div>
-      </div>
+      </CardContent>
 
       <EditCommunityCaseDialog
         open={editOpen}
         onOpenChange={setEditOpen}
         communityCase={communityCase}
       />
-    </article>
+    </Card>
   );
 }

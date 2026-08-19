@@ -77,16 +77,14 @@ export class ConsultationService {
   async delete(tenantId: string, id: string) {
     const consultation = await this.getById(tenantId, id);
 
-    if (consultation.status !== ConsultationStatus.OPEN) {
-      throw new HttpError('Apenas consultas em andamento podem ser canceladas', 400);
-    }
-
     await deleteConsultationAttachmentDirectory(id);
 
     await consultationRepository.delete(
       tenantId,
       id,
-      consultation.appointmentId,
+      consultation.status === ConsultationStatus.OPEN
+        ? consultation.appointmentId
+        : null,
       consultation.petId,
     );
   }

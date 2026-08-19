@@ -5,6 +5,7 @@ import {
   Heart,
   HeartOff,
   MessageCircle,
+  Lightbulb,
   MessagesSquare,
   PawPrint,
   Bell,
@@ -253,6 +254,36 @@ export const pricingPlans = [
   },
 ] as const;
 
+export const communityRoadmapContent = {
+  title: 'Feito com a comunidade, em público',
+  subtitle:
+    'A BoxVet não é só um sistema da clínica. Veterinários trocam casos reais e acompanham — e sugerem — o que entra no produto.',
+  items: [
+    {
+      icon: MessagesSquare,
+      title: 'Comunidade de casos',
+      description:
+        'Compartilhe atendimentos anonimizados, curta e comente. Um espaço só para membros autenticados, sem dados de tutor ou pet.',
+      highlights: [
+        'Casos clínicos anonimizados',
+        'Curtidas e comentários',
+        'Troca entre veterinários da plataforma',
+      ],
+    },
+    {
+      icon: Lightbulb,
+      title: 'Roadmap público',
+      description:
+        'Construímos em público. Envie uma ideia e veja o que está na fila, em construção e já entregue.',
+      highlights: [
+        'Sugestões da comunidade',
+        'Fila, andamento e concluído',
+        'Você influencia o produto',
+      ],
+    },
+  ],
+} as const;
+
 export const migrationContent = {
   title: 'Migração sem dor de cabeça',
   subtitle:
@@ -291,6 +322,11 @@ export const faqItems = [
       'É um espaço exclusivo para membros autenticados da BoxVet. Veterinários compartilham casos clínicos anonimizados (sem dados de tutor ou pet), curtem e comentam para trocar experiências com a comunidade.',
   },
   {
+    question: 'O que é o Roadmap público?',
+    answer:
+      'É o quadro em que mostramos o que estamos construindo. Qualquer membro autenticado pode enviar uma ideia e acompanhar o que está na fila, em andamento e já entregue.',
+  },
+  {
     question: 'Posso cancelar quando quiser?',
     answer: 'Sempre. Você pode cancelar sua assinatura a qualquer momento.',
   },
@@ -309,6 +345,7 @@ export const ctaContent = {
 export const navLinks = [
   { label: 'Recursos', href: '#recursos' },
   { label: 'Como funciona', href: '#como-funciona' },
+  { label: 'Comunidade', href: '#comunidade' },
   { label: 'Migração', href: '#migracao' },
   { label: 'Planos', href: '#planos' },
   { label: 'FAQ', href: '#faq' },

@@ -1,4 +1,7 @@
+import { Link } from 'react-router';
+import { Calendar, Plus, Users } from 'lucide-react';
 import { OPEN_BOX_SRC } from '@/lib/brand';
+import { Button } from '@/components/ui/button';
 
 type HomeHeroProps = {
   userName: string;
@@ -6,11 +9,22 @@ type HomeHeroProps = {
   reminderCount?: number;
 };
 
+function formatToday() {
+  return new Date().toLocaleDateString('pt-BR', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+  });
+}
+
 export function HomeHero({ userName, clinicName, reminderCount }: HomeHeroProps) {
   const firstName = userName.split(' ')[0] ?? userName;
+  const todayLabel = formatToday();
+  const capitalizedToday =
+    todayLabel.charAt(0).toUpperCase() + todayLabel.slice(1);
 
   return (
-    <section className="relative overflow-hidden rounded-2xl border border-border/50 bg-white/90 p-4 shadow-xl shadow-black/4 backdrop-blur-sm sm:p-5">
+    <section className="relative overflow-hidden rounded-2xl border border-border/50 bg-white/90 p-4 shadow-xl shadow-black/4 backdrop-blur-sm sm:p-6">
       <img
         src={OPEN_BOX_SRC}
         alt=""
@@ -21,22 +35,46 @@ export function HomeHero({ userName, clinicName, reminderCount }: HomeHeroProps)
       />
 
       <div className="relative z-10 max-w-2xl pr-0 sm:pr-28 lg:pr-36">
-        <p className="text-xs font-medium text-primary">
+        <p className="inline-flex rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
           {clinicName ?? 'Sua clínica'}
         </p>
-        <h1 className="mt-0.5 text-xl font-bold tracking-tight sm:text-2xl">
+        <h1 className="mt-2 text-xl font-bold tracking-tight sm:text-2xl">
           Olá, {firstName}!
         </h1>
         <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-          Resumo da clínica para os próximos dias.
+          {capitalizedToday}. Resumo da clínica para os próximos dias.
         </p>
         {reminderCount ? (
-          <p className="mt-2 text-sm text-foreground/80">
+          <a
+            href="#lembretes"
+            className="mt-2 inline-flex text-sm font-medium text-foreground/80 underline-offset-4 hover:underline"
+          >
             {reminderCount === 1
-              ? '1 lembrete na semana.'
-              : `${reminderCount} lembretes na semana.`}
-          </p>
+              ? '1 lembrete na semana'
+              : `${reminderCount} lembretes na semana`}
+          </a>
         ) : null}
+
+        <div className="mt-4 flex flex-wrap gap-2">
+          <Button size="sm" asChild>
+            <Link to="/atendimento">
+              <Plus className="size-4" />
+              Novo atendimento
+            </Link>
+          </Button>
+          <Button size="sm" variant="outline" asChild>
+            <Link to="/agenda">
+              <Calendar className="size-4" />
+              Agenda
+            </Link>
+          </Button>
+          <Button size="sm" variant="outline" asChild>
+            <Link to="/tutors">
+              <Users className="size-4" />
+              Tutores
+            </Link>
+          </Button>
+        </div>
       </div>
     </section>
   );

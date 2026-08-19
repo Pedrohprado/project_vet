@@ -2,6 +2,12 @@ export type ClinicPlan = 'FREE' | 'STARTER' | 'PRO';
 
 export type UserRole = 'VETERINARIAN' | 'ADMIN' | 'SUPER_ADMIN';
 
+export const USER_ROLE_LABELS: Record<UserRole, string> = {
+  VETERINARIAN: 'Veterinário',
+  ADMIN: 'Administrador da clínica',
+  SUPER_ADMIN: 'Administrador da plataforma',
+};
+
 export type Clinic = {
   id: string;
   name: string;

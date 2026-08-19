@@ -3,6 +3,7 @@ import { ATENDIMENTOS_QUERY_KEY } from '@/hooks/useAtendimentos';
 import { CALENDAR_EVENTS_QUERY_KEY } from '@/hooks/useCalendarEvents';
 import { PET_TIMELINE_QUERY_KEY } from '@/hooks/usePetTimeline';
 import { STATS_QUERY_KEY } from '@/hooks/useStats';
+import { WEEK_REMINDERS_QUERY_KEY } from '@/hooks/useWeekReminders';
 import {
   createVaccination,
   deleteVaccination,
@@ -73,6 +74,9 @@ export function useUpdateVaccination() {
       data: Parameters<typeof updateVaccination>[1];
     }) => updateVaccination(id, data),
     onSuccess: (vaccination, { id }) => {
+      void queryClient.invalidateQueries({ queryKey: [CALENDAR_EVENTS_QUERY_KEY] });
+      void queryClient.invalidateQueries({ queryKey: WEEK_REMINDERS_QUERY_KEY });
+      void queryClient.invalidateQueries({ queryKey: STATS_QUERY_KEY });
       void queryClient.invalidateQueries({ queryKey: ['vaccination', id] });
       void queryClient.invalidateQueries({
         queryKey: [PET_VACCINATIONS_QUERY_KEY, vaccination.petId],
@@ -95,6 +99,7 @@ export function useFinishVaccination() {
     onSuccess: (vaccination, { id }) => {
       void queryClient.invalidateQueries({ queryKey: [CALENDAR_EVENTS_QUERY_KEY] });
       void queryClient.invalidateQueries({ queryKey: [ATENDIMENTOS_QUERY_KEY] });
+      void queryClient.invalidateQueries({ queryKey: WEEK_REMINDERS_QUERY_KEY });
       void queryClient.invalidateQueries({ queryKey: ['vaccination', id] });
       void queryClient.invalidateQueries({
         queryKey: ['vaccination', 'open', vaccination.petId],
@@ -118,6 +123,8 @@ export function useDeleteVaccination() {
     onSuccess: (_, { id, petId }) => {
       void queryClient.invalidateQueries({ queryKey: [CALENDAR_EVENTS_QUERY_KEY] });
       void queryClient.invalidateQueries({ queryKey: [ATENDIMENTOS_QUERY_KEY] });
+      void queryClient.invalidateQueries({ queryKey: WEEK_REMINDERS_QUERY_KEY });
+      void queryClient.invalidateQueries({ queryKey: STATS_QUERY_KEY });
       void queryClient.invalidateQueries({ queryKey: ['vaccination'] });
       void queryClient.invalidateQueries({ queryKey: [PET_VACCINATIONS_QUERY_KEY] });
       void queryClient.invalidateQueries({ queryKey: [PET_TIMELINE_QUERY_KEY] });

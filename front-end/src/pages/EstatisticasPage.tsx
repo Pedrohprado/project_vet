@@ -110,6 +110,16 @@ export function EstatisticasPage() {
                   Organize tutores, pets, consultas e agendamentos da{' '}
                   {clinic.name} em um só lugar.
                 </CardDescription>
+                <p className="text-xs text-muted-foreground">
+                  {
+                    [
+                      onboarding.tutorCreated,
+                      onboarding.petRegistered,
+                      onboarding.careStarted,
+                    ].filter(Boolean).length
+                  }
+                  /3 etapas concluídas
+                </p>
               </div>
               <Button
                 type="button"

@@ -14,6 +14,7 @@ import type {
   FinishVaccinationInput,
   UpdateVaccinationInput,
 } from '../https/schemas/vaccination-schema.js';
+import { toClinicNoon } from '../lib/clinic-date.js';
 
 const vaccinationRepository = new VaccinationPrismaRepository();
 const vaccineCatalogRepository = new VaccineCatalogPrismaRepository();
@@ -73,13 +74,9 @@ export class VaccinationService {
   }
 
   async delete(tenantId: string, id: string) {
-    const vaccination = await this.getById(tenantId, id);
-
-    if (vaccination.appliedAt) {
-      throw new HttpError('Não é possível excluir vacinação já aplicada', 400);
-    }
-
+    await this.getById(tenantId, id);
     await notificationService.cancelPendingVaccineReminders(id);
+    await appointmentService.cancelPendingNextDosesForVaccination(tenantId, id);
     await vaccinationRepository.delete(tenantId, id);
   }
 
@@ -132,11 +129,29 @@ export class VaccinationService {
     });
   }
 
-  async update(tenantId: string, id: string, input: UpdateVaccinationInput) {
+  async update(
+    tenantId: string,
+    userId: string,
+    id: string,
+    input: UpdateVaccinationInput,
+  ) {
     const vaccination = await this.getById(tenantId, id);
 
     if (vaccination.appliedAt) {
-      throw new HttpError('Vacinação já foi finalizada', 400);
+      if (input.nextDoseAt === undefined) {
+        throw new HttpError('Vacinação já foi finalizada', 400);
+      }
+
+      const nextDoseAt =
+        input.nextDoseAt === null ? null : toClinicNoon(input.nextDoseAt);
+
+      const updated = await vaccinationRepository.update(tenantId, id, {
+        nextDoseAt,
+      });
+
+      await this.syncNextDoseSchedule(tenantId, userId, updated, nextDoseAt);
+
+      return updated;
     }
 
     if (input.vaccineCatalogItemId) {
@@ -153,7 +168,9 @@ export class VaccinationService {
     const nextDoseAt =
       input.nextDoseAt === null
         ? null
-        : input.nextDoseAt ?? undefined;
+        : input.nextDoseAt
+          ? toClinicNoon(input.nextDoseAt)
+          : undefined;
 
     return vaccinationRepository.update(tenantId, id, pickDefined({
       vaccineCatalogItemId:
@@ -212,7 +229,11 @@ export class VaccinationService {
     const nextDoseAt =
       input.nextDoseAt === null
         ? null
-        : input.nextDoseAt ?? vaccination.nextDoseAt ?? undefined;
+        : input.nextDoseAt
+          ? toClinicNoon(input.nextDoseAt)
+          : vaccination.nextDoseAt
+            ? toClinicNoon(vaccination.nextDoseAt)
+            : undefined;
 
     const result = await prisma.$transaction(async () => {
       const updated = await vaccinationRepository.update(tenantId, id, {
@@ -265,5 +286,58 @@ export class VaccinationService {
     });
 
     return result;
+  }
+
+  private async syncNextDoseSchedule(
+    tenantId: string,
+    userId: string,
+    vaccination: {
+      id: string;
+      petId: string;
+      vaccineName: string;
+      pet: {
+        name: string;
+        tutor: {
+          id: string;
+          name: string;
+          phone: string | null;
+          whatsapp: string | null;
+        };
+      };
+    },
+    nextDoseAt: Date | null,
+  ) {
+    await notificationService.cancelPendingVaccineReminders(vaccination.id);
+
+    if (!nextDoseAt) {
+      await appointmentService.cancelPendingNextDosesForVaccination(
+        tenantId,
+        vaccination.id,
+      );
+      return;
+    }
+
+    const tutor = vaccination.pet.tutor;
+    const vaccineName = vaccination.vaccineName.trim() || 'Vacina';
+
+    await notificationService.createVaccineReminder({
+      clinicId: tenantId,
+      tutorId: tutor.id,
+      petId: vaccination.petId,
+      vaccinationId: vaccination.id,
+      tutorName: tutor.name,
+      recipientPhone: tutor.whatsapp ?? tutor.phone,
+      petName: vaccination.pet.name,
+      vaccineName,
+      nextDoseAt,
+    });
+
+    await appointmentService.upsertNextDose(tenantId, userId, {
+      sourceVaccinationId: vaccination.id,
+      tutorId: tutor.id,
+      petId: vaccination.petId,
+      scheduledAt: nextDoseAt,
+      vaccineName,
+    });
   }
 }

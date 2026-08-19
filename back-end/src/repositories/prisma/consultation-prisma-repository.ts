@@ -334,7 +334,22 @@ export class ConsultationPrismaRepository {
           where: { id: petId, clinicId },
           data: { weightKg: latestRecord?.weightKg ?? null },
         });
+      } else {
+        await tx.petWeightRecord.updateMany({
+          where: { consultationId: id, clinicId },
+          data: { consultationId: null },
+        });
       }
+
+      await tx.appointment.updateMany({
+        where: { sourceConsultationId: id, clinicId },
+        data: { sourceConsultationId: null },
+      });
+
+      await tx.consultation.updateMany({
+        where: { parentConsultationId: id, clinicId },
+        data: { parentConsultationId: null },
+      });
 
       if (appointmentId) {
         await tx.appointment.updateMany({

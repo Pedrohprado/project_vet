@@ -17,8 +17,24 @@ import {
   type WeekReminderKind,
 } from '@/types/home';
 
-function formatReminderDate(value: string) {
-  return new Date(value).toLocaleString('pt-BR', {
+function formatReminderWhen(value: string) {
+  const date = new Date(value);
+  const time = date.toLocaleTimeString('pt-BR', {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const day = new Date(date);
+  day.setHours(0, 0, 0, 0);
+  const diffDays = Math.round((day.getTime() - today.getTime()) / 86_400_000);
+
+  if (diffDays === 0) return `Hoje, ${time}`;
+  if (diffDays === 1) return `Amanhã, ${time}`;
+  if (diffDays === -1) return `Ontem, ${time}`;
+
+  return date.toLocaleString('pt-BR', {
     weekday: 'short',
     day: '2-digit',
     month: '2-digit',
@@ -28,8 +44,13 @@ function formatReminderDate(value: string) {
 }
 
 const kindBadgeClass: Record<WeekReminderKind, string> = {
-  APPOINTMENT: 'bg-sky-500/10 text-sky-700 dark:text-sky-300',
-  VACCINE_DOSE: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300',
+  APPOINTMENT: 'border-transparent bg-sky-700 text-white',
+  VACCINE_DOSE: 'border-transparent bg-emerald-700 text-white',
+};
+
+const kindIconWrapClass: Record<WeekReminderKind, string> = {
+  APPOINTMENT: 'bg-sky-700/10 text-sky-800',
+  VACCINE_DOSE: 'bg-emerald-700/10 text-emerald-800',
 };
 
 const kindIcon: Record<WeekReminderKind, typeof Calendar> = {
@@ -45,14 +66,19 @@ function ReminderRow({ item }: { item: WeekReminderItem }) {
       to={item.href}
       className="flex items-center gap-3 rounded-xl border border-border/60 bg-background/70 px-3 py-3 transition-colors hover:bg-muted/60"
     >
-      <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted">
-        <Icon className="size-4 text-muted-foreground" />
+      <div
+        className={cn(
+          'flex size-9 shrink-0 items-center justify-center rounded-lg',
+          kindIconWrapClass[item.kind],
+        )}
+      >
+        <Icon className="size-4" />
       </div>
       <div className="min-w-0 flex-1">
-        <div className="flex items-start justify-between gap-2 sm:items-center sm:justify-start">
+        <div className="flex items-start justify-between gap-2">
           <p className="min-w-0 truncate text-sm font-medium">{item.title}</p>
           <Badge
-            variant="secondary"
+            variant="outline"
             className={cn(
               'shrink-0 self-center px-1.5 py-0 text-[10px] leading-4',
               kindBadgeClass[item.kind],
@@ -61,9 +87,11 @@ function ReminderRow({ item }: { item: WeekReminderItem }) {
             {WEEK_REMINDER_KIND_LABELS[item.kind]}
           </Badge>
         </div>
-        <p className="mt-1.5 truncate text-xs text-muted-foreground">{item.subtitle}</p>
-        <p className="mt-0.5 text-xs text-muted-foreground">
-          {formatReminderDate(item.at)}
+        <p className="mt-1.5 truncate text-xs text-muted-foreground">
+          {item.subtitle}
+        </p>
+        <p className="mt-0.5 text-xs font-medium text-foreground/80">
+          {formatReminderWhen(item.at)}
         </p>
       </div>
       <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
@@ -83,7 +111,10 @@ export function HomeWeekReminders({
   error,
 }: HomeWeekRemindersProps) {
   return (
-    <Card className="rounded-2xl border border-border/50 bg-white/90 shadow-xl shadow-black/4 backdrop-blur-sm">
+    <Card
+      id="lembretes"
+      className="scroll-mt-4 rounded-2xl border border-border/50 bg-white/90 shadow-xl shadow-black/4 backdrop-blur-sm"
+    >
       <CardHeader className="flex flex-col gap-3 space-y-0 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
         <div className="space-y-1">
           <CardTitle>Lembretes da semana</CardTitle>
@@ -121,7 +152,11 @@ export function HomeWeekReminders({
             </p>
           </div>
         ) : (
-          items.map((item) => <ReminderRow key={item.id} item={item} />)
+          <div className="max-h-72 space-y-2 overflow-y-auto pr-1">
+            {items.map((item) => (
+              <ReminderRow key={item.id} item={item} />
+            ))}
+          </div>
         )}
       </CardContent>
     </Card>

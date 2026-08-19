@@ -36,3 +36,25 @@ export function useUpdateClinicStatus() {
     },
   });
 }
+
+export function usePlatformVeterinarians(
+  q?: string,
+  options?: { page?: number; limit?: number },
+) {
+  return useQuery({
+    queryKey: ['platform', 'veterinarians', q, options?.page, options?.limit],
+    queryFn: () =>
+      platformApi.listPlatformVeterinarians({
+        q,
+        page: options?.page,
+        limit: options?.limit,
+      }),
+  });
+}
+
+export function usePlatformVeterinarianRelations() {
+  return useQuery({
+    queryKey: ['platform', 'veterinarian-relations'],
+    queryFn: platformApi.getPlatformVeterinarianRelations,
+  });
+}

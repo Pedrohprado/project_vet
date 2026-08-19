@@ -228,19 +228,21 @@ export function PetDetailPage() {
           <h1 className={pageTitleClassName}>{pet.name}</h1>
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            size="icon-lg"
-            className="size-10 sm:hidden"
-            aria-label="Editar pet"
-            onClick={() => setEditOpen(true)}
-          >
+            <Button
+              type="button"
+              variant="outline"
+              size="icon-lg"
+              action="edit"
+              className="size-10 sm:hidden"
+              aria-label="Editar pet"
+              onClick={() => setEditOpen(true)}
+            >
             <Pencil className="size-5" />
           </Button>
           <Button
             type="button"
             variant="outline"
+            action="edit"
             className="hidden sm:inline-flex"
             onClick={() => setEditOpen(true)}
           >
@@ -298,7 +300,11 @@ export function PetDetailPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button className="w-full sm:w-auto" onClick={handleContinueConsultation}>
+            <Button
+              className="w-full sm:w-auto"
+              action="continue"
+              onClick={handleContinueConsultation}
+            >
               Continuar consulta
             </Button>
           </CardContent>
@@ -318,7 +324,11 @@ export function PetDetailPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button className="w-full sm:w-auto" onClick={handleContinueConsultation}>
+            <Button
+              className="w-full sm:w-auto"
+              action="continue"
+              onClick={handleContinueConsultation}
+            >
               Continuar retorno
             </Button>
           </CardContent>
@@ -367,7 +377,11 @@ export function PetDetailPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button className="w-full sm:w-auto" onClick={handleContinueVaccination}>
+            <Button
+              className="w-full sm:w-auto"
+              action="vaccinate"
+              onClick={handleContinueVaccination}
+            >
               Continuar vacinação
             </Button>
           </CardContent>

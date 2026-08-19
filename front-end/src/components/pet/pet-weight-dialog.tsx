@@ -114,7 +114,9 @@ export function PetWeightDialog({
             <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
               Cancelar
             </Button>
-            <Button type="submit">Salvar</Button>
+            <Button type="submit" action="save">
+              Salvar
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

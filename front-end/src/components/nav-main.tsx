@@ -10,6 +10,7 @@ import {
 
 export function NavMain({
   items,
+  label = 'Menu',
 }: {
   items: {
     title: string;
@@ -17,12 +18,13 @@ export function NavMain({
     icon?: React.ReactNode;
     isActive?: boolean;
   }[];
+  label?: string;
 }) {
   const { setOpenMobile } = useSidebar();
 
   return (
     <SidebarGroup>
-      <SidebarGroupLabel>Menu</SidebarGroupLabel>
+      <SidebarGroupLabel>{label}</SidebarGroupLabel>
       <SidebarMenu>
         {items.map((item) => (
           <SidebarMenuItem key={item.title}>

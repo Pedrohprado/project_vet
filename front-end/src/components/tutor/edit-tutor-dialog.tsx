@@ -120,7 +120,7 @@ export function EditTutorDialog({ open, onOpenChange, tutor }: EditTutorDialogPr
             >
               Cancelar
             </Button>
-            <Button type="submit" disabled={updateTutor.isPending}>
+            <Button type="submit" action="save" disabled={updateTutor.isPending}>
               {updateTutor.isPending ? 'Salvando...' : 'Salvar'}
             </Button>
           </DialogFooter>

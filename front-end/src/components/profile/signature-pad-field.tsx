@@ -120,29 +120,24 @@ export const SignaturePadField = forwardRef<
     const safeSignatureUrl = getSafeMediaUrl(savedSignatureUrl);
 
     return (
-      <div className="space-y-4">
-        <div className="space-y-2">
-          <p className="text-sm font-medium">Assinatura salva</p>
-          <div className="rounded-lg border bg-white p-3">
-            {safeSignatureUrl ? (
-              <img
-                src={safeSignatureUrl}
-                alt="Assinatura salva"
-                className="mx-auto h-16 max-w-full object-contain"
-              />
-            ) : (
-              <p className="text-center text-sm text-muted-foreground">
-                Assinatura indisponível
-              </p>
-            )}
-          </div>
-          <p className="text-xs text-muted-foreground">
-            Remova a assinatura atual para cadastrar uma nova.
-          </p>
+      <div className="space-y-3">
+        <div className="flex max-w-md items-center justify-center rounded-lg border bg-muted/30 px-4 py-3">
+          {safeSignatureUrl ? (
+            <img
+              src={safeSignatureUrl}
+              alt="Assinatura salva"
+              className="h-20 w-full max-w-sm object-contain object-center"
+            />
+          ) : (
+            <p className="text-sm text-muted-foreground">Assinatura indisponível</p>
+          )}
         </div>
+        <p className="text-xs text-muted-foreground">
+          Remova a assinatura atual para cadastrar uma nova.
+        </p>
         <Button
           type="button"
-          variant="destructive"
+          variant="outline"
           className="w-full sm:w-auto"
           onClick={() => void handleRemove()}
           disabled={isRemoving}
@@ -154,17 +149,13 @@ export const SignaturePadField = forwardRef<
   }
 
   return (
-    <div className="space-y-4">
-      <div className="space-y-2">
-        <p className="text-sm font-medium">Desenhe sua assinatura</p>
-        <div className="overflow-hidden rounded-lg border border-dashed bg-white">
-          <canvas ref={canvasRef} className="h-40 w-full touch-none" />
-        </div>
-        <p className="text-xs text-muted-foreground">
-          Use o mouse ou o dedo para assinar no campo acima.
-        </p>
+    <div className="space-y-3">
+      <div className="max-w-md overflow-hidden rounded-lg border border-dashed bg-white">
+        <canvas ref={canvasRef} className="h-28 w-full touch-none sm:h-32" />
       </div>
-
+      <p className="text-xs text-muted-foreground">
+        Use o mouse ou o dedo para assinar no campo acima.
+      </p>
       <Button
         type="button"
         variant="outline"

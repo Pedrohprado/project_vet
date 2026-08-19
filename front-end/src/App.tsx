@@ -22,6 +22,7 @@ import { TutorListPage } from '@/pages/TutorListPage';
 import { AdminClinicsPage } from '@/pages/admin/AdminClinicsPage';
 import { AdminDashboardPage } from '@/pages/admin/AdminDashboardPage';
 import { AdminFinancePage } from '@/pages/admin/AdminFinancePage';
+import { RoadmapPage } from '@/pages/RoadmapPage';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { GuestRoute, ProtectedRoute, SuperAdminRoute, getAuthenticatedHome } from '@/routes/ProtectedRoute';
 
@@ -70,6 +71,7 @@ function App() {
             <Route path="/consultations/:id" element={<ConsultationPage />} />
             <Route path="/vaccinations/:id" element={<VaccinationPage />} />
             <Route path="/perfil" element={<ProfilePage />} />
+            <Route path="/roadmap" element={<RoadmapPage />} />
           </Route>
         </Route>
 
@@ -78,6 +80,9 @@ function App() {
             <Route path="/admin" element={<AdminDashboardPage />} />
             <Route path="/admin/clinicas" element={<AdminClinicsPage />} />
             <Route path="/admin/financeiro" element={<AdminFinancePage />} />
+            <Route path="/admin/comunidade" element={<CommunityPage />} />
+            <Route path="/admin/comunidade/:caseId" element={<CommunityCasePage />} />
+            <Route path="/admin/roadmap" element={<RoadmapPage />} />
           </Route>
         </Route>
       </Routes>

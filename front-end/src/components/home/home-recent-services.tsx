@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, Stethoscope, Syringe } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -10,22 +10,21 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
 import {
   ATENDIMENTO_KIND_LABELS,
   ATENDIMENTO_STATUS_LABELS,
+  type AtendimentoKind,
   type AtendimentoListItem,
   type AtendimentoStatus,
 } from '@/types/atendimento';
 import { PET_SPECIES_LABELS } from '@/types/pet';
 
-const statusBadgeVariant: Record<
-  AtendimentoStatus,
-  'default' | 'secondary' | 'outline'
-> = {
-  OPEN: 'default',
-  RETURN_SCHEDULED: 'secondary',
-  FINISHED: 'secondary',
-  CANCELLED: 'outline',
+const statusBadgeClassName: Record<AtendimentoStatus, string> = {
+  OPEN: 'border-amber-500/30 bg-amber-500/12 text-amber-800',
+  RETURN_SCHEDULED: 'border-sky-500/30 bg-sky-500/12 text-sky-800',
+  FINISHED: 'border-transparent bg-emerald-700 text-white',
+  CANCELLED: 'border-border bg-muted text-muted-foreground',
 };
 
 function formatDateTime(value: string) {
@@ -36,6 +35,27 @@ function formatDateTime(value: string) {
     hour: '2-digit',
     minute: '2-digit',
   });
+}
+
+function KindIcon({ kind }: { kind: AtendimentoKind }) {
+  const isVaccination = kind === 'VACCINATION';
+
+  return (
+    <span
+      className={cn(
+        'flex size-9 shrink-0 items-center justify-center rounded-lg',
+        isVaccination
+          ? 'bg-emerald-700/10 text-emerald-800'
+          : 'bg-sky-700/10 text-sky-800',
+      )}
+    >
+      {isVaccination ? (
+        <Syringe className="size-4" />
+      ) : (
+        <Stethoscope className="size-4" />
+      )}
+    </span>
+  );
 }
 
 function ServiceRow({ item }: { item: AtendimentoListItem }) {
@@ -49,22 +69,27 @@ function ServiceRow({ item }: { item: AtendimentoListItem }) {
     PET_SPECIES_LABELS[item.pet.species as keyof typeof PET_SPECIES_LABELS] ??
     item.pet.species;
 
+  const title =
+    item.kind === 'VACCINATION' && item.vaccineName
+      ? item.vaccineName
+      : ATENDIMENTO_KIND_LABELS[item.kind];
+
   return (
     <button
       type="button"
       onClick={() => void navigate(detailPath)}
       className="flex w-full items-center gap-3 rounded-xl border border-border/60 bg-background/70 px-3 py-3 text-left transition-colors hover:bg-muted/60"
     >
+      <KindIcon kind={item.kind} />
       <div className="min-w-0 flex-1">
-        <div className="flex items-start justify-between gap-2 sm:items-center sm:justify-start">
-          <p className="min-w-0 truncate text-sm font-medium">
-            {item.kind === 'VACCINATION' && item.vaccineName
-              ? item.vaccineName
-              : ATENDIMENTO_KIND_LABELS[item.kind]}
-          </p>
+        <div className="flex items-start justify-between gap-2">
+          <p className="min-w-0 truncate text-sm font-medium">{title}</p>
           <Badge
-            variant={statusBadgeVariant[item.status]}
-            className="shrink-0 self-center px-1.5 py-0 text-[10px] leading-4"
+            variant="outline"
+            className={cn(
+              'shrink-0 self-center px-1.5 py-0 text-[10px] leading-4',
+              statusBadgeClassName[item.status],
+            )}
           >
             {ATENDIMENTO_STATUS_LABELS[item.status]}
           </Badge>

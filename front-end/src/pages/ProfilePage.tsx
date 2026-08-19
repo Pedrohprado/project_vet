@@ -1,11 +1,13 @@
 import { useRef, useState } from 'react';
-import { Link } from 'react-router';
 import { toast } from 'sonner';
 import { ApiError } from '@/api/http';
+import { PageBackButton } from '@/components/page-back-button';
 import {
   SignaturePadField,
   type SignaturePadFieldHandle,
 } from '@/components/profile/signature-pad-field';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -14,14 +16,35 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import {
+  Field,
+  FieldDescription,
+  FieldGroup,
+  FieldLabel,
+} from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/hooks/useAuth';
-import { pageShellClassName, pageTitleClassName } from '@/lib/mobile-ui';
+import { formatPhone } from '@/lib/masks';
+import {
+  pageDescriptionClassName,
+  pageShellClassName,
+  pageTitleClassName,
+  stickyActionBarClassName,
+} from '@/lib/mobile-ui';
+import { USER_ROLE_LABELS } from '@/types/auth';
+
+function getInitials(name: string) {
+  return name
+    .split(' ')
+    .filter(Boolean)
+    .map((part) => part[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
+}
 
 export function ProfilePage() {
-  const { user, updateProfile, saveSignature } = useAuth();
+  const { user, clinic, updateProfile, saveSignature } = useAuth();
   const signatureRef = useRef<SignaturePadFieldHandle>(null);
   const [phone, setPhone] = useState(user?.phone ?? '');
   const [crmv, setCrmv] = useState(user?.crmv ?? '');
@@ -42,6 +65,8 @@ export function ProfilePage() {
     return <p className="text-muted-foreground">Carregando perfil...</p>;
   }
 
+  const roleLabel = USER_ROLE_LABELS[user.role];
+  const isPlatformAdmin = user.role === 'SUPER_ADMIN';
   const normalizedPhone = phone.trim() || null;
   const normalizedCrmv = crmv.trim() || null;
   const hasProfileChanges =
@@ -83,85 +108,139 @@ export function ProfilePage() {
 
   return (
     <div className={pageShellClassName}>
-      <h1 className={pageTitleClassName}>Meu perfil</h1>
+      <PageBackButton to="/estatisticas" />
 
-      <Card className="mt-6">
-        <CardHeader>
-          <CardTitle>Dados profissionais</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={(event) => void handleSubmit(event)} className="space-y-6">
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="name">Nome</Label>
+      <div>
+        <h1 className={pageTitleClassName}>Meu perfil</h1>
+        <p className={`mt-1 ${pageDescriptionClassName}`}>
+          Atualize seus dados profissionais e a assinatura usada nas receitas.
+        </p>
+      </div>
+
+      <Card>
+        <CardContent className="flex items-start gap-4 pt-1 sm:items-center">
+          <Avatar className="size-16 text-base" size="lg">
+            <AvatarFallback className="bg-primary/10 text-base font-semibold text-primary">
+              {getInitials(user.name)}
+            </AvatarFallback>
+          </Avatar>
+
+          <div className="min-w-0 flex-1 space-y-2">
+            <div>
+              <p className="truncate text-lg font-semibold tracking-tight">
+                {user.name}
+              </p>
+              <p className="truncate text-sm text-muted-foreground">{user.email}</p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge variant="secondary">{roleLabel}</Badge>
+              {clinic?.name ? (
+                <span className="text-sm text-muted-foreground">{clinic.name}</span>
+              ) : null}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <form onSubmit={(event) => void handleSubmit(event)} className="space-y-4 sm:space-y-6">
+        <Card>
+          <CardHeader className="border-b">
+            <CardTitle>Dados profissionais</CardTitle>
+            <CardDescription>
+              Nome, e-mail e cargo não podem ser alterados por aqui.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <FieldGroup className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Field>
+                <FieldLabel htmlFor="name">Nome</FieldLabel>
                 <Input id="name" value={user.name} disabled />
-              </div>
+              </Field>
 
-              <div className="space-y-2">
-                <Label htmlFor="email">E-mail</Label>
+              <Field>
+                <FieldLabel htmlFor="email">E-mail</FieldLabel>
                 <Input id="email" value={user.email} disabled />
-              </div>
+              </Field>
 
-              <div className="space-y-2">
-                <Label htmlFor="phone">Telefone</Label>
+              <Field>
+                <FieldLabel htmlFor="role">Cargo</FieldLabel>
+                <Input id="role" value={roleLabel} disabled />
+                <FieldDescription>
+                  O cargo é definido pela clínica e não pode ser alterado nesta tela.
+                </FieldDescription>
+              </Field>
+
+              <Field>
+                <FieldLabel htmlFor="phone">Telefone</FieldLabel>
                 <Input
                   id="phone"
                   value={phone}
-                  onChange={(event) => setPhone(event.target.value)}
+                  onChange={(event) => setPhone(formatPhone(event.target.value))}
                   placeholder="(14) 99680-8476"
+                  inputMode="tel"
+                  autoComplete="tel"
                 />
-              </div>
+              </Field>
 
-              <div className="space-y-2">
-                <Label htmlFor="crmv">CRMV</Label>
-                <Input
-                  id="crmv"
-                  value={crmv}
-                  onChange={(event) => setCrmv(event.target.value)}
-                  placeholder="Ex.: 12345-SP"
-                />
-                <CardDescription>
-                  O CRMV é opcional, mas recomendado para receitas impressas.
-                </CardDescription>
-              </div>
-            </div>
+              {!isPlatformAdmin ? (
+                <Field className="sm:col-span-2">
+                  <FieldLabel htmlFor="crmv">CRMV</FieldLabel>
+                  <Input
+                    id="crmv"
+                    value={crmv}
+                    onChange={(event) => setCrmv(event.target.value)}
+                    placeholder="Ex.: 12345-SP"
+                  />
+                  <FieldDescription>
+                    Opcional, mas recomendado para receitas impressas.
+                  </FieldDescription>
+                </Field>
+              ) : null}
+            </FieldGroup>
+          </CardContent>
+        </Card>
 
-            <Separator />
-
-            <div className="space-y-4">
-              <div className="space-y-1">
-                <CardTitle>Assinatura eletrônica</CardTitle>
-                <CardDescription>
-                  Sua assinatura aparecerá no final das receitas veterinárias em PDF.
-                </CardDescription>
-              </div>
+        {!isPlatformAdmin ? (
+          <Card>
+            <CardHeader className="border-b">
+              <CardTitle>Assinatura eletrônica</CardTitle>
+              <CardDescription>
+                Aparece no final das receitas veterinárias em PDF.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
               <SignaturePadField
                 ref={signatureRef}
                 savedSignatureUrl={user.signatureUrl}
                 onSignatureChange={setHasSignatureDraft}
               />
-            </div>
+            </CardContent>
+          </Card>
+        ) : null}
 
-            <div className="flex flex-col gap-2 sm:flex-row">
-              <Button
-                type="submit"
-                className="w-full sm:w-auto"
-                disabled={isSaving || !hasChanges}
-              >
-                {isSaving ? 'Salvando...' : 'Salvar alterações'}
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full sm:w-auto"
-                render={<Link to="/estatisticas" />}
-              >
-                Voltar
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+        <div className={stickyActionBarClassName}>
+          <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
+            {hasChanges ? (
+              <p className="text-sm text-muted-foreground sm:mr-auto">
+                Há alterações pendentes.
+              </p>
+            ) : (
+              <p className="text-sm text-muted-foreground sm:mr-auto">
+                Nenhuma alteração pendente.
+              </p>
+            )}
+            <Button
+              type="submit"
+              className="w-full sm:w-auto"
+              action="save"
+              disabled={isSaving || !hasChanges}
+            >
+              {isSaving ? 'Salvando...' : 'Salvar alterações'}
+            </Button>
+          </div>
+        </div>
+      </form>
     </div>
   );
 }

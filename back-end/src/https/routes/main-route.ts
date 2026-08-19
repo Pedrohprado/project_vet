@@ -11,6 +11,7 @@ import { statsRoutes } from './stats-route.js';
 import { vaccinationRoutes } from './vaccination-route.js';
 import { addressRoutes } from './address-route.js';
 import { platformRoutes } from './platform-route.js';
+import { productIdeaRoutes } from './product-idea-route.js';
 
 export async function mainRoutes(app: FastifyInstance) {
   app.register(healthRoutes, { prefix: '/health' });
@@ -25,4 +26,5 @@ export async function mainRoutes(app: FastifyInstance) {
   app.register(statsRoutes, { prefix: '/stats' });
   app.register(addressRoutes, { prefix: '/address' });
   app.register(platformRoutes, { prefix: '/platform' });
+  app.register(productIdeaRoutes, { prefix: '/product-ideas' });
 }

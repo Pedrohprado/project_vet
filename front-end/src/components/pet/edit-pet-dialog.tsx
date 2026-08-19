@@ -147,7 +147,7 @@ export function EditPetDialog({ open, onOpenChange, pet }: EditPetDialogProps) {
             >
               Cancelar
             </Button>
-            <Button type="submit" disabled={isSaving}>
+            <Button type="submit" action="save" disabled={isSaving}>
               {isSaving ? 'Salvando...' : 'Salvar'}
             </Button>
           </DialogFooter>

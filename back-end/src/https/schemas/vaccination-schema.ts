@@ -1,4 +1,10 @@
 import { z } from 'zod';
+import { parseClinicDateInput } from '../../lib/clinic-date.js';
+
+const optionalClinicDate = z.preprocess(
+  parseClinicDateInput,
+  z.coerce.date().nullable().optional(),
+);
 
 export const createVaccinationSchema = z.object({
   tutorId: z.string().uuid('Tutor inválido'),
@@ -12,7 +18,7 @@ export const updateVaccinationSchema = z.object({
   dose: z.string().optional(),
   batch: z.string().optional(),
   manufacturer: z.string().optional(),
-  nextDoseAt: z.coerce.date().nullable().optional(),
+  nextDoseAt: optionalClinicDate,
   notes: z.string().optional(),
 });
 
@@ -23,7 +29,7 @@ export const finishVaccinationSchema = z
     dose: z.string().optional(),
     batch: z.string().optional(),
     manufacturer: z.string().optional(),
-    nextDoseAt: z.coerce.date().nullable().optional(),
+    nextDoseAt: optionalClinicDate,
     notes: z.string().optional(),
     appliedAt: z.coerce.date().optional(),
   })

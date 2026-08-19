@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
-import { MessagesSquare, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { CommunityCaseCard } from '@/components/community/community-case-card';
 import { CommunityCaseDetailDialog } from '@/components/community/community-case-detail-dialog';
 import {
@@ -11,12 +11,14 @@ import { SelectConsultationForShareDialog } from '@/components/community/select-
 import { ShareCommunityCaseDialog } from '@/components/community/share-community-case-dialog';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useAuth } from '@/hooks/useAuth';
 import { useCommunityCases } from '@/hooks/useCommunity';
 import {
   pageDescriptionClassName,
   pageShellClassName,
   pageTitleClassName,
 } from '@/lib/mobile-ui';
+import { isSuperAdmin } from '@/types/auth';
 import type { CommunityCase } from '@/types/community';
 import type { Consultation } from '@/types/consultation';
 
@@ -27,6 +29,8 @@ const EMPTY_FILTERS: CommunityFiltersState = {
 };
 
 export function CommunityPage() {
+  const { user } = useAuth();
+  const readOnly = isSuperAdmin(user);
   const [searchParams, setSearchParams] = useSearchParams();
   const [page, setPage] = useState(1);
   const [filters, setFilters] = useState<CommunityFiltersState>(EMPTY_FILTERS);
@@ -109,48 +113,58 @@ export function CommunityPage() {
 
   return (
     <div className={pageShellClassName}>
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className={pageTitleClassName}>Comunidade</h1>
           <p className={pageDescriptionClassName}>
-            Casos clínicos compartilhados por veterinários da plataforma.
+            {readOnly
+              ? 'Acompanhe casos clínicos compartilhados por veterinários da plataforma.'
+              : 'Casos clínicos compartilhados por veterinários da plataforma.'}
           </p>
         </div>
-        <Button
-          type="button"
-          className="w-full sm:w-auto"
-          onClick={() => setSelectOpen(true)}
-        >
-          <Plus className="size-4" />
-          Compartilhar caso
-        </Button>
+        {!readOnly ? (
+          <Button
+            type="button"
+            className="w-full sm:w-auto"
+            onClick={() => setSelectOpen(true)}
+          >
+            <Plus className="size-4" />
+            Compartilhar caso
+          </Button>
+        ) : null}
       </div>
 
       <CommunityFilters filters={filters} onChange={handleFiltersChange} />
 
       {isLoading ? (
         <div className="space-y-3">
-          <Skeleton className="h-36 w-full" />
-          <Skeleton className="h-36 w-full" />
-          <Skeleton className="h-36 w-full" />
+          <Skeleton className="h-40 w-full rounded-2xl" />
+          <Skeleton className="h-40 w-full rounded-2xl" />
+          <Skeleton className="h-40 w-full rounded-2xl" />
         </div>
       ) : isError ? (
         <p className="text-sm text-destructive">
           Não foi possível carregar a comunidade. Tente novamente.
         </p>
       ) : !data?.items.length ? (
-        <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed px-6 py-16 text-center">
-          <MessagesSquare className="size-10 text-muted-foreground" />
+        <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed bg-card px-6 py-16 text-center">
+          <img
+            src="/sniff_dog.png"
+            alt=""
+            className="size-36 object-contain"
+          />
           <div className="space-y-1">
             <p className="font-medium">
               {hasActiveFilters
                 ? 'Nenhuma publicação encontrada'
                 : 'Nenhum caso compartilhado ainda'}
             </p>
-            <p className="text-sm text-muted-foreground">
+            <p className="max-w-md text-sm text-muted-foreground">
               {hasActiveFilters
                 ? 'Tente ajustar os filtros ou limpar a busca.'
-                : 'Compartilhe uma consulta finalizada para publicar o primeiro caso na comunidade.'}
+                : readOnly
+                  ? 'Ainda não há casos publicados na comunidade.'
+                  : 'Compartilhe uma consulta finalizada para publicar o primeiro caso na comunidade.'}
             </p>
           </div>
           {hasActiveFilters ? (
@@ -165,7 +179,7 @@ export function CommunityPage() {
             >
               Limpar filtros
             </Button>
-          ) : (
+          ) : readOnly ? null : (
             <div className="flex flex-col gap-2 sm:flex-row">
               <Button type="button" onClick={() => setSelectOpen(true)}>
                 <Plus className="size-4" />
@@ -179,8 +193,16 @@ export function CommunityPage() {
         </div>
       ) : (
         <>
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-sm text-muted-foreground">
+              {data.total === 1
+                ? '1 caso publicado'
+                : `${data.total} casos publicados`}
+            </p>
+          </div>
+
           <div
-            className={`divide-y divide-border ${isFetching ? 'opacity-70' : ''}`}
+            className={`space-y-3 ${isFetching ? 'opacity-70' : ''}`}
           >
             {data.items.map((communityCase) => (
               <CommunityCaseCard
@@ -219,19 +241,23 @@ export function CommunityPage() {
         </>
       )}
 
-      <SelectConsultationForShareDialog
-        open={selectOpen}
-        onOpenChange={setSelectOpen}
-        onSelect={handleSelectConsultation}
-      />
+      {!readOnly ? (
+        <>
+          <SelectConsultationForShareDialog
+            open={selectOpen}
+            onOpenChange={setSelectOpen}
+            onSelect={handleSelectConsultation}
+          />
 
-      {selectedConsultation ? (
-        <ShareCommunityCaseDialog
-          open={shareOpen}
-          onOpenChange={handleShareOpenChange}
-          consultation={selectedConsultation}
-          onPublished={handlePublished}
-        />
+          {selectedConsultation ? (
+            <ShareCommunityCaseDialog
+              open={shareOpen}
+              onOpenChange={handleShareOpenChange}
+              consultation={selectedConsultation}
+              onPublished={handlePublished}
+            />
+          ) : null}
+        </>
       ) : null}
 
       <CommunityCaseDetailDialog

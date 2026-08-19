@@ -1,5 +1,22 @@
 @import 'tailwindcss';
 
+/* Reset UA do popover: cobre a faixa da scrollbar (top layer). */
+[data-slot='dialog-layer'],
+[data-slot='sheet-layer'] {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100dvh;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  background: transparent;
+  color: inherit;
+}
+
 @property --bird-p {
   syntax: '<number>';
   inherits: false;
@@ -15,7 +32,7 @@
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
   --primary: oklch(0.84 0.15 75);
-  --primary-foreground: oklch(0.22 0.03 260);
+  --primary-foreground: oklch(0.985 0 0);
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);
@@ -30,7 +47,7 @@
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
   --sidebar-primary: oklch(0.84 0.15 75);
-  --sidebar-primary-foreground: oklch(0.22 0.03 260);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
   --sidebar-accent: oklch(0.97 0 0);
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
@@ -80,6 +97,11 @@
   html {
     -webkit-tap-highlight-color: transparent;
     scroll-behavior: smooth;
+  }
+
+  [data-slot='dialog-content'],
+  [data-slot='sheet-content'] {
+    scrollbar-gutter: auto;
   }
 
   body {

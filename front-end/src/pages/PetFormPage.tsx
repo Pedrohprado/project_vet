@@ -102,7 +102,7 @@ export function PetFormPage() {
             {formError && <p className="text-sm text-destructive">{formError}</p>}
 
             <div className="flex flex-col gap-2 sm:flex-row">
-              <Button type="submit" className="w-full sm:w-auto" disabled={isSaving}>
+              <Button type="submit" className="w-full sm:w-auto" action="save" disabled={isSaving}>
                 {isSaving ? 'Salvando...' : 'Salvar Pet'}
               </Button>
               {tutorId && (

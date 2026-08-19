@@ -112,7 +112,7 @@ export function TutorFormPage() {
             {formError && <p className="text-sm text-destructive">{formError}</p>}
 
             <div className="flex flex-col gap-2 sm:flex-row">
-              <Button type="submit" className="w-full sm:w-auto" disabled={createTutor.isPending}>
+              <Button type="submit" className="w-full sm:w-auto" action="save" disabled={createTutor.isPending}>
                 {createTutor.isPending ? 'Salvando...' : 'Salvar Tutor'}
               </Button>
               <Button type="button" variant="outline" className="w-full sm:w-auto" asChild>

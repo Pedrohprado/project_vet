@@ -4,6 +4,7 @@ import { HttpError } from '../../services/erros/http-error.js';
 import {
   listPlatformClinicsQuerySchema,
   listPlatformTutorsQuerySchema,
+  listPlatformVeterinariansQuerySchema,
   updateClinicStatusSchema,
 } from '../schemas/platform-schema.js';
 
@@ -60,5 +61,28 @@ export async function listPlatformTutors(
   }
 
   const result = await platformService.listTutors(parsed.data);
+  return reply.status(200).send(result);
+}
+
+export async function listPlatformVeterinarians(
+  request: FastifyRequest,
+  reply: FastifyReply,
+) {
+  const parsed = listPlatformVeterinariansQuerySchema.safeParse(request.query);
+
+  if (!parsed.success) {
+    const firstError = parsed.error.issues[0]?.message ?? 'Parâmetros inválidos';
+    throw new HttpError(firstError, 400);
+  }
+
+  const result = await platformService.listVeterinarians(parsed.data);
+  return reply.status(200).send(result);
+}
+
+export async function getPlatformVeterinarianRelations(
+  _request: FastifyRequest,
+  reply: FastifyReply,
+) {
+  const result = await platformService.getVeterinarianRelations();
   return reply.status(200).send(result);
 }

@@ -188,6 +188,7 @@ export function AppointmentFormPage() {
               <Button
                 type="submit"
                 className="w-full sm:w-auto"
+                action="add"
                 disabled={createAppointment.isPending}
               >
                 {createAppointment.isPending ? 'Agendando...' : 'Confirmar Agendamento'}

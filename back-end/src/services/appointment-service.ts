@@ -174,6 +174,16 @@ export class AppointmentService {
     );
   }
 
+  async cancelPendingNextDosesForVaccination(
+    tenantId: string,
+    sourceVaccinationId: string,
+  ) {
+    return appointmentRepository.cancelPendingNextDosesForVaccination(
+      tenantId,
+      sourceVaccinationId,
+    );
+  }
+
   async findPendingReturnByConsultation(
     tenantId: string,
     sourceConsultationId: string,

@@ -7,6 +7,7 @@ import {
   subDays,
 } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { toClinicDate } from '@/lib/clinic-date';
 import type { Appointment } from '@/types/appointment';
 import {
   APPOINTMENT_STATUS_LABELS,
@@ -88,7 +89,10 @@ export function mapAppointmentToCalendarEvent(
   return {
     id: appointment.id,
     kind: 'APPOINTMENT',
-    startsAt: appointment.scheduledAt,
+    startsAt:
+      appointment.sourceVaccinationId
+        ? toClinicDate(appointment.scheduledAt).toISOString()
+        : appointment.scheduledAt,
     durationMinutes: appointment.durationMinutes,
     title: getAppointmentTitle(appointment),
     status: appointment.status,

@@ -3,6 +3,7 @@ import { HttpError } from './erros/http-error.js';
 import type {
   ListPlatformClinicsQuery,
   ListPlatformTutorsQuery,
+  ListPlatformVeterinariansQuery,
 } from '../https/schemas/platform-schema.js';
 
 const platformRepository = new PlatformPrismaRepository();
@@ -26,5 +27,13 @@ export class PlatformService {
 
   async listTutors(query: ListPlatformTutorsQuery) {
     return platformRepository.findTutors(query);
+  }
+
+  async listVeterinarians(query: ListPlatformVeterinariansQuery) {
+    return platformRepository.findVeterinarians(query);
+  }
+
+  async getVeterinarianRelations() {
+    return platformRepository.getVeterinarianRelations();
   }
 }
