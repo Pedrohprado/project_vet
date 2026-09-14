@@ -14,6 +14,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';
 import { useFormFieldErrors } from '@/hooks/useFormFieldErrors';
+import { getPostAuthPath } from '@/lib/billing';
 import { formatCpf, formatPhone, onlyDigits } from '@/lib/masks';
 import { cn } from '@/lib/utils';
 
@@ -86,7 +87,7 @@ export function RegisterForm({
     setIsSubmitting(true);
 
     try {
-      await register({
+      const data = await register({
         clinicName: parsed.data.clinicName,
         document: parsed.data.document,
         phone: parsed.data.phone,
@@ -95,7 +96,7 @@ export function RegisterForm({
         name: parsed.data.name,
       });
 
-      void navigate('/estatisticas');
+      void navigate(getPostAuthPath(data.user, data.clinic));
     } catch (err) {
       const message =
         err instanceof ApiError ? err.message : 'Erro ao criar conta';

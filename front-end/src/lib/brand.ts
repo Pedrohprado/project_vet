@@ -1,6 +1,7 @@
 export const APP_NAME = 'Box Vet';
-export const LOGO_SRC = '/logo.png';
-export const FAVICON_SRC = LOGO_SRC;
+export const LOGO_SRC = '/new_logo.png';
+export const LOGO_BOX_SRC = '/new_logo_box.png';
+export const FAVICON_SRC = LOGO_BOX_SRC;
 export const BIRD_SRC = '/bird.png';
 export const FLYBIRD_SRC = '/flybird.png';
 export const HEAD_CAT_SRC = '/head_cat.png';

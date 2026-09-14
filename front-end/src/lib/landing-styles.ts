@@ -19,3 +19,19 @@ export const landingBodyTextClassName =
 
 export const landingMutedTextClassName =
   'text-sm leading-relaxed text-foreground/65';
+
+/** Card compacto (splash / paywall) — tipografia padrão web, não hero da landing. */
+export const marketingCardClassName =
+  'rounded-2xl border border-border/50 bg-white/95 p-6 shadow-xl shadow-black/5 backdrop-blur-sm sm:p-8';
+
+export const marketingBrandWordClassName =
+  'text-lg font-bold tracking-tight text-primary';
+
+export const marketingTitleClassName =
+  'text-2xl font-bold tracking-tight text-foreground sm:text-[1.75rem] sm:leading-snug';
+
+export const marketingBodyClassName =
+  'text-sm leading-relaxed text-foreground/70 sm:text-[0.9375rem]';
+
+export const marketingListItemClassName =
+  'text-sm leading-relaxed text-foreground/70';

@@ -3,6 +3,7 @@ import { Toaster } from 'sonner';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { AuthProvider } from '@/contexts/AuthProvider';
 import { useAuth } from '@/hooks/useAuth';
+import { getPostAuthPath } from '@/lib/billing';
 import { AtendimentoPage } from '@/pages/AtendimentoPage';
 import { AgendaPage } from '@/pages/AgendaPage';
 import { AppointmentFormPage } from '@/pages/AppointmentFormPage';
@@ -16,6 +17,9 @@ import { LandingPage } from '@/pages/LandingPage';
 import { PetDetailPage } from '@/pages/PetDetailPage';
 import { PetFormPage } from '@/pages/PetFormPage';
 import { ProfilePage } from '@/pages/ProfilePage';
+import { SplashPage } from '@/pages/SplashPage';
+import { SubscriptionIntroPage } from '@/pages/SubscriptionIntroPage';
+import { SubscriptionPaymentPage } from '@/pages/SubscriptionPaymentPage';
 import { TutorDetailPage } from '@/pages/TutorDetailPage';
 import { TutorFormPage } from '@/pages/TutorFormPage';
 import { TutorListPage } from '@/pages/TutorListPage';
@@ -24,10 +28,15 @@ import { AdminDashboardPage } from '@/pages/admin/AdminDashboardPage';
 import { AdminFinancePage } from '@/pages/admin/AdminFinancePage';
 import { RoadmapPage } from '@/pages/RoadmapPage';
 import { AdminLayout } from '@/components/layout/AdminLayout';
-import { GuestRoute, ProtectedRoute, SuperAdminRoute, getAuthenticatedHome } from '@/routes/ProtectedRoute';
+import {
+  GuestRoute,
+  ProtectedRoute,
+  SubscriptionRoute,
+  SuperAdminRoute,
+} from '@/routes/ProtectedRoute';
 
 function RootRedirect() {
-  const { isAuthenticated, isLoading, user } = useAuth();
+  const { isAuthenticated, isLoading, user, clinic } = useAuth();
 
   if (isLoading) {
     return (
@@ -38,10 +47,10 @@ function RootRedirect() {
   }
 
   if (isAuthenticated) {
-    return <Navigate to={getAuthenticatedHome(user)} replace />;
+    return <Navigate to={getPostAuthPath(user, clinic)} replace />;
   }
 
-  return <LandingPage />;
+  return <SplashPage />;
 }
 
 function App() {
@@ -49,10 +58,16 @@ function App() {
     <>
       <Routes>
         <Route path="/" element={<RootRedirect />} />
+        <Route path="/landing" element={<LandingPage />} />
 
         <Route element={<GuestRoute />}>
           <Route path="/login" element={<AuthPage />} />
           <Route path="/register" element={<AuthPage />} />
+        </Route>
+
+        <Route element={<SubscriptionRoute />}>
+          <Route path="/assinatura" element={<SubscriptionIntroPage />} />
+          <Route path="/assinatura/pagamento" element={<SubscriptionPaymentPage />} />
         </Route>
 
         <Route element={<ProtectedRoute />}>

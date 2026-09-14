@@ -13,7 +13,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';
 import { useFormFieldErrors } from '@/hooks/useFormFieldErrors';
-import { getAuthenticatedHome } from '@/routes/ProtectedRoute';
+import { getPostAuthPath } from '@/lib/billing';
 import { cn } from '@/lib/utils';
 
 const loginSchema = z.object({
@@ -57,7 +57,7 @@ export function LoginForm({
 
     try {
       const data = await login(parsed.data.email, parsed.data.password);
-      void navigate(getAuthenticatedHome(data.user));
+      void navigate(getPostAuthPath(data.user, data.clinic));
     } catch (err) {
       const message =
         err instanceof ApiError ? err.message : 'Erro ao fazer login';
