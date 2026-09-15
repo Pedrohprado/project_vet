@@ -42,8 +42,11 @@ export function ConsultationWhatsAppReviewDialog({
 }: ConsultationWhatsAppReviewDialogProps) {
   const busy = isConfirming || isGenerating;
   const canSend = Boolean(tutorPhone && message.trim());
-  const confirmingWithoutLabel = 'Concluindo...';
-  const confirmingWithLabel = 'Enviando...';
+  const isResend = mode === 'resend';
+  const skipLabel = isResend ? 'Fechar' : 'Concluir';
+  const sendLabel = isResend ? 'Reenviar' : 'Enviar';
+  const confirmingWithoutLabel = isResend ? 'Fechando...' : 'Concluindo...';
+  const confirmingWithLabel = isResend ? 'Reenviando...' : 'Enviando...';
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -117,7 +120,7 @@ export function ConsultationWhatsAppReviewDialog({
           >
             {isConfirming && confirmingAction === 'skip'
               ? confirmingWithoutLabel
-              : 'Concluir'}
+              : skipLabel}
           </Button>
           <Button
             type="button"
@@ -129,7 +132,7 @@ export function ConsultationWhatsAppReviewDialog({
           >
             {isConfirming && confirmingAction === 'send'
               ? confirmingWithLabel
-              : 'Enviar'}
+              : sendLabel}
           </Button>
         </DialogFooter>
       </DialogContent>
