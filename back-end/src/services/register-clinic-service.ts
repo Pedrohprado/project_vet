@@ -53,6 +53,8 @@ export class RegisterClinicService {
           plan: true,
           isActive: true,
           createdAt: true,
+          paymentMethod: true,
+          paymentStatus: true,
         },
       });
 

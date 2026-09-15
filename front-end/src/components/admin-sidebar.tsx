@@ -1,4 +1,4 @@
-import { Building2, CreditCard, Home, Lightbulb, MessagesSquare } from 'lucide-react';
+import { Building2, CreditCard, Home, Lightbulb, MessagesSquare, Users } from 'lucide-react';
 import { useLocation } from 'react-router';
 import { BrandLogo } from '@/components/brand/brand-logo';
 import { NavMain } from '@/components/nav-main';
@@ -18,6 +18,7 @@ import { APP_NAME } from '@/lib/brand';
 
 const navItems = [
   { title: 'Visão geral', url: '/admin', icon: Home },
+  { title: 'Usuários', url: '/admin/usuarios', icon: Users },
   { title: 'Clínicas', url: '/admin/clinicas', icon: Building2 },
   { title: 'Financeiro', url: '/admin/financeiro', icon: CreditCard },
 ];

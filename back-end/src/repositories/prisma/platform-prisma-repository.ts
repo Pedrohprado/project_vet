@@ -95,6 +95,8 @@ export class PlatformPrismaRepository {
           email: true,
           plan: true,
           isActive: true,
+          paymentMethod: true,
+          paymentStatus: true,
           createdAt: true,
           _count: {
             select: {
@@ -120,6 +122,8 @@ export class PlatformPrismaRepository {
         email: clinic.email,
         plan: clinic.plan,
         isActive: clinic.isActive,
+        paymentMethod: clinic.paymentMethod,
+        paymentStatus: clinic.paymentStatus,
         createdAt: clinic.createdAt,
         tutorsCount: clinic._count.tutors,
         petsCount: clinic._count.pets,
@@ -131,16 +135,38 @@ export class PlatformPrismaRepository {
     };
   }
 
-  async updateClinicStatus(id: string, isActive: boolean) {
+  async updateClinic(
+    id: string,
+    data: {
+      isActive?: boolean;
+      paymentMethod?: 'NONE' | 'PIX' | 'CARD';
+      paymentStatus?: 'PENDING' | 'PAID';
+    },
+  ) {
     return prisma.clinic.update({
       where: { id },
-      data: { isActive },
+      data: {
+        ...(data.isActive !== undefined ? { isActive: data.isActive } : {}),
+        ...(data.paymentMethod !== undefined
+          ? { paymentMethod: data.paymentMethod }
+          : {}),
+        ...(data.paymentStatus !== undefined
+          ? { paymentStatus: data.paymentStatus }
+          : {}),
+      },
       select: {
         id: true,
         name: true,
         isActive: true,
+        paymentMethod: true,
+        paymentStatus: true,
+        plan: true,
       },
     });
+  }
+
+  async updateClinicStatus(id: string, isActive: boolean) {
+    return this.updateClinic(id, { isActive });
   }
 
   async findTutors(query: ListPlatformTutorsQuery) {
@@ -235,6 +261,9 @@ export class PlatformPrismaRepository {
             select: {
               id: true,
               name: true,
+              plan: true,
+              paymentMethod: true,
+              paymentStatus: true,
             },
           },
           _count: {
@@ -289,6 +318,9 @@ export class PlatformPrismaRepository {
         lastLoginAt: user.lastLoginAt,
         clinicId: user.clinic?.id ?? null,
         clinicName: user.clinic?.name ?? null,
+        clinicPlan: user.clinic?.plan ?? null,
+        paymentMethod: user.clinic?.paymentMethod ?? null,
+        paymentStatus: user.clinic?.paymentStatus ?? null,
         consultationsCount: user._count.consultations,
         communityCasesCount: user._count.communityCases,
         commentsCount: user._count.communityCaseComments,

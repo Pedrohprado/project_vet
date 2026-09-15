@@ -33,4 +33,4 @@ COPY --from=build /usr/src/app/src ./src
 
 EXPOSE 3135
 
-CMD ["sh", "-c", "npx prisma generate && npx prisma migrate deploy && npm run start"]
+CMD ["sh", "-c", "npx prisma generate && npx prisma migrate deploy && npm run seed:platform-admin && npm run start"]

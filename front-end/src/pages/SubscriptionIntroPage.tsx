@@ -1,14 +1,17 @@
 import { Link, Navigate } from 'react-router';
 import { CreditCard, QrCode } from 'lucide-react';
+import { TypingSparkleLine } from '@/components/marketing/typing-sparkle-line';
 import { BrandCardBirds } from '@/components/brand/brand-card-birds';
 import { BrandLogo } from '@/components/brand/brand-logo';
 import { BrandPageBackground } from '@/components/brand-page-background';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
+import { useFunnelTrack } from '@/hooks/useFunnelTrack';
 import {
   firstName,
   getPostAuthPath,
   hasAppAccess,
+  SUBSCRIPTION_COMMUNITY_BENEFIT,
   SUBSCRIPTION_PRICE,
   subscriptionBenefits,
 } from '@/lib/billing';
@@ -21,6 +24,7 @@ import {
 } from '@/lib/landing-styles';
 
 export function SubscriptionIntroPage() {
+  useFunnelTrack('CHECKOUT');
   const { user, clinic, isLoading, isAuthenticated } = useAuth();
 
   if (isLoading) {
@@ -67,11 +71,23 @@ export function SubscriptionIntroPage() {
 
                 <ul className="mt-5 space-y-2">
                   {subscriptionBenefits.map((benefit) => (
-                    <li key={benefit} className={`flex gap-2.5 ${marketingListItemClassName}`}>
-                      <span className="shrink-0 text-foreground/45" aria-hidden>
+                    <li
+                      key={benefit}
+                      className={`flex items-baseline gap-2.5 ${marketingListItemClassName}`}
+                    >
+                      <span
+                        className="shrink-0 leading-none text-foreground/45"
+                        aria-hidden
+                      >
                         —
                       </span>
-                      <span>{benefit}</span>
+                      <span className="min-w-0 flex-1">
+                        {benefit === SUBSCRIPTION_COMMUNITY_BENEFIT ? (
+                          <TypingSparkleLine text={benefit} />
+                        ) : (
+                          benefit
+                        )}
+                      </span>
                     </li>
                   ))}
                 </ul>
@@ -102,10 +118,11 @@ export function SubscriptionIntroPage() {
 
                 <div className="mt-5 border-t border-border/60 pt-5 md:border-t-0 md:pt-6">
                   <Button
-                    className={`${landingPrimaryButtonClassName} w-full text-sm font-semibold uppercase tracking-wide`}
+                    action="join"
+                    className={`${landingPrimaryButtonClassName} w-full gap-2 text-sm font-semibold tracking-wide`}
                     render={<Link to="/assinatura/pagamento" />}
                   >
-                    Fazer parte →
+                    fazer parte
                   </Button>
                 </div>
 

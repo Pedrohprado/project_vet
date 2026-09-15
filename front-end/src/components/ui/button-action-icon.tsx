@@ -3,6 +3,7 @@ import {
   CheckIcon,
   ChevronRightIcon,
   CircleCheckIcon,
+  CornerUpRightIcon,
   PlusIcon,
   SendIcon,
   SquarePenIcon,
@@ -18,7 +19,8 @@ export type ButtonAction =
   | 'add'
   | 'share'
   | 'edit'
-  | 'vaccinate';
+  | 'vaccinate'
+  | 'join';
 
 type IconHandle = {
   startAnimation: () => void;
@@ -33,6 +35,7 @@ const LUCIDE_ACTION_ICONS = {
   share: SendIcon,
   edit: SquarePenIcon,
   vaccinate: SyringeIcon,
+  join: CornerUpRightIcon,
 } as const;
 
 type ButtonActionIconProps = {
@@ -56,9 +59,20 @@ export function ButtonActionIcon({
       return;
     }
 
-    const timeoutId = window.setTimeout(() => {
+    const delayMs = action === 'join' ? 0 : 500;
+
+    const start = () => {
       iconRef.current?.startAnimation();
-    }, 500);
+    };
+
+    if (delayMs === 0) {
+      start();
+      return () => {
+        iconRef.current?.stopAnimation();
+      };
+    }
+
+    const timeoutId = window.setTimeout(start, delayMs);
 
     return () => {
       window.clearTimeout(timeoutId);

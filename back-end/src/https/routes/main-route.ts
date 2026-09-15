@@ -13,6 +13,9 @@ import { addressRoutes } from './address-route.js';
 import { platformRoutes } from './platform-route.js';
 import { productIdeaRoutes } from './product-idea-route.js';
 import { waitlistRoutes } from './waitlist-route.js';
+import { analyticsRoutes } from './analytics-route.js';
+import { publicRoutes } from './public-route.js';
+import { billingRoutes } from './billing-route.js';
 
 export async function mainRoutes(app: FastifyInstance) {
   app.register(healthRoutes, { prefix: '/health' });
@@ -29,4 +32,7 @@ export async function mainRoutes(app: FastifyInstance) {
   app.register(platformRoutes, { prefix: '/platform' });
   app.register(productIdeaRoutes, { prefix: '/product-ideas' });
   app.register(waitlistRoutes, { prefix: '/waitlist' });
+  app.register(analyticsRoutes, { prefix: '/analytics' });
+  app.register(publicRoutes, { prefix: '/public' });
+  app.register(billingRoutes, { prefix: '/billing' });
 }

@@ -4,9 +4,13 @@
 [data-slot='dialog-layer'],
 [data-slot='sheet-layer'] {
   position: fixed;
-  inset: 0;
-  width: 100vw;
+  top: 0;
+  left: 0;
+  z-index: 50;
+  width: calc(100vw + (100vw - 100%));
+  min-width: 100vw;
   height: 100dvh;
+  min-height: 100dvh;
   max-width: none;
   max-height: none;
   margin: 0;
@@ -15,6 +19,17 @@
   overflow: hidden;
   background: transparent;
   color: inherit;
+}
+
+[data-slot='dialog-overlay'],
+[data-slot='sheet-overlay'] {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: calc(100vw + (100vw - 100%));
+  min-width: 100vw;
+  height: 100dvh;
+  min-height: 100dvh;
 }
 
 @property --bird-p {

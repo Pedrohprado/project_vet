@@ -45,7 +45,7 @@ export async function updatePlatformClinicStatus(
     throw new HttpError(firstError, 400);
   }
 
-  const clinic = await platformService.updateClinicStatus(id, parsed.data.isActive);
+  const clinic = await platformService.updateClinic(id, parsed.data);
   return reply.status(200).send(clinic);
 }
 

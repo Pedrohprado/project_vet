@@ -5,12 +5,13 @@ import { BrandCardBirds } from '@/components/brand/brand-card-birds';
 import { BrandLogo } from '@/components/brand/brand-logo';
 import { BrandPageBackground } from '@/components/brand-page-background';
 import { Button } from '@/components/ui/button';
+import { ApiError } from '@/api/http';
 import { useAuth } from '@/hooks/useAuth';
+import { useFunnelTrack } from '@/hooks/useFunnelTrack';
 import {
   firstName,
   getPostAuthPath,
   hasAppAccess,
-  markPixAccess,
   SUBSCRIPTION_PRICE,
 } from '@/lib/billing';
 import {
@@ -21,8 +22,9 @@ import {
 import { cn } from '@/lib/utils';
 
 export function SubscriptionPaymentPage() {
+  useFunnelTrack('CHECKOUT');
   const navigate = useNavigate();
-  const { user, clinic, isLoading, isAuthenticated } = useAuth();
+  const { user, clinic, isLoading, isAuthenticated, selectPix } = useAuth();
   const [isActivating, setIsActivating] = useState(false);
 
   if (isLoading) {
@@ -44,16 +46,25 @@ export function SubscriptionPaymentPage() {
   const name = firstName(user?.name);
   const clinicId = clinic?.id ?? user?.clinicId;
 
-  function handlePix() {
+  async function handlePix() {
     if (!clinicId) {
       toast.error('Não foi possível identificar sua clínica.');
       return;
     }
 
     setIsActivating(true);
-    markPixAccess(clinicId);
-    toast.success('Acesso liberado. Bem-vindo à BoxVet!');
-    void navigate('/estatisticas', { replace: true });
+    try {
+      await selectPix();
+      toast.success('Acesso liberado. Bem-vindo à BoxVet!');
+      void navigate('/estatisticas', { replace: true });
+    } catch (error) {
+      const message =
+        error instanceof ApiError
+          ? error.message
+          : 'Não foi possível liberar o acesso via Pix.';
+      toast.error(message);
+      setIsActivating(false);
+    }
   }
 
   return (
@@ -80,7 +91,7 @@ export function SubscriptionPaymentPage() {
               <button
                 type="button"
                 disabled={isActivating || !clinicId}
-                onClick={handlePix}
+                onClick={() => void handlePix()}
                 className={cn(
                   'flex w-full flex-col items-start rounded-xl border border-border bg-white px-4 py-3.5 text-left text-foreground transition-opacity',
                   'hover:border-foreground/30 hover:bg-muted/30 disabled:cursor-not-allowed disabled:opacity-60',

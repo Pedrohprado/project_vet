@@ -37,6 +37,23 @@ export function useUpdateClinicStatus() {
   });
 }
 
+export function useUpdatePlatformClinic() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      id,
+      payload,
+    }: {
+      id: string;
+      payload: platformApi.UpdatePlatformClinicPayload;
+    }) => platformApi.updatePlatformClinic(id, payload),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['platform'] });
+    },
+  });
+}
+
 export function usePlatformVeterinarians(
   q?: string,
   options?: { page?: number; limit?: number },

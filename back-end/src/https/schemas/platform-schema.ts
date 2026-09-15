@@ -19,9 +19,19 @@ export const listPlatformVeterinariansQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).default(20),
 });
 
-export const updateClinicStatusSchema = z.object({
-  isActive: z.boolean(),
-});
+export const updateClinicStatusSchema = z
+  .object({
+    isActive: z.boolean().optional(),
+    paymentMethod: z.enum(['NONE', 'PIX', 'CARD']).optional(),
+    paymentStatus: z.enum(['PENDING', 'PAID']).optional(),
+  })
+  .refine(
+    (data) =>
+      data.isActive !== undefined ||
+      data.paymentMethod !== undefined ||
+      data.paymentStatus !== undefined,
+    { message: 'Informe ao menos um campo para atualizar' },
+  );
 
 export type ListPlatformClinicsQuery = z.infer<typeof listPlatformClinicsQuerySchema>;
 export type ListPlatformTutorsQuery = z.infer<typeof listPlatformTutorsQuerySchema>;

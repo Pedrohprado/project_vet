@@ -1,5 +1,10 @@
 import { apiFetchJson } from '@/api/http';
-import type { ClinicPlan, UserRole } from '@/types/auth';
+import type {
+  ClinicPlan,
+  PaymentMethod,
+  PaymentStatus,
+  UserRole,
+} from '@/types/auth';
 
 export type PlatformStats = {
   clinicsActive: number;
@@ -24,6 +29,8 @@ export type PlatformClinic = {
   email: string | null;
   plan: ClinicPlan;
   isActive: boolean;
+  paymentMethod: PaymentMethod;
+  paymentStatus: PaymentStatus;
   createdAt: string;
   tutorsCount: number;
   petsCount: number;
@@ -47,6 +54,9 @@ export type PlatformVeterinarian = {
   lastLoginAt: string | null;
   clinicId: string | null;
   clinicName: string | null;
+  clinicPlan: ClinicPlan | null;
+  paymentMethod: PaymentMethod | null;
+  paymentStatus: PaymentStatus | null;
   consultationsCount: number;
   communityCasesCount: number;
   commentsCount: number;
@@ -90,6 +100,21 @@ export type PlatformVeterinarianRelations = {
   interactionPairs: PlatformVeterinarianInteractionPair[];
 };
 
+export type UpdatePlatformClinicPayload = {
+  isActive?: boolean;
+  paymentMethod?: PaymentMethod;
+  paymentStatus?: PaymentStatus;
+};
+
+export type UpdatedPlatformClinic = {
+  id: string;
+  name: string;
+  isActive: boolean;
+  paymentMethod: PaymentMethod;
+  paymentStatus: PaymentStatus;
+  plan: ClinicPlan;
+};
+
 export async function getPlatformStats(): Promise<PlatformStats> {
   return apiFetchJson<PlatformStats>('/platform/stats');
 }
@@ -115,10 +140,18 @@ export async function listPlatformClinics(params?: {
 export async function updatePlatformClinicStatus(
   id: string,
   isActive: boolean,
-): Promise<{ id: string; name: string; isActive: boolean }> {
+): Promise<UpdatedPlatformClinic> {
+  return updatePlatformClinic(id, { isActive });
+}
+
+export async function updatePlatformClinic(
+  id: string,
+  payload: UpdatePlatformClinicPayload,
+): Promise<UpdatedPlatformClinic> {
   return apiFetchJson(`/platform/clinics/${id}`, {
     method: 'PATCH',
-    body: JSON.stringify({ isActive }),
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
   });
 }
 

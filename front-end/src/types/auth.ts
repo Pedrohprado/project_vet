@@ -1,5 +1,9 @@
 export type ClinicPlan = 'FREE' | 'STARTER' | 'PRO';
 
+export type PaymentMethod = 'NONE' | 'PIX' | 'CARD';
+
+export type PaymentStatus = 'PENDING' | 'PAID';
+
 export type UserRole = 'VETERINARIAN' | 'ADMIN' | 'SUPER_ADMIN';
 
 export const USER_ROLE_LABELS: Record<UserRole, string> = {
@@ -17,6 +21,8 @@ export type Clinic = {
   email: string | null;
   plan: ClinicPlan;
   isActive: boolean;
+  paymentMethod: PaymentMethod;
+  paymentStatus: PaymentStatus;
   createdAt: string;
 };
 

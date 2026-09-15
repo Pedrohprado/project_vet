@@ -19,6 +19,7 @@ export type AuthContextValue = {
   updateProfile: (payload: UpdateProfilePayload) => Promise<void>;
   saveSignature: (signature: string) => Promise<void>;
   deleteSignature: () => Promise<void>;
+  selectPix: () => Promise<void>;
   logout: () => Promise<void>;
 };
 

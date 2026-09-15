@@ -1,17 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import {
-  Building2,
   ChevronRight,
   Heart,
   MessageSquare,
-  MessagesSquare,
-  PawPrint,
-  Stethoscope,
-  UserCheck,
-  Users,
-  UserX,
-  type LucideIcon,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -26,103 +18,16 @@ import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   usePlatformClinics,
-  usePlatformStats,
   usePlatformVeterinarianRelations,
   usePlatformVeterinarians,
 } from '@/hooks/usePlatform';
-import { cn } from '@/lib/utils';
 import {
   pageDescriptionClassName,
   pageShellClassName,
   pageTitleClassName,
 } from '@/lib/mobile-ui';
-import type { PlatformClinic, PlatformStats, PlatformVeterinarian } from '@/api/platform';
+import type { PlatformClinic, PlatformVeterinarian } from '@/api/platform';
 import { USER_ROLE_LABELS } from '@/types/auth';
-
-type StatCard = {
-  key: string;
-  label: string;
-  description: string;
-  icon: LucideIcon;
-  cardClassName: string;
-  iconClassName: string;
-  getValue: (stats: PlatformStats) => number;
-};
-
-const statCards: StatCard[] = [
-  {
-    key: 'clinicsActive',
-    label: 'Clínicas ativas',
-    description: 'Clientes com acesso liberado',
-    icon: Building2,
-    cardClassName: 'border-primary/20 bg-primary/5',
-    iconClassName: 'text-primary',
-    getValue: (stats) => stats.clinicsActive,
-  },
-  {
-    key: 'veterinariansActive',
-    label: 'Veterinários ativos',
-    description: 'Profissionais com acesso habilitado',
-    icon: UserCheck,
-    cardClassName: 'border-violet-500/20 bg-violet-500/5',
-    iconClassName: 'text-violet-600 dark:text-violet-400',
-    getValue: (stats) => stats.veterinariansActive,
-  },
-  {
-    key: 'veterinariansRecentLogin',
-    label: 'Logins recentes',
-    description: 'Veterinários ativos nos últimos 30 dias',
-    icon: Users,
-    cardClassName: 'border-indigo-500/20 bg-indigo-500/5',
-    iconClassName: 'text-indigo-600 dark:text-indigo-400',
-    getValue: (stats) => stats.veterinariansRecentLogin,
-  },
-  {
-    key: 'consultationsFinished',
-    label: 'Consultas finalizadas',
-    description: 'Atendimentos concluídos na plataforma',
-    icon: Stethoscope,
-    cardClassName: 'border-teal-500/20 bg-teal-500/5',
-    iconClassName: 'text-teal-600 dark:text-teal-400',
-    getValue: (stats) => stats.consultationsFinished,
-  },
-  {
-    key: 'communityCases',
-    label: 'Casos na comunidade',
-    description: 'Publicações clínicas compartilhadas',
-    icon: MessagesSquare,
-    cardClassName: 'border-orange-500/20 bg-orange-500/5',
-    iconClassName: 'text-orange-600 dark:text-orange-400',
-    getValue: (stats) => stats.communityCases,
-  },
-  {
-    key: 'tutors',
-    label: 'Tutores',
-    description: 'Donos de pets em toda a plataforma',
-    icon: Users,
-    cardClassName: 'border-sky-500/20 bg-sky-500/5',
-    iconClassName: 'text-sky-600 dark:text-sky-400',
-    getValue: (stats) => stats.tutors,
-  },
-  {
-    key: 'pets',
-    label: 'Pets',
-    description: 'Animais cadastrados na plataforma',
-    icon: PawPrint,
-    cardClassName: 'border-emerald-500/20 bg-emerald-500/5',
-    iconClassName: 'text-emerald-600 dark:text-emerald-400',
-    getValue: (stats) => stats.pets,
-  },
-  {
-    key: 'clinicsInactive',
-    label: 'Clínicas inativas',
-    description: 'Clientes desativados',
-    icon: UserX,
-    cardClassName: 'border-amber-500/20 bg-amber-500/5',
-    iconClassName: 'text-amber-600 dark:text-amber-400',
-    getValue: (stats) => stats.clinicsInactive,
-  },
-];
 
 function formatDate(value: string | null) {
   if (!value) return '—';
@@ -227,7 +132,6 @@ export function AdminDashboardPage() {
     return () => window.clearTimeout(timer);
   }, [vetSearch]);
 
-  const { data: stats, isLoading, error } = usePlatformStats();
   const {
     data: recentClinics,
     isLoading: isLoadingClinics,
@@ -249,42 +153,9 @@ export function AdminDashboardPage() {
       <div>
         <h1 className={pageTitleClassName}>Visão geral</h1>
         <p className={pageDescriptionClassName}>
-          Indicadores globais da plataforma e relações entre veterinários.
+          Relações entre veterinários, diretório e clínicas recentes.
         </p>
       </div>
-
-      {error ? (
-        <p className="text-sm text-destructive">
-          Não foi possível carregar os indicadores.
-        </p>
-      ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          {statCards.map((item) => (
-            <Card
-              key={item.key}
-              className={cn(
-                'rounded-2xl border bg-white/90 shadow-xl shadow-black/4 backdrop-blur-sm',
-                item.cardClassName,
-              )}
-            >
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{item.label}</CardTitle>
-                <item.icon className={cn('size-4', item.iconClassName)} />
-              </CardHeader>
-              <CardContent>
-                {isLoading ? (
-                  <Skeleton className="h-9 w-16" />
-                ) : (
-                  <p className="text-3xl font-semibold tracking-tight">
-                    {stats ? item.getValue(stats) : 0}
-                  </p>
-                )}
-                <CardDescription className="mt-1">{item.description}</CardDescription>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
         <Card>

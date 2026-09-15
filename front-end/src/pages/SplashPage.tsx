@@ -5,6 +5,7 @@ import { BrandLogo } from '@/components/brand/brand-logo';
 import { BrandPageBackground } from '@/components/brand-page-background';
 import { Button } from '@/components/ui/button';
 import { DashboardMockup } from '@/components/landing/dashboard-mockup';
+import { useFunnelTrack } from '@/hooks/useFunnelTrack';
 import { CAT_SRC, DOG_SRC } from '@/lib/brand';
 import { splashBenefits } from '@/lib/billing';
 import {
@@ -17,6 +18,8 @@ import {
 import { cn } from '@/lib/utils';
 
 export function SplashPage() {
+  useFunnelTrack('ENTRADA');
+
   return (
     <div className="relative flex min-h-svh items-center justify-center overflow-hidden bg-white px-4 py-10 sm:px-6 sm:py-12">
       <BrandPageBackground variant="absolute" blurHeight="55%" />
@@ -123,10 +126,11 @@ export function SplashPage() {
                 </ul>
 
                 <Button
-                  className={`${landingPrimaryButtonClassName} mt-6 w-full sm:max-w-[11rem]`}
+                  action="join"
+                  className={`${landingPrimaryButtonClassName} mt-6 w-full gap-2 sm:max-w-[11rem]`}
                   render={<Link to="/login" />}
                 >
-                  Fazer parte
+                  fazer parte
                 </Button>
               </div>
             </div>

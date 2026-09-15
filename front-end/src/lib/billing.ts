@@ -5,12 +5,15 @@ const PIX_ACCESS_KEY = 'boxvet:pix-access';
 
 export const SUBSCRIPTION_PRICE = 'R$ 27';
 
+export const SUBSCRIPTION_COMMUNITY_BENEFIT =
+  'Comunidade de casos e roadmap público';
+
 export const subscriptionBenefits = [
   'Agenda de consultas e vacinas organizada',
   'Prontuário digital com anamnese e receitas',
   'Lembretes de retorno e vacinação',
   'Pós-consulta para enviar ao tutor',
-  'Comunidade de casos e roadmap público',
+  SUBSCRIPTION_COMMUNITY_BENEFIT,
 ] as const;
 
 export type SplashBenefit = {
@@ -58,6 +61,7 @@ export function hasAppAccess(
   if (!user) return false;
   if (isSuperAdmin(user)) return true;
   if (clinic && clinic.plan !== 'FREE') return true;
+  if (clinic?.paymentStatus === 'PAID') return true;
   return hasPixAccess(clinic?.id ?? user.clinicId);
 }
 

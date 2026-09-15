@@ -1,7 +1,7 @@
 import { useCallback, useLayoutEffect, useRef } from 'react';
 
 const LAYER_CLASS =
-  'fixed inset-0 z-50 m-0 h-dvh w-screen max-h-none max-w-none border-0 bg-transparent p-0';
+  'fixed top-0 left-0 z-50 m-0 h-dvh min-h-dvh w-[calc(100vw+(100vw-100%))] min-w-screen max-h-none max-w-none border-0 bg-transparent p-0';
 
 function openLayer(layer: HTMLDivElement) {
   if (typeof layer.showPopover !== 'function') return;

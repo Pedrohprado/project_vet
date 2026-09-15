@@ -20,6 +20,8 @@ export class ClinicPrismaRepository {
         email: true,
         plan: true,
         isActive: true,
+        paymentMethod: true,
+        paymentStatus: true,
         createdAt: true,
       },
     });
@@ -37,6 +39,8 @@ export class ClinicPrismaRepository {
         email: true,
         plan: true,
         isActive: true,
+        paymentMethod: true,
+        paymentStatus: true,
         createdAt: true,
       },
     });

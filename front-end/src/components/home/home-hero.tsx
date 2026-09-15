@@ -1,7 +1,4 @@
-import { Link } from 'react-router';
-import { Calendar, Plus, Users } from 'lucide-react';
 import { OPEN_BOX_SRC } from '@/lib/brand';
-import { Button } from '@/components/ui/button';
 
 type HomeHeroProps = {
   userName: string;
@@ -42,7 +39,7 @@ export function HomeHero({ userName, clinicName, reminderCount }: HomeHeroProps)
           Olá, {firstName}!
         </h1>
         <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-          {capitalizedToday}. Resumo da clínica para os próximos dias.
+          {capitalizedToday}
         </p>
         {reminderCount ? (
           <a
@@ -54,27 +51,6 @@ export function HomeHero({ userName, clinicName, reminderCount }: HomeHeroProps)
               : `${reminderCount} lembretes na semana`}
           </a>
         ) : null}
-
-        <div className="mt-4 flex flex-wrap gap-2">
-          <Button size="sm" asChild>
-            <Link to="/atendimento">
-              <Plus className="size-4" />
-              Novo atendimento
-            </Link>
-          </Button>
-          <Button size="sm" variant="outline" asChild>
-            <Link to="/agenda">
-              <Calendar className="size-4" />
-              Agenda
-            </Link>
-          </Button>
-          <Button size="sm" variant="outline" asChild>
-            <Link to="/tutors">
-              <Users className="size-4" />
-              Tutores
-            </Link>
-          </Button>
-        </div>
       </div>
     </section>
   );

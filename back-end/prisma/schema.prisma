@@ -104,6 +104,23 @@ enum ProductIdeaStatus {
   DONE
 }
 
+enum FunnelStep {
+  ENTRADA
+  CHECKOUT
+  ENTERED
+}
+
+enum PaymentMethod {
+  NONE
+  PIX
+  CARD
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+}
+
 model Clinic {
   id           String  @id @default(uuid())
   name         String
@@ -120,8 +137,10 @@ model Clinic {
   city         String?
   state        String?
 
-  plan     ClinicPlan @default(FREE)
-  isActive Boolean    @default(true)
+  plan            ClinicPlan    @default(FREE)
+  isActive        Boolean       @default(true)
+  paymentMethod   PaymentMethod @default(NONE)
+  paymentStatus   PaymentStatus @default(PENDING)
 
   users              User[]
   tutors             Tutor[]
@@ -590,5 +609,16 @@ model WaitlistSignup {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
+  @@index([createdAt])
+}
+
+model FunnelEvent {
+  id        String     @id @default(cuid())
+  step      FunnelStep
+  path      String
+  sessionId String?
+  createdAt DateTime   @default(now())
+
+  @@index([step])
   @@index([createdAt])
 }

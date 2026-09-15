@@ -300,6 +300,9 @@ export function ConsultationPage() {
   const [whatsappReviewMode, setWhatsappReviewMode] = useState<
     'finish' | 'resend'
   >('finish');
+  const [whatsappConfirmAction, setWhatsappConfirmAction] = useState<
+    'skip' | 'send' | null
+  >(null);
   const [pendingWeightKg, setPendingWeightKg] = useState<number | null>(null);
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
   const [prescriptionDocumentType, setPrescriptionDocumentType] =
@@ -767,16 +770,18 @@ export function ConsultationPage() {
     await openPostSummaryReview('resend');
   }
 
-  async function handleConfirmFinish() {
+  async function handleConfirmFinish(sendWhatsApp: boolean) {
     if (!id || !consultation) return;
 
     const tutorPhone =
       consultation.tutor.whatsapp ?? consultation.tutor.phone;
 
     if (whatsappReviewMode === 'resend') {
-      const whatsappUrl = buildWhatsAppUrl(tutorPhone, whatsappMessage.trim());
-      if (whatsappUrl) {
-        window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
+      if (sendWhatsApp) {
+        const whatsappUrl = buildWhatsAppUrl(tutorPhone, whatsappMessage.trim());
+        if (whatsappUrl) {
+          window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
+        }
       }
       setWhatsappReviewOpen(false);
       return;
@@ -785,6 +790,8 @@ export function ConsultationPage() {
     const hasPrescriptions = consultation.prescriptions.length > 0;
     const schedulingReturn =
       returnInfo.needsReturn && Boolean(returnInfo.returnDate);
+
+    setWhatsappConfirmAction(sendWhatsApp ? 'send' : 'skip');
 
     try {
       await handleSaveReturn();
@@ -803,9 +810,11 @@ export function ConsultationPage() {
         },
       });
 
-      const whatsappUrl = buildWhatsAppUrl(tutorPhone, whatsappMessage.trim());
-      if (whatsappUrl) {
-        window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
+      if (sendWhatsApp) {
+        const whatsappUrl = buildWhatsAppUrl(tutorPhone, whatsappMessage.trim());
+        if (whatsappUrl) {
+          window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
+        }
       }
 
       setWhatsappReviewOpen(false);
@@ -827,6 +836,8 @@ export function ConsultationPage() {
       toast.error(
         err instanceof ApiError ? err.message : 'Erro ao finalizar consulta',
       );
+    } finally {
+      setWhatsappConfirmAction(null);
     }
   }
 
@@ -1890,13 +1901,10 @@ export function ConsultationPage() {
         }
         message={whatsappMessage}
         onMessageChange={setWhatsappMessage}
-        onConfirm={() => void handleConfirmFinish()}
-        confirmLabel={
-          whatsappReviewMode === 'resend' ? 'Enviar no WhatsApp' : 'Concluir'
-        }
-        confirmingLabel={
-          whatsappReviewMode === 'resend' ? 'Abrindo...' : 'Concluindo...'
-        }
+        mode={whatsappReviewMode}
+        onProceedWithoutSend={() => void handleConfirmFinish(false)}
+        onProceedWithSend={() => void handleConfirmFinish(true)}
+        confirmingAction={whatsappConfirmAction}
         isConfirming={
           finishConsultation.isPending || updateConsultation.isPending
         }

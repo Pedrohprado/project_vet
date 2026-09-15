@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
@@ -116,15 +115,12 @@ export function HomeWeekReminders({
       className="scroll-mt-4 rounded-2xl border border-border/50 bg-white/90 shadow-xl shadow-black/4 backdrop-blur-sm"
     >
       <CardHeader className="flex flex-col gap-3 space-y-0 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
-        <div className="space-y-1">
-          <CardTitle>Lembretes da semana</CardTitle>
-          <CardDescription>
-            Agendamentos e próximas doses de vacina nos próximos 7 dias.
-          </CardDescription>
-        </div>
-        <Button size="sm" className="w-fit shrink-0" asChild>
-          <Link to="/agenda">Ir para agenda</Link>
-        </Button>
+        <CardTitle>Lembretes da semana</CardTitle>
+        {!isLoading && !error && items.length > 0 ? (
+          <Button size="sm" className="w-fit shrink-0" asChild>
+            <Link to="/agenda">Ir para agenda</Link>
+          </Button>
+        ) : null}
       </CardHeader>
       <CardContent className="space-y-2">
         {error ? (
@@ -138,13 +134,11 @@ export function HomeWeekReminders({
             <Skeleton className="h-16 w-full rounded-xl" />
           </>
         ) : items.length === 0 ? (
-          <div className="flex flex-col items-center py-8 text-center">
-            <img
-              src="/sniff_dog.png"
-              alt="Cachorro farejando"
-              className="size-40 object-contain"
-            />
-            <p className="ellipsis-dots -mt-8 text-xs text-muted-foreground">
+          <div className="flex flex-col items-center gap-3 py-8 text-center">
+            <Button size="sm" asChild>
+              <Link to="/agenda">Ir para agenda</Link>
+            </Button>
+            <p className="ellipsis-dots text-xs text-muted-foreground">
               Não conseguimos encontrar nenhum lembrete
               <span>.</span>
               <span>.</span>

@@ -14,6 +14,7 @@ import { VaccinationPage } from '@/pages/VaccinationPage';
 import { AuthPage } from '@/pages/AuthPage';
 import { EstatisticasPage } from '@/pages/EstatisticasPage';
 import { LandingPage } from '@/pages/LandingPage';
+import { LevantamentoPage } from '@/pages/LevantamentoPage';
 import { PetDetailPage } from '@/pages/PetDetailPage';
 import { PetFormPage } from '@/pages/PetFormPage';
 import { ProfilePage } from '@/pages/ProfilePage';
@@ -26,6 +27,7 @@ import { TutorListPage } from '@/pages/TutorListPage';
 import { AdminClinicsPage } from '@/pages/admin/AdminClinicsPage';
 import { AdminDashboardPage } from '@/pages/admin/AdminDashboardPage';
 import { AdminFinancePage } from '@/pages/admin/AdminFinancePage';
+import { AdminUsersPage } from '@/pages/admin/AdminUsersPage';
 import { RoadmapPage } from '@/pages/RoadmapPage';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import {
@@ -59,6 +61,7 @@ function App() {
       <Routes>
         <Route path="/" element={<RootRedirect />} />
         <Route path="/landing" element={<LandingPage />} />
+        <Route path="/levantamento" element={<LevantamentoPage />} />
 
         <Route element={<GuestRoute />}>
           <Route path="/login" element={<AuthPage />} />
@@ -93,6 +96,7 @@ function App() {
         <Route element={<SuperAdminRoute />}>
           <Route element={<AdminLayout />}>
             <Route path="/admin" element={<AdminDashboardPage />} />
+            <Route path="/admin/usuarios" element={<AdminUsersPage />} />
             <Route path="/admin/clinicas" element={<AdminClinicsPage />} />
             <Route path="/admin/financeiro" element={<AdminFinancePage />} />
             <Route path="/admin/comunidade" element={<CommunityPage />} />

@@ -50,6 +50,7 @@ function Button({
   variant = "default",
   size = "default",
   action,
+  alwaysShowActionIcon = false,
   asChild = false,
   render,
   children,
@@ -60,6 +61,7 @@ function Button({
   VariantProps<typeof buttonVariants> & {
     asChild?: boolean
     action?: ButtonAction
+    alwaysShowActionIcon?: boolean
   }) {
   const [hovered, setHovered] = React.useState(false)
   const child = asChild ? React.Children.only(children) : null
@@ -81,7 +83,32 @@ function Button({
   const resolvedAction =
     action ?? (variant === "destructive" ? "delete" : undefined)
   const isIconSize = typeof size === "string" && size.startsWith("icon")
-  const showActionIcon = Boolean(resolvedAction) && !usesCustomRender
+  const isJoinAction = resolvedAction === "join"
+  const showActionIcon =
+    Boolean(resolvedAction) && (!usesCustomRender || isJoinAction)
+  const actionIconAtEnd = isJoinAction
+
+  const actionIcon = showActionIcon && resolvedAction ? (
+    <span
+      className={cn(
+        "inline-flex items-center justify-center overflow-visible transition-all duration-300 ease-out",
+        isJoinAction || alwaysShowActionIcon
+          ? "size-4 opacity-100"
+          : isIconSize
+            ? "w-4 opacity-100"
+            : hovered
+              ? "w-4 opacity-100"
+              : "w-0 opacity-0",
+      )}
+      aria-hidden
+    >
+      <ButtonActionIcon
+        action={resolvedAction}
+        animate={hovered}
+        size={isIconSize ? 14 : 16}
+      />
+    </span>
+  ) : null
 
   return (
     <ButtonPrimitive
@@ -102,26 +129,9 @@ function Button({
       }}
       {...props}
     >
-      {showActionIcon && resolvedAction ? (
-        <span
-          className={cn(
-            "inline-flex items-center justify-center overflow-visible transition-all duration-300 ease-out",
-            isIconSize
-              ? "w-4 opacity-100"
-              : hovered
-                ? "w-4 opacity-100"
-                : "w-0 opacity-0",
-          )}
-          aria-hidden
-        >
-          <ButtonActionIcon
-            action={resolvedAction}
-            animate={hovered}
-            size={isIconSize ? 14 : 16}
-          />
-        </span>
-      ) : null}
+      {!actionIconAtEnd ? actionIcon : null}
       {isIconSize && showActionIcon ? null : resolvedChildren}
+      {actionIconAtEnd ? actionIcon : null}
     </ButtonPrimitive>
   )
 }

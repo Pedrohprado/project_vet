@@ -6,12 +6,14 @@ import {
   type ReactNode,
 } from 'react';
 import * as authApi from '@/api/auth';
+import * as billingApi from '@/api/billing';
 import { ApiError } from '@/api/http';
 import {
   AuthContext,
   type AuthContextValue,
 } from '@/contexts/auth-context';
 import { clearAllConsultationDrafts } from '@/lib/consultation-draft';
+import { markPixAccess } from '@/lib/billing';
 import type { RegisterClinicPayload, UpdateProfilePayload } from '@/types/auth';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -85,6 +87,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setClinic(data.clinic);
   }, []);
 
+  const selectPix = useCallback(async () => {
+    const data = await billingApi.selectPixBilling();
+    setClinic(data.clinic);
+    markPixAccess(data.clinic.id);
+  }, []);
+
   const logout = useCallback(async () => {
     try {
       await authApi.logout();
@@ -110,9 +118,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       updateProfile,
       saveSignature,
       deleteSignature,
+      selectPix,
       logout,
     }),
-    [user, clinic, isLoading, login, register, completeWelcome, updateProfile, saveSignature, deleteSignature, logout],
+    [
+      user,
+      clinic,
+      isLoading,
+      login,
+      register,
+      completeWelcome,
+      updateProfile,
+      saveSignature,
+      deleteSignature,
+      selectPix,
+      logout,
+    ],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
