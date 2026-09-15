@@ -37,7 +37,8 @@ import {
   pageShellClassName,
   stickyActionBarClassName,
 } from '@/lib/mobile-ui';
-import { formatDateValue } from '@/lib/date-input';
+import { addDays } from 'date-fns';
+import { formatDateValue, parseDateValue } from '@/lib/date-input';
 import { toClinicDate, toClinicDatePayload } from '@/lib/clinic-date';
 import { getSafeMediaUrl } from '@/lib/safe-url';
 import { cn } from '@/lib/utils';
@@ -59,6 +60,60 @@ const STEPS = [
 ] as const;
 
 const OTHER_VACCINE_VALUE = '__other__';
+
+const NEXT_DOSE_PRESETS = [
+  { days: 21, label: '21 dias' },
+  { days: 28, label: '28 dias' },
+  { days: 365, label: '1 ano' },
+] as const;
+
+function nextDoseDateFromApplied(appliedAt: string, days: number) {
+  const base = parseDateValue(appliedAt) ?? new Date();
+  return formatDateValue(addDays(base, days));
+}
+
+type NextDoseDateFieldProps = {
+  appliedAt: string;
+  value: string;
+  onChange: (value: string) => void;
+  id?: string;
+  placeholder?: string;
+};
+
+function NextDoseDateField({
+  appliedAt,
+  value,
+  onChange,
+  id,
+  placeholder = 'Opcional',
+}: NextDoseDateFieldProps) {
+  return (
+    <div className="space-y-3">
+      <div className="flex flex-wrap gap-2">
+        {NEXT_DOSE_PRESETS.map((preset) => {
+          const presetValue = nextDoseDateFromApplied(appliedAt, preset.days);
+          return (
+            <Button
+              key={preset.days}
+              type="button"
+              variant={value === presetValue ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => onChange(presetValue)}
+            >
+              {preset.label}
+            </Button>
+          );
+        })}
+      </div>
+      <DatePicker
+        id={id}
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+      />
+    </div>
+  );
+}
 
 function stepStorageKey(vaccinationId: string) {
   return `vaccination-step-${vaccinationId}`;
@@ -489,8 +544,9 @@ export function VaccinationPage() {
 
               <div className="max-w-sm space-y-2">
                 <Label htmlFor="finished-next-dose">Próxima dose</Label>
-                <DatePicker
+                <NextDoseDateField
                   id="finished-next-dose"
+                  appliedAt={form.appliedAt}
                   value={form.nextDoseAt}
                   onChange={(value) =>
                     setForm((prev) => ({ ...prev, nextDoseAt: value }))
@@ -652,7 +708,8 @@ export function VaccinationPage() {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label>Data da próxima dose</Label>
-                <DatePicker
+                <NextDoseDateField
+                  appliedAt={form.appliedAt}
                   value={form.nextDoseAt}
                   onChange={(value) =>
                     setForm((prev) => ({ ...prev, nextDoseAt: value }))
