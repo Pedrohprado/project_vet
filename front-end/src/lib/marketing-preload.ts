@@ -4,6 +4,7 @@ import {
   DOG_SRC,
   FLYBIRD_SRC,
   LOGO_BOX_SRC,
+  LOGO_SRC,
   OPEN_BOX_SRC,
   VETERINARY_WOMEN_SRC,
 } from '@/lib/brand';
@@ -20,7 +21,7 @@ export const SPLASH_PRELOAD_PNGS = [
 export const LANDING_HERO_PRELOAD_PNGS = [CAT_SRC, BIRD_SRC] as const;
 
 /** Login / register */
-export const AUTH_PRELOAD_PNGS = [BIRD_SRC, LOGO_BOX_SRC] as const;
+export const AUTH_PRELOAD_PNGS = [BIRD_SRC, LOGO_SRC, LOGO_BOX_SRC] as const;
 
 /** Seções abaixo da dobra — preload leve após hero (opcional, via hook na landing) */
 export const LANDING_BELOW_FOLD_PRELOAD_PNGS = [

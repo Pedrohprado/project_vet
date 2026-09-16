@@ -399,6 +399,23 @@
   }
 }
 
+@keyframes caret-blink {
+  0%,
+  70%,
+  100% {
+    opacity: 1;
+  }
+
+  20%,
+  50% {
+    opacity: 0;
+  }
+}
+
+.animate-caret-blink {
+  animation: caret-blink 1.2s ease-out infinite;
+}
+
 /* Avanço contínuo no X + leve onda para intercalarem sem frear */
 @keyframes hero-bird-fly-progress {
   from {

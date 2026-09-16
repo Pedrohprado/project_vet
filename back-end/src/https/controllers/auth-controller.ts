@@ -3,13 +3,19 @@ import { clearAuthCookies, setAuthCookies } from '../../lib/auth-cookies.js';
 import { UserRole } from '../../generated/prisma/client.js';
 import { UserPrismaRepository } from '../../repositories/prisma/user-prisma-repository.js';
 import { LoginService } from '../../services/login-service.js';
+import { PasswordResetService } from '../../services/password-reset-service.js';
 import { HttpError } from '../../services/erros/http-error.js';
 import { loginSchema } from '../schemas/login-schema.js';
+import {
+  forgotPasswordSchema,
+  resetPasswordSchema,
+} from '../schemas/password-reset-schema.js';
 import type { RefreshJwtPayload } from '../../types/jwt-payload.js';
 import { getClinicById } from './clinic-controller.js';
 import { updateProfileSchema } from '../schemas/update-profile-schema.js';
 
 const loginService = new LoginService();
+const passwordResetService = new PasswordResetService();
 const userRepository = new UserPrismaRepository();
 
 export async function login(request: FastifyRequest, reply: FastifyReply) {
@@ -25,6 +31,41 @@ export async function login(request: FastifyRequest, reply: FastifyReply) {
   await setAuthCookies(reply, user);
 
   return reply.status(200).send({ user, clinic });
+}
+
+export async function forgotPassword(
+  request: FastifyRequest,
+  reply: FastifyReply,
+) {
+  const parsed = forgotPasswordSchema.safeParse(request.body);
+
+  if (!parsed.success) {
+    const firstError = parsed.error.issues[0]?.message ?? 'Dados inválidos';
+    throw new HttpError(firstError, 400);
+  }
+
+  const result = await passwordResetService.forgotPassword(
+    parsed.data,
+    request.ip,
+  );
+
+  return reply.status(200).send(result);
+}
+
+export async function resetPassword(
+  request: FastifyRequest,
+  reply: FastifyReply,
+) {
+  const parsed = resetPasswordSchema.safeParse(request.body);
+
+  if (!parsed.success) {
+    const firstError = parsed.error.issues[0]?.message ?? 'Dados inválidos';
+    throw new HttpError(firstError, 400);
+  }
+
+  const result = await passwordResetService.resetPassword(parsed.data);
+
+  return reply.status(200).send(result);
 }
 
 export async function me(request: FastifyRequest, reply: FastifyReply) {

@@ -9,7 +9,9 @@ import {
   Syringe,
   Users,
 } from 'lucide-react';
+import { BrandCardBirds } from '@/components/brand/brand-card-birds';
 import { BrandImage } from '@/components/brand/brand-image';
+import { BrandLogo } from '@/components/brand/brand-logo';
 import { usePreloadBrandImages } from '@/hooks/use-preload-images';
 import { BIRD_SRC } from '@/lib/brand';
 import { AUTH_PRELOAD_PNGS } from '@/lib/marketing-preload';
@@ -115,15 +117,18 @@ function EcosystemBadge({
 type AuthPageLayoutProps = {
   children: React.ReactNode;
   isRegister?: boolean;
-  subtitle: string;
+  subtitle?: string | null;
+  showEyebrow?: boolean;
 };
 
 export function AuthPageLayout({
   children,
   isRegister = false,
   subtitle,
+  showEyebrow = true,
 }: AuthPageLayoutProps) {
   usePreloadBrandImages(AUTH_PRELOAD_PNGS);
+  const hasSubtitle = Boolean(subtitle?.trim());
 
   return (
     <div className='relative flex min-h-svh items-center justify-center overflow-hidden bg-white p-4 sm:p-6'>
@@ -158,24 +163,42 @@ export function AuthPageLayout({
           isRegister ? 'max-w-lg' : 'max-w-md',
         )}
       >
-        <BrandImage
-          src={BIRD_SRC}
-          alt=''
-          aria-hidden
-          priority
-          className='pointer-events-none absolute top-0 right-6 z-20 h-14 w-auto translate-y-[-58%] object-contain sm:right-10 sm:h-16'
-        />
+        {isRegister ? (
+          <BrandCardBirds count={2} priority />
+        ) : (
+          <BrandImage
+            src={BIRD_SRC}
+            alt=''
+            aria-hidden
+            priority
+            className='pointer-events-none absolute top-0 right-6 z-20 h-14 w-auto translate-y-[-58%] object-contain sm:right-10 sm:h-16'
+          />
+        )}
         <div className='rounded-2xl border border-border/50 bg-white p-6 shadow-xl shadow-black/4 sm:p-8'>
-          <header className='mb-6 text-center sm:mb-8'>
-            <p className='text-sm text-muted-foreground'>
-              {isRegister ? 'Crie sua conta na' : 'Bem vindo'}
-            </p>
-            <h1 className='mt-1 text-3xl font-bold tracking-tight text-primary sm:text-4xl'>
-              boxvet.
-            </h1>
-            <p className='mt-3 text-sm leading-relaxed text-muted-foreground'>
-              {subtitle}
-            </p>
+          <header
+            className={cn(
+              'text-center',
+              hasSubtitle || showEyebrow ? 'mb-6 sm:mb-8' : 'mb-6 sm:mb-8',
+            )}
+          >
+            {showEyebrow ? (
+              <p className='text-sm text-muted-foreground'>
+                {isRegister ? 'Crie sua conta na' : 'Bem vindo'}
+              </p>
+            ) : null}
+            <div
+              className={cn(
+                'flex justify-center',
+                showEyebrow ? 'mt-2' : undefined,
+              )}
+            >
+              <BrandLogo size='lg' priority className='justify-center' />
+            </div>
+            {hasSubtitle ? (
+              <p className='mt-3 text-sm leading-relaxed text-muted-foreground'>
+                {subtitle}
+              </p>
+            ) : null}
           </header>
           {children}
         </div>

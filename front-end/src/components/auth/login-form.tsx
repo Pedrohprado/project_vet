@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router';
+import { useLocation, useNavigate } from 'react-router';
 import { z } from 'zod';
 import { ApiError } from '@/api/http';
 import { BrandImage } from '@/components/brand/brand-image';
@@ -33,6 +33,14 @@ export function LoginForm({
   ...props
 }: React.ComponentProps<'div'>) {
   const navigate = useNavigate();
+  const location = useLocation();
+  const resetSuccess =
+    typeof location.state === 'object' &&
+    location.state !== null &&
+    'resetSuccess' in location.state &&
+    typeof (location.state as { resetSuccess?: unknown }).resetSuccess === 'string'
+      ? (location.state as { resetSuccess: string }).resetSuccess
+      : null;
   const { login } = useAuth();
   const [form, setForm] = useState<LoginFormData>({ email: '', password: '' });
   const { fieldErrors, formError, applyZodError, clearFieldError, clearErrors, setFormError } =
@@ -74,7 +82,7 @@ export function LoginForm({
       <form onSubmit={(e) => void handleSubmit(e)}>
         <FieldGroup className="gap-5">
           <Field data-invalid={Boolean(fieldErrors.email)}>
-            <FieldLabel htmlFor="email">E-mail de acesso *</FieldLabel>
+            <FieldLabel htmlFor="email">E-mail</FieldLabel>
             <Input
               id="email"
               type="email"
@@ -88,7 +96,7 @@ export function LoginForm({
             <FieldError>{fieldErrors.email}</FieldError>
           </Field>
           <Field data-invalid={Boolean(fieldErrors.password)}>
-            <FieldLabel htmlFor="password">Senha *</FieldLabel>
+            <FieldLabel htmlFor="password">Senha</FieldLabel>
             <Input
               id="password"
               type="password"
@@ -100,7 +108,19 @@ export function LoginForm({
               className={inputClassName}
             />
             <FieldError>{fieldErrors.password}</FieldError>
+            <FieldDescription className="text-right text-xs">
+              <button
+                type="button"
+                onClick={() => void navigate('/forgot-password')}
+                className="font-semibold text-foreground underline-offset-4 hover:underline"
+              >
+                Esqueci minha senha
+              </button>
+            </FieldDescription>
           </Field>
+          {resetSuccess ? (
+            <p className="text-sm text-emerald-700">{resetSuccess}</p>
+          ) : null}
           {formError ? (
             <p className="text-sm text-destructive">{formError}</p>
           ) : null}

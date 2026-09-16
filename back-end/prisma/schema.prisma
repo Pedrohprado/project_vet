@@ -177,12 +177,25 @@ model User {
   communityCaseLikes        CommunityCaseLike[]
   communityCaseComments     CommunityCaseComment[]
   productIdeas              ProductIdea[]
+  passwordResetTokens       PasswordResetToken[]
   clinicId                  String?
   clinic           Clinic?           @relation(fields: [clinicId], references: [id])
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
 
   @@unique([clinicId, email])
+}
+
+model PasswordResetToken {
+  id        String    @id @default(uuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  codeHash  String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId, expiresAt])
 }
 
 model Tutor {

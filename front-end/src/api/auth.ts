@@ -57,3 +57,26 @@ export async function updateProfile(
     body: JSON.stringify(payload),
   });
 }
+
+export async function forgotPassword(
+  email: string,
+): Promise<{ message: string }> {
+  return apiFetchJson<{ message: string }>('/auth/forgot-password', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email }),
+  });
+}
+
+export async function resetPassword(payload: {
+  email: string;
+  code: string;
+  newPassword: string;
+  confirmPassword: string;
+}): Promise<{ message: string }> {
+  return apiFetchJson<{ message: string }>('/auth/reset-password', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+}

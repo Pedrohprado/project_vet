@@ -49,6 +49,13 @@ export const registerSeo: SeoConfig = {
   robots: NOINDEX_NOFOLLOW,
 };
 
+export const forgotPasswordSeo: SeoConfig = {
+  title: `Esqueci a senha | ${SITE_NAME}`,
+  description: `Redefina sua senha do ${SITE_NAME} com um código enviado por e-mail.`,
+  canonicalPath: '/forgot-password',
+  robots: NOINDEX_NOFOLLOW,
+};
+
 export const levantamentoSeo: SeoConfig = {
   title: `Levantamento | ${SITE_NAME}`,
   description: DEFAULT_DESCRIPTION,
