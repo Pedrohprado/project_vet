@@ -17,8 +17,6 @@ export type AuthContextValue = {
   register: (payload: RegisterClinicPayload) => Promise<AuthResponse>;
   completeWelcome: () => Promise<void>;
   updateProfile: (payload: UpdateProfilePayload) => Promise<void>;
-  saveSignature: (signature: string) => Promise<void>;
-  deleteSignature: () => Promise<void>;
   selectPix: () => Promise<void>;
   logout: () => Promise<void>;
 };

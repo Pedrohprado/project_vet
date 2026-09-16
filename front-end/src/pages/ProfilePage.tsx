@@ -1,11 +1,7 @@
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { toast } from 'sonner';
 import { ApiError } from '@/api/http';
 import { PageBackButton } from '@/components/page-back-button';
-import {
-  SignaturePadField,
-  type SignaturePadFieldHandle,
-} from '@/components/profile/signature-pad-field';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -44,11 +40,9 @@ function getInitials(name: string) {
 }
 
 export function ProfilePage() {
-  const { user, clinic, updateProfile, saveSignature } = useAuth();
-  const signatureRef = useRef<SignaturePadFieldHandle>(null);
+  const { user, clinic, updateProfile } = useAuth();
   const [phone, setPhone] = useState(user?.phone ?? '');
   const [crmv, setCrmv] = useState(user?.crmv ?? '');
-  const [hasSignatureDraft, setHasSignatureDraft] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [prevUser, setPrevUser] = useState(user);
 
@@ -57,7 +51,6 @@ export function ProfilePage() {
     if (user) {
       setPhone(user.phone ?? '');
       setCrmv(user.crmv ?? '');
-      setHasSignatureDraft(false);
     }
   }
 
@@ -69,35 +62,21 @@ export function ProfilePage() {
   const isPlatformAdmin = user.role === 'SUPER_ADMIN';
   const normalizedPhone = phone.trim() || null;
   const normalizedCrmv = crmv.trim() || null;
-  const hasProfileChanges =
+  const hasChanges =
     normalizedPhone !== (user.phone?.trim() || null) ||
     normalizedCrmv !== (user.crmv?.trim() || null);
-  const hasSignatureToSave = !user.signatureUrl && hasSignatureDraft;
-  const hasChanges = hasProfileChanges || hasSignatureToSave;
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
+    if (!hasChanges) return;
+
     setIsSaving(true);
 
     try {
-      if (hasProfileChanges) {
-        await updateProfile({
-          phone: normalizedPhone,
-          crmv: normalizedCrmv,
-        });
-      }
-
-      if (hasSignatureToSave) {
-        const signature = signatureRef.current?.getDataUrl();
-        if (!signature) {
-          toast.error('Desenhe sua assinatura antes de salvar.');
-          return;
-        }
-        await saveSignature(signature);
-        signatureRef.current?.clear();
-        setHasSignatureDraft(false);
-      }
-
+      await updateProfile({
+        phone: normalizedPhone,
+        crmv: normalizedCrmv,
+      });
       toast.success('Perfil atualizado!');
     } catch (err) {
       toast.error(err instanceof ApiError ? err.message : 'Erro ao salvar perfil');
@@ -113,7 +92,7 @@ export function ProfilePage() {
       <div>
         <h1 className={pageTitleClassName}>Meu perfil</h1>
         <p className={`mt-1 ${pageDescriptionClassName}`}>
-          Atualize seus dados profissionais e a assinatura usada nas receitas.
+          Atualize seus dados profissionais.
         </p>
       </div>
 
@@ -200,24 +179,6 @@ export function ProfilePage() {
             </FieldGroup>
           </CardContent>
         </Card>
-
-        {!isPlatformAdmin ? (
-          <Card>
-            <CardHeader className="border-b">
-              <CardTitle>Assinatura eletrônica</CardTitle>
-              <CardDescription>
-                Aparece no final das receitas veterinárias em PDF.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <SignaturePadField
-                ref={signatureRef}
-                savedSignatureUrl={user.signatureUrl}
-                onSignatureChange={setHasSignatureDraft}
-              />
-            </CardContent>
-          </Card>
-        ) : null}
 
         <div className={stickyActionBarClassName}>
           <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">

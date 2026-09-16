@@ -10,7 +10,6 @@ const userSelect = {
   clinicId: true,
   phone: true,
   crmv: true,
-  signatureUrl: true,
   isActive: true,
   lastLoginAt: true,
   createdAt: true,
@@ -83,14 +82,6 @@ export class UserPrismaRepository {
         ...(data.crmv !== undefined ? { crmv: data.crmv } : {}),
         ...(data.phone !== undefined ? { phone: data.phone } : {}),
       },
-      select: userSelect,
-    });
-  }
-
-  async updateSignatureUrl(id: string, signatureUrl: string | null) {
-    return prisma.user.update({
-      where: { id },
-      data: { signatureUrl },
       select: userSelect,
     });
   }

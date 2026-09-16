@@ -8,11 +8,6 @@ import { loginSchema } from '../schemas/login-schema.js';
 import type { RefreshJwtPayload } from '../../types/jwt-payload.js';
 import { getClinicById } from './clinic-controller.js';
 import { updateProfileSchema } from '../schemas/update-profile-schema.js';
-import { updateSignatureSchema } from '../schemas/update-signature-schema.js';
-import {
-  deleteUserSignature,
-  saveUserSignature,
-} from '../../lib/save-user-signature.js';
 
 const loginService = new LoginService();
 const userRepository = new UserPrismaRepository();
@@ -154,36 +149,4 @@ async function buildAuthResponse(
   const clinic = await getClinicById(request.authUser.clinicId);
 
   return { user, clinic };
-}
-
-export async function saveSignature(request: FastifyRequest, reply: FastifyReply) {
-  const parsed = updateSignatureSchema.safeParse(request.body);
-
-  if (!parsed.success) {
-    const firstError = parsed.error.issues[0]?.message ?? 'Dados inválidos';
-    throw new HttpError(firstError, 400);
-  }
-
-  const signatureUrl = await saveUserSignature(
-    request.authUser.id,
-    parsed.data.signature,
-  );
-
-  const user = await userRepository.updateSignatureUrl(
-    request.authUser.id,
-    signatureUrl,
-  );
-
-  const response = await buildAuthResponse(request, user);
-
-  return reply.status(200).send(response);
-}
-
-export async function removeSignature(request: FastifyRequest, reply: FastifyReply) {
-  await deleteUserSignature(request.authUser.id);
-
-  const user = await userRepository.updateSignatureUrl(request.authUser.id, null);
-  const response = await buildAuthResponse(request, user);
-
-  return reply.status(200).send(response);
 }

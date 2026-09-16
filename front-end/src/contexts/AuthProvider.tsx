@@ -75,18 +75,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setClinic(data.clinic);
   }, []);
 
-  const saveSignature = useCallback(async (signature: string) => {
-    const data = await authApi.saveSignature(signature);
-    setUser(data.user);
-    setClinic(data.clinic);
-  }, []);
-
-  const deleteSignature = useCallback(async () => {
-    const data = await authApi.deleteSignature();
-    setUser(data.user);
-    setClinic(data.clinic);
-  }, []);
-
   const selectPix = useCallback(async () => {
     const data = await billingApi.selectPixBilling();
     setClinic(data.clinic);
@@ -116,8 +104,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       register,
       completeWelcome,
       updateProfile,
-      saveSignature,
-      deleteSignature,
       selectPix,
       logout,
     }),
@@ -129,8 +115,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       register,
       completeWelcome,
       updateProfile,
-      saveSignature,
-      deleteSignature,
       selectPix,
       logout,
     ],
