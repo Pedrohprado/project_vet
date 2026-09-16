@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { z } from 'zod';
 import { ApiError } from '@/api/http';
+import { BrandImage } from '@/components/brand/brand-image';
 import { Button } from '@/components/ui/button';
 import {
   Field,
@@ -12,6 +13,7 @@ import {
 } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';
+import { HEAD_CAT_SRC } from '@/lib/brand';
 import { useFormFieldErrors } from '@/hooks/useFormFieldErrors';
 import { getPostAuthPath } from '@/lib/billing';
 import { cn } from '@/lib/utils';
@@ -104,8 +106,8 @@ export function LoginForm({
           ) : null}
           <Field>
             <div className="group relative mt-2">
-              <img
-                src="/head_cat.png"
+              <BrandImage
+                src={HEAD_CAT_SRC}
                 alt=""
                 aria-hidden
                 className="pointer-events-none absolute right-1 bottom-full z-10 h-24 w-auto translate-y-[30%] opacity-0 transition-opacity duration-500 ease-out group-hover:opacity-100"

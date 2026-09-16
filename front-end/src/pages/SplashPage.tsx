@@ -1,12 +1,15 @@
 import { Sparkles } from 'lucide-react';
 import { Link } from 'react-router';
 import { BrandCardBirds } from '@/components/brand/brand-card-birds';
+import { BrandImage } from '@/components/brand/brand-image';
 import { BrandLogo } from '@/components/brand/brand-logo';
 import { BrandPageBackground } from '@/components/brand-page-background';
 import { Button } from '@/components/ui/button';
 import { DashboardMockup } from '@/components/landing/dashboard-mockup';
 import { useFunnelTrack } from '@/hooks/useFunnelTrack';
+import { usePreloadBrandImages } from '@/hooks/use-preload-images';
 import { CAT_SRC, DOG_SRC } from '@/lib/brand';
+import { SPLASH_PRELOAD_PNGS } from '@/lib/marketing-preload';
 import { splashBenefits } from '@/lib/billing';
 import {
   landingPrimaryButtonClassName,
@@ -19,6 +22,7 @@ import { cn } from '@/lib/utils';
 
 export function SplashPage() {
   useFunnelTrack('ENTRADA');
+  usePreloadBrandImages(SPLASH_PRELOAD_PNGS);
 
   return (
     <div className="relative flex min-h-svh items-center justify-center overflow-hidden bg-white px-4 py-10 sm:px-6 sm:py-12">
@@ -26,43 +30,47 @@ export function SplashPage() {
 
       <div className="relative z-10 w-full max-w-md md:max-w-3xl lg:max-w-4xl">
         <div className="relative">
-          <BrandCardBirds count={3} />
+          <BrandCardBirds count={3} priority />
 
           <div className={cn(marketingCardClassName, 'overflow-visible md:pt-5 md:pb-7')}>
             <div className="flex flex-col gap-6 md:grid md:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] md:items-start md:gap-8">
               <div className="flex flex-col overflow-visible md:-mt-0.5">
                 <div className="flex justify-center md:justify-start">
-                  <BrandLogo size="xl" className="md:hidden" />
-                  <BrandLogo size="lg" className="hidden md:flex" />
+                  <BrandLogo size="xl" className="md:hidden" priority />
+                  <BrandLogo size="lg" className="hidden md:flex" priority />
                 </div>
 
                 <div
                   className="mt-5 flex items-end justify-center md:hidden"
                   aria-hidden
                 >
-                  <img
+                  <BrandImage
                     src={DOG_SRC}
                     alt=""
+                    priority
                     className="relative z-10 h-28 w-auto max-w-[44%] -translate-x-1 object-contain object-bottom sm:h-32"
                   />
-                  <img
+                  <BrandImage
                     src={CAT_SRC}
                     alt=""
+                    priority
                     className="relative -ml-5 h-28 w-auto max-w-[44%] translate-x-1 object-contain object-bottom sm:-ml-6 sm:h-32"
                   />
                 </div>
 
                 <div className="relative mt-3 hidden md:mx-1 md:block md:px-6 lg:px-8">
-                  <img
+                  <BrandImage
                     src={DOG_SRC}
                     alt=""
                     aria-hidden
+                    priority
                     className="pointer-events-none absolute -bottom-5 -left-8 z-20 h-[5.5rem] w-auto object-contain lg:-bottom-6 lg:-left-11 lg:h-28 xl:-left-14 xl:h-[7.25rem]"
                   />
-                  <img
+                  <BrandImage
                     src={CAT_SRC}
                     alt=""
                     aria-hidden
+                    priority
                     className="pointer-events-none absolute -bottom-5 -right-8 z-20 h-[5.5rem] w-auto object-contain lg:-bottom-6 lg:-right-11 lg:h-28 xl:-right-14 xl:h-[7.25rem]"
                   />
                   <DashboardMockup

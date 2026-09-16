@@ -1,6 +1,7 @@
 import { Check } from 'lucide-react';
 import { migrationContent } from '@/lib/landing-content';
 import { cn } from '@/lib/utils';
+import { BrandImage } from '@/components/brand/brand-image';
 import { OPEN_BOX_SRC, VETERINARY_WOMEN_SRC } from '@/lib/brand';
 import { LandingSection } from './landing-section';
 
@@ -46,20 +47,16 @@ export function LandingMigration() {
         </div>
 
         <div className='relative mx-auto flex max-w-sm items-end justify-center gap-2 sm:max-w-md'>
-          <img
+          <BrandImage
             src={VETERINARY_WOMEN_SRC}
             alt=''
             aria-hidden
-            loading='lazy'
-            decoding='async'
             className='relative z-0 -mr-6 h-44 w-auto object-contain sm:-mr-8 sm:h-52'
           />
-          <img
+          <BrandImage
             src={OPEN_BOX_SRC}
             alt=''
             aria-hidden
-            loading='lazy'
-            decoding='async'
             className='relative z-0 h-24 w-auto object-contain sm:h-28'
           />
         </div>

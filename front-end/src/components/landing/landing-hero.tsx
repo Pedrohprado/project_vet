@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { BrandImage } from '@/components/brand/brand-image';
 import { BIRD_SRC, FLYBIRD_SRC, CAT_SRC } from '@/lib/brand';
 import { heroContent } from '@/lib/landing-content';
 import { cn } from '@/lib/utils';
@@ -193,13 +194,14 @@ export function LandingHero() {
                 onClick={startFlight}
               >
                 {Array.from({ length: BIRD_COUNT }, (_, index) => (
-                  <img
+                  <BrandImage
                     key={index}
                     ref={(node) => {
                       birdRefs.current[index] = node;
                     }}
                     src={BIRD_SRC}
                     alt=""
+                    priority={index === 0}
                     draggable={false}
                     className={cn(
                       'h-11 w-auto object-contain transition-opacity duration-150 lg:h-12',
@@ -227,7 +229,7 @@ export function LandingHero() {
                         }
                         aria-hidden
                       >
-                        <img
+                        <BrandImage
                           src={FLYBIRD_SRC}
                           alt=""
                           className="hero-bird-fly object-contain"
@@ -243,10 +245,11 @@ export function LandingHero() {
                   })
                 : null}
 
-              <img
+              <BrandImage
                 src={CAT_SRC}
                 alt=""
                 aria-hidden
+                priority
                 className="pointer-events-none absolute -bottom-4 -left-4 z-20 h-25 w-auto object-contain sm:h-28 lg:-left-8"
               />
               <DashboardMockup

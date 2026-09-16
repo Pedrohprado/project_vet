@@ -1,3 +1,4 @@
+import { BrandImage } from '@/components/brand/brand-image';
 import { BIRD_SRC } from '@/lib/brand';
 import { cn } from '@/lib/utils';
 
@@ -7,12 +8,17 @@ type BrandCardBirdsProps = {
   /** Quantidade de passarinhos visíveis (2 padrão, 3 na splash). */
   count?: 2 | 3;
   className?: string;
+  priority?: boolean;
 };
 
 /**
  * Passarinhos pousados na borda superior do card — mesmo alinhamento do login.
  */
-export function BrandCardBirds({ count = 2, className }: BrandCardBirdsProps) {
+export function BrandCardBirds({
+  count = 2,
+  className,
+  priority = false,
+}: BrandCardBirdsProps) {
   return (
     <div
       className={cn(
@@ -22,14 +28,15 @@ export function BrandCardBirds({ count = 2, className }: BrandCardBirdsProps) {
       aria-hidden
     >
       {count === 3 ? (
-        <img
+        <BrandImage
           src={BIRD_SRC}
           alt=""
+          priority={priority}
           className={cn(birdClassName, 'hidden -scale-x-100 md:block')}
         />
       ) : null}
-      <img src={BIRD_SRC} alt="" className={birdClassName} />
-      <img src={BIRD_SRC} alt="" className={birdClassName} />
+      <BrandImage src={BIRD_SRC} alt="" priority={priority} className={birdClassName} />
+      <BrandImage src={BIRD_SRC} alt="" priority={priority} className={birdClassName} />
     </div>
   );
 }

@@ -9,10 +9,12 @@ import {
 } from '@/components/community/community-filters';
 import { SelectConsultationForShareDialog } from '@/components/community/select-consultation-for-share-dialog';
 import { ShareCommunityCaseDialog } from '@/components/community/share-community-case-dialog';
+import { BrandImage } from '@/components/brand/brand-image';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/hooks/useAuth';
 import { useCommunityCases } from '@/hooks/useCommunity';
+import { SNIFF_DOG_SRC } from '@/lib/brand';
 import {
   pageDescriptionClassName,
   pageShellClassName,
@@ -148,8 +150,8 @@ export function CommunityPage() {
         </p>
       ) : !data?.items.length ? (
         <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed bg-card px-6 py-16 text-center">
-          <img
-            src="/sniff_dog.png"
+          <BrandImage
+            src={SNIFF_DOG_SRC}
             alt=""
             className="size-36 object-contain"
           />

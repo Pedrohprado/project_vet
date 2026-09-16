@@ -9,7 +9,10 @@ import {
   Syringe,
   Users,
 } from 'lucide-react';
+import { BrandImage } from '@/components/brand/brand-image';
+import { usePreloadBrandImages } from '@/hooks/use-preload-images';
 import { BIRD_SRC } from '@/lib/brand';
+import { AUTH_PRELOAD_PNGS } from '@/lib/marketing-preload';
 import { cn } from '@/lib/utils';
 
 const ecosystemBadges = [
@@ -120,6 +123,8 @@ export function AuthPageLayout({
   isRegister = false,
   subtitle,
 }: AuthPageLayoutProps) {
+  usePreloadBrandImages(AUTH_PRELOAD_PNGS);
+
   return (
     <div className='relative flex min-h-svh items-center justify-center overflow-hidden bg-white p-4 sm:p-6'>
       <div
@@ -153,10 +158,11 @@ export function AuthPageLayout({
           isRegister ? 'max-w-lg' : 'max-w-md',
         )}
       >
-        <img
+        <BrandImage
           src={BIRD_SRC}
           alt=''
           aria-hidden
+          priority
           className='pointer-events-none absolute top-0 right-6 z-20 h-14 w-auto translate-y-[-58%] object-contain sm:right-10 sm:h-16'
         />
         <div className='rounded-2xl border border-border/50 bg-white p-6 shadow-xl shadow-black/4 sm:p-8'>

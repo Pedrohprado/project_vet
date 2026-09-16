@@ -1,5 +1,7 @@
 import { Outlet } from 'react-router';
 import { AppSidebar } from '@/components/app-sidebar';
+import { usePreloadBrandImages } from '@/hooks/use-preload-images';
+import { APP_SHELL_PRELOAD_PNGS } from '@/lib/app-preload';
 import { Separator } from '@/components/ui/separator';
 import {
   SidebarInset,
@@ -9,6 +11,8 @@ import {
 import { TooltipProvider } from '@/components/ui/tooltip';
 
 export function AppLayout() {
+  usePreloadBrandImages(APP_SHELL_PRELOAD_PNGS);
+
   return (
     <TooltipProvider>
       <SidebarProvider defaultOpen={false}>

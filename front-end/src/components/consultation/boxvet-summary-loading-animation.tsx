@@ -1,3 +1,4 @@
+import { BrandImage } from '@/components/brand/brand-image';
 import { BIRD_SRC, DOG_CAT_BOX_SRC } from '@/lib/brand';
 
 type BoxvetSummaryLoadingAnimationProps = {
@@ -17,20 +18,18 @@ export function BoxvetSummaryLoadingAnimation({
         .join(' ')}
     >
       <div className='boxvet-loading-scene relative mx-auto w-full max-w-60 shrink overflow-hidden'>
-        <img
+        <BrandImage
           src={DOG_CAT_BOX_SRC}
           alt=''
           aria-hidden
-          loading="lazy"
-          decoding="async"
+          priority
           className='pointer-events-none absolute inset-0 z-10 size-full object-contain'
         />
-        <img
+        <BrandImage
           src={BIRD_SRC}
           alt=''
           aria-hidden
-          loading="lazy"
-          decoding="async"
+          priority
           className='boxvet-loading-bird pointer-events-none absolute right-[49%] top-[24%] z-20 w-[22%]'
         />
       </div>

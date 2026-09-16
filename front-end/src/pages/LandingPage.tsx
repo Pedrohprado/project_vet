@@ -1,3 +1,5 @@
+import { usePreloadBrandImages } from '@/hooks/use-preload-images';
+import { LANDING_PRELOAD_PNGS } from '@/lib/marketing-preload';
 import { LandingCommunity } from '@/components/landing/landing-community';
 import { LandingCta } from '@/components/landing/landing-cta';
 import { LandingFaq } from '@/components/landing/landing-faq';
@@ -13,6 +15,8 @@ import { LandingProductInAction } from '@/components/landing/landing-product-in-
 import { LandingTestimonials } from '@/components/landing/landing-testimonials';
 
 export function LandingPage() {
+  usePreloadBrandImages(LANDING_PRELOAD_PNGS);
+
   return (
     <LandingLayout>
       <LandingHero />

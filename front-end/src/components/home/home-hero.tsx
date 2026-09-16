@@ -1,3 +1,4 @@
+import { BrandImage } from '@/components/brand/brand-image';
 import { OPEN_BOX_SRC } from '@/lib/brand';
 
 type HomeHeroProps = {
@@ -22,12 +23,11 @@ export function HomeHero({ userName, clinicName, reminderCount }: HomeHeroProps)
 
   return (
     <section className="relative overflow-hidden rounded-2xl border border-border/50 bg-white/90 p-4 shadow-xl shadow-black/4 backdrop-blur-sm sm:p-6">
-      <img
+      <BrandImage
         src={OPEN_BOX_SRC}
         alt=""
         aria-hidden
-        loading="lazy"
-        decoding="async"
+        priority
         className="pointer-events-none absolute right-2 bottom-0 hidden h-20 w-auto object-contain object-bottom opacity-90 sm:block sm:h-24 lg:right-4 lg:h-28"
       />
 

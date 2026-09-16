@@ -13,7 +13,9 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { ApiError } from '@/api/http';
+import { SNIFF_DOG_SRC } from '@/lib/brand';
 import { NewAtendimentoSheet } from '@/components/atendimento/new-atendimento-sheet';
+import { BrandImage } from '@/components/brand/brand-image';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -549,8 +551,8 @@ export function AtendimentoPage() {
 
           {!isLoading && !error && items.length === 0 && (
             <div className='flex flex-col items-center px-4 py-10 text-center sm:px-0'>
-              <img
-                src='/sniff_dog.png'
+              <BrandImage
+                src={SNIFF_DOG_SRC}
                 alt=''
                 className='size-36 object-contain'
               />
