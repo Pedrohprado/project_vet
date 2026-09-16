@@ -1,4 +1,4 @@
-import { getMailFrom, getMailTransporter } from '../lib/mail.js';
+import { getMailFrom, getMailLogoUrl, getMailTransporter } from '../lib/mail.js';
 
 export class MailService {
   async sendPasswordResetCode(input: {
@@ -18,8 +18,18 @@ export class MailService {
       '— Equipe BoxVet',
     ].join('\n');
 
+    const logoUrl = escapeHtml(getMailLogoUrl());
+
     const html = `
       <div style="font-family: system-ui, sans-serif; max-width: 480px; margin: 0 auto; color: #1a1a1a;">
+        <div style="text-align: center; margin: 0 0 28px;">
+          <img
+            src="${logoUrl}"
+            alt="BoxVet"
+            width="168"
+            style="display: inline-block; height: auto; max-width: 168px; border: 0;"
+          />
+        </div>
         <p>Olá, <strong>${escapeHtml(input.name)}</strong>!</p>
         <p>Use o código abaixo para redefinir sua senha no BoxVet:</p>
         <p style="font-size: 28px; letter-spacing: 6px; font-weight: 700; text-align: center; margin: 24px 0;">

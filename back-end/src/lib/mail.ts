@@ -41,3 +41,12 @@ export function getMailFrom() {
   const name = process.env.MAIL_FROM_NAME?.trim() || 'BoxVet';
   return `"${name}" <${from}>`;
 }
+
+/** URL pública do logo no HTML do e-mail (ex.: front em produção). */
+export function getMailLogoUrl() {
+  const custom = process.env.MAIL_LOGO_URL?.trim();
+  if (custom) {
+    return custom;
+  }
+  return 'https://boxvet.app/new_logo.png';
+}
