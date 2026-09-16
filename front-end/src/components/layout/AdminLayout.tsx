@@ -1,7 +1,9 @@
 import { Outlet } from 'react-router';
 import { AdminSidebar } from '@/components/admin-sidebar';
+import { useDocumentSeo } from '@/hooks/use-document-seo';
 import { usePreloadBrandImages } from '@/hooks/use-preload-images';
 import { APP_SHELL_PRELOAD_PNGS } from '@/lib/app-preload';
+import { adminShellSeo } from '@/lib/seo';
 import { Separator } from '@/components/ui/separator';
 import {
   SidebarInset,
@@ -12,6 +14,7 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 
 export function AdminLayout() {
   usePreloadBrandImages(APP_SHELL_PRELOAD_PNGS);
+  useDocumentSeo(adminShellSeo);
 
   return (
     <TooltipProvider>

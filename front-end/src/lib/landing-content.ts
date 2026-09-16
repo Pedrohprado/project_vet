@@ -16,8 +16,8 @@ import {
 } from 'lucide-react';
 
 export const heroContent = {
-  eyebrow: 'Cuidado contínuo para clínicas veterinárias',
-  title: 'Continue cuidando do paciente mesmo depois da consulta.',
+  eyebrow: 'Software para clínicas veterinárias',
+  title: 'BoxVet: continue cuidando do paciente mesmo depois da consulta.',
   subtitle:
     'Organize consultas, automatize retornos, vacinação e acompanhamento pós-consulta para manter tutores próximos e pacientes com o cuidado em dia.',
   primaryCta: 'Ver como funciona',

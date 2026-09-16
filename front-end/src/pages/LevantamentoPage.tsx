@@ -4,11 +4,13 @@ import { getPublicStats, type PublicStats } from '@/api/public-stats';
 import { BrandCardBirds } from '@/components/brand/brand-card-birds';
 import { BrandLogo } from '@/components/brand/brand-logo';
 import { BrandPageBackground } from '@/components/brand-page-background';
+import { useDocumentSeo } from '@/hooks/use-document-seo';
 import {
   marketingBodyClassName,
   marketingCardClassName,
   marketingTitleClassName,
 } from '@/lib/landing-styles';
+import { levantamentoSeo } from '@/lib/seo';
 import { cn } from '@/lib/utils';
 
 const METRICS: {
@@ -44,6 +46,7 @@ function formatMetric(value: number | null | undefined) {
 }
 
 export function LevantamentoPage() {
+  useDocumentSeo(levantamentoSeo);
   const [stats, setStats] = useState<PublicStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);

@@ -4,13 +4,16 @@ import { BrandCardBirds } from '@/components/brand/brand-card-birds';
 import { BrandImage } from '@/components/brand/brand-image';
 import { BrandLogo } from '@/components/brand/brand-logo';
 import { BrandPageBackground } from '@/components/brand-page-background';
+import { HomeJsonLd } from '@/components/seo/home-json-ld';
 import { Button } from '@/components/ui/button';
 import { DashboardMockup } from '@/components/landing/dashboard-mockup';
+import { useDocumentSeo } from '@/hooks/use-document-seo';
 import { useFunnelTrack } from '@/hooks/useFunnelTrack';
 import { usePreloadBrandImages } from '@/hooks/use-preload-images';
 import { CAT_SRC, DOG_SRC } from '@/lib/brand';
-import { SPLASH_PRELOAD_PNGS } from '@/lib/marketing-preload';
 import { splashBenefits } from '@/lib/billing';
+import { SPLASH_PRELOAD_PNGS } from '@/lib/marketing-preload';
+import { splashSeo } from '@/lib/seo';
 import {
   landingPrimaryButtonClassName,
   marketingBodyClassName,
@@ -23,9 +26,11 @@ import { cn } from '@/lib/utils';
 export function SplashPage() {
   useFunnelTrack('ENTRADA');
   usePreloadBrandImages(SPLASH_PRELOAD_PNGS);
+  useDocumentSeo(splashSeo);
 
   return (
     <div className="relative flex min-h-svh items-center justify-center overflow-hidden bg-white px-4 py-10 sm:px-6 sm:py-12">
+      <HomeJsonLd />
       <BrandPageBackground variant="absolute" blurHeight="55%" />
 
       <div className="relative z-10 w-full max-w-md md:max-w-3xl lg:max-w-4xl">
@@ -83,13 +88,17 @@ export function SplashPage() {
               </div>
 
               <div className="flex flex-col md:pt-1">
+                <p className="text-sm font-medium text-primary">
+                  Software para clínicas veterinárias
+                </p>
                 <h1
                   className={cn(
                     marketingTitleClassName,
-                    'text-xl sm:text-2xl sm:leading-snug',
+                    'mt-2 text-xl sm:text-2xl sm:leading-snug',
                   )}
                 >
-                  Cuide dos seus pacientes antes, durante e depois de cada procedimento!
+                  BoxVet: cuide dos seus pacientes antes, durante e depois de
+                  cada procedimento!
                 </h1>
 
                 <p className={`${marketingBodyClassName} mt-3`}>

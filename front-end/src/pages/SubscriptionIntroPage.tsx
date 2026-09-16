@@ -6,6 +6,7 @@ import { BrandLogo } from '@/components/brand/brand-logo';
 import { BrandPageBackground } from '@/components/brand-page-background';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
+import { useDocumentSeo } from '@/hooks/use-document-seo';
 import { useFunnelTrack } from '@/hooks/useFunnelTrack';
 import {
   firstName,
@@ -22,9 +23,11 @@ import {
   marketingListItemClassName,
   marketingTitleClassName,
 } from '@/lib/landing-styles';
+import { subscriptionSeo } from '@/lib/seo';
 
 export function SubscriptionIntroPage() {
   useFunnelTrack('CHECKOUT');
+  useDocumentSeo(subscriptionSeo);
   const { user, clinic, isLoading, isAuthenticated } = useAuth();
 
   if (isLoading) {

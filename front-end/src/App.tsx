@@ -13,7 +13,6 @@ import { ConsultationPage } from '@/pages/ConsultationPage';
 import { VaccinationPage } from '@/pages/VaccinationPage';
 import { AuthPage } from '@/pages/AuthPage';
 import { EstatisticasPage } from '@/pages/EstatisticasPage';
-import { LandingPage } from '@/pages/LandingPage';
 import { LevantamentoPage } from '@/pages/LevantamentoPage';
 import { PetDetailPage } from '@/pages/PetDetailPage';
 import { PetFormPage } from '@/pages/PetFormPage';
@@ -60,7 +59,8 @@ function App() {
     <>
       <Routes>
         <Route path="/" element={<RootRedirect />} />
-        <Route path="/landing" element={<LandingPage />} />
+        {/* Landing desabilitada temporariamente — reativar: element={<LandingPage />} */}
+        <Route path="/landing" element={<Navigate to="/" replace />} />
         <Route path="/levantamento" element={<LevantamentoPage />} />
 
         <Route element={<GuestRoute />}>

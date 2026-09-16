@@ -7,6 +7,7 @@ import { BrandPageBackground } from '@/components/brand-page-background';
 import { Button } from '@/components/ui/button';
 import { ApiError } from '@/api/http';
 import { useAuth } from '@/hooks/useAuth';
+import { useDocumentSeo } from '@/hooks/use-document-seo';
 import { useFunnelTrack } from '@/hooks/useFunnelTrack';
 import {
   firstName,
@@ -19,10 +20,12 @@ import {
   marketingCardClassName,
   marketingTitleClassName,
 } from '@/lib/landing-styles';
+import { subscriptionSeo } from '@/lib/seo';
 import { cn } from '@/lib/utils';
 
 export function SubscriptionPaymentPage() {
   useFunnelTrack('CHECKOUT');
+  useDocumentSeo(subscriptionSeo);
   const navigate = useNavigate();
   const { user, clinic, isLoading, isAuthenticated, selectPix } = useAuth();
   const [isActivating, setIsActivating] = useState(false);

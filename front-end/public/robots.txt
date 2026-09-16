@@ -1,0 +1,22 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /api
+Disallow: /uploads
+Disallow: /levantamento
+Disallow: /assinatura
+Disallow: /estatisticas
+Disallow: /agenda
+Disallow: /atendimento
+Disallow: /tutors
+Disallow: /consultations
+Disallow: /vaccinations
+Disallow: /perfil
+Disallow: /comunidade
+Disallow: /roadmap
+Disallow: /appointments
+Disallow: /login
+Disallow: /register
+Disallow: /landing
+
+Sitemap: https://boxvet.app/sitemap.xml
